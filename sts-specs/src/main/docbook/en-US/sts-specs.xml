@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<article version="5.0"
+	xsi:schemaLocation="http://docbook.org/ns/docbook http://www.docbook.org/xml/5.0/xsd/docbook.xsd"
+	xmlns="http://docbook.org/ns/docbook" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<title>eID Security Token Service Specifications</title>
+	<subtitle>
+		Version &project.version;
+	</subtitle>
+
+	<info>
+		<authorgroup>
+			<author>
+				<personname>
+					<firstname>Frank</firstname>
+					<surname>Cornelis</surname>
+				</personname>
+			</author>
+		</authorgroup>
+		<copyright>
+			<year>2014</year>
+			<holder>e-Contract.be BVBA</holder>
+		</copyright>
+		<pubdate>
+			&project.pubdate;
+		</pubdate>
+		<abstract>
+			<para>
+				This document details on the eID Security Token Service
+				specifications.
+			</para>
+		</abstract>
+	</info>
+
+	<section>
+		<title>Introduction</title>
+		<para>
+			TODO
+		</para>
+		<section>
+			<title>References</title>
+			<bibliography>
+				<title></title>
+
+				<bibliomixed id="base64">
+					<abbrev>Base64</abbrev>
+					S. Josefsson,
+					<title>The Base16, Base32, and Base64 Data Encodings
+					</title>
+					,
+					The Internet Society, 2006
+					<citetitle>
+						<ulink url="http://tools.ietf.org/html/rfc4648">http://tools.ietf.org/html/rfc4648
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="dssAsync">
+					<abbrev>DSSAsync</abbrev>
+					A. Kuehne et al.,
+					<title>Asynchronous Processing Abstract Profile of the OASIS
+						Digital Signature Services Version 1.0
+					</title>
+					,
+					OASIS, April 2007
+					<citetitle>
+						<ulink
+							url="http://docs.oasis-open.org/dss/v1.0/oasis-dss-profiles-asynchronous_processing-spec-v1.0-os.pdf">http://docs.oasis-open.org/dss/v1.0/oasis-dss-profiles-asynchronous_processing-spec-v1.0-os.pdf
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="dssCore">
+					<abbrev>DSSCore</abbrev>
+					S. Drees et al.,
+					<title>Digital Signature Service Core Protocols and Elements
+					</title>
+					,
+					OASIS, April 2007
+					<citetitle>
+						<ulink
+							url="http://docs.oasis-open.org/dss/v1.0/oasis-dss-core-spec-v1.0-os.pdf">http://docs.oasis-open.org/dss/v1.0/oasis-dss-core-spec-v1.0-os.pdf
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="dssVerify">
+					<abbrev>DSSVer</abbrev>
+					D. H&uuml;hnlein
+					et al.,
+					<title>Profile for Comprehensive Multi-Signature Verification
+						Reports Version 1.0
+					</title>
+					,
+					OASIS, November 2010
+					<citetitle>
+						<ulink
+							url="http://docs.oasis-open.org/dss-x/profiles/verificationreport/oasis-dssx-1.0-profiles-vr-cs01.pdf">http://docs.oasis-open.org/dss-x/profiles/verificationreport/oasis-dssx-1.0-profiles-vr-cs01.pdf
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="dssVisSig">
+					<abbrev>DSSVisSig</abbrev>
+					Ezer Farhi
+					et al.,
+					<title>
+						Visible Signature Profile of the OASIS Digital Signature
+						Services Version 1.0
+					</title>
+					,
+					OASIS, 8 May 2010
+					<citetitle>
+						<ulink
+							url="http://docs.oasis-open.org/dss-x/profiles/visualsig/v1.0/cs01/oasis-dssx-1.0-profiles-visualsig-cs1.pdf">http://docs.oasis-open.org/dss-x/profiles/visualsig/v1.0/cs01/oasis-dssx-1.0-profiles-visualsig-cs1.pdf
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="Excl-C14N">
+					<abbrev>Excl-C14N</abbrev>
+					J. Boyer
+					et al.,
+					<title>Exclusive XML Canonicalization Version 1.0
+					</title>
+					,
+					World Wide Web
+					Consortium, July 2002
+					<citetitle>
+						<ulink url="http://www.w3.org/TR/xml-exc-c14n/">http://www.w3.org/TR/xml-exc-c14n/
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="HTML401">
+					<abbrev>HTML401</abbrev>
+					D. Raggett et al.,
+					<title>HTML 4.01 Specification
+					</title>
+					,
+					World Wide Web Consortium, December 1999
+					<citetitle>
+						<ulink url="http://www.w3.org/TR/html4">http://www.w3.org/TR/html4
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="RFC2616">
+					<abbrev>RFC 2616</abbrev>
+					R. Fielding et al.,
+					<title>Hypertext Transfer Protocol - HTTP/1.1.
+					</title>
+					,
+					<citetitle>
+						<ulink url="http://www.ietf.org/rfc/rfc2616.txt">http://www.ietf.org/rfc/rfc2616.txt</ulink>
+					</citetitle>
+					IETF (Internet Engineering Task Force) RFC 2616, June 1999.
+				</bibliomixed>
+
+				<bibliomixed id="soap">
+					<abbrev>SOAP</abbrev>
+					W3C,
+					<title>SOAP Version 1.2</title>
+					,
+					<citetitle>
+						<ulink url="http://www.w3.org/TR/soap12-part1/">SOAP Version 1.2</ulink>
+					</citetitle>
+					W3C Recommendation 27 April 2007
+				</bibliomixed>
+
+				<bibliomixed id="swa">
+					<abbrev>SwA</abbrev>
+					WS-I,
+					<title>Attachments Profile Version 1.0</title>
+					,
+					<citetitle>
+						<ulink url="http://www.ws-i.org/Profiles/AttachmentsProfile-1.0.html">WS-I Attachments Profile Version 1.0</ulink>
+					</citetitle>
+					Web Services Interoperability Organization
+				</bibliomixed>
+
+				<bibliomixed id="TLS1.0">
+					<abbrev>RFC 2246</abbrev>
+					T. Dierks, C. Allen,
+					<title>The TLS Protocol Version 1.0
+					</title>
+					,
+					<citetitle>
+						<ulink url="http://www.ietf.org/rfc/rfc2246.txt">http://www.ietf.org/rfc/rfc2246.txt</ulink>
+					</citetitle>
+					IETF (Internet Engineering Task Force) RFC 2246, January 1999.
+				</bibliomixed>
+
+				<bibliomixed id="ws-sc">
+					<abbrev>WS-SecConv</abbrev>
+					A. Nadalin et al.,
+					<title>WS-SecureConversation 1.4
+					</title>
+					,
+					OASIS, February 2009
+					<citetitle>
+						<ulink
+							url="http://docs.oasis-open.org/ws-sx/ws-secureconversation/v1.4/ws-secureconversation.html">http://docs.oasis-open.org/ws-sx/ws-secureconversation/v1.4/ws-secureconversation.html
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="ws-sec">
+					<abbrev>WS-Sec</abbrev>
+					Kelvin Lawrence, Chris Kaler,
+					<title>OASIS Web Services Security: SOAP Message Security 1.1
+					</title>
+					,
+					OASIS, February 2006
+					<citetitle>
+						<ulink
+							url="https://www.oasis-open.org/committees/download.php/16790/wss-v1.1-spec-os-SOAPMessageSecurity.pdf">OASIS WS-Security 1.1</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="wss-ut">
+					<abbrev>WSS-UT</abbrev>
+					Anthony Nadalin, Chris Kaler, Ronald Monzillo, Phillip Hallam-Baker
+					<title>OASIS Web Services Security: UsernameToken Profile 1.1
+					</title>
+					,
+					OASIS, February 2006
+					<citetitle>
+						<ulink
+							url="https://www.oasis-open.org/committees/download.php/16782/wss-v1.1-spec-os-UsernameTokenProfile.pdf">OASIS WS-Security UsernameToken Profile 1.1</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="ws-trust">
+					<abbrev>WS-Trust</abbrev>
+					A. Nadalin et al.,
+					<title>WS-Trust 1.3
+					</title>
+					,
+					OASIS, March 2007
+					<citetitle>
+						<ulink
+							url="http://docs.oasis-open.org/ws-sx/ws-trust/200512/ws-trust-1.3-os.html">http://docs.oasis-open.org/ws-sx/ws-trust/200512/ws-trust-1.3-os.html
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="XACML">
+					<abbrev>XACML</abbrev>
+					<title>eXtensible Access Control Markup Language (XACML) Version
+						2.0
+					</title>
+					,
+					OASIS, 1 Feb 2005
+					<citetitle>
+						<ulink
+							url="http://docs.oasis-open.org/xacml/2.0/access_control-xacml-2.0-core-spec-os.pdf">http://docs.oasis-open.org/xacml/2.0/access_control-xacml-2.0-core-spec-os.pdf
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="XHTML">
+					<abbrev>XHTML</abbrev>
+					<title>XHTML 1.0 The Extensible HyperText Markup Language (Second
+						Edition)
+					</title>
+					,
+					World Wide Web Consortium Recommendation, August 2002
+					<citetitle>
+						<ulink url="http://www.w3.org/TR/xhtml1/">http://www.w3.org/TR/xhtml1/
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="xmldsig">
+					<abbrev>XMLSig</abbrev>
+					D. Eastlake et al.,
+					<title>XML-Signature Syntax and Processing</title>
+					,
+					W3C Recommendation, June 2008
+					<citetitle>
+						<ulink url="http://www.w3.org/TR/xmldsig-core/">http://www.w3.org/TR/xmldsig-core/</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="xmlns">
+					<abbrev>XML-ns</abbrev>
+					T. Bray, D. Hollander, A. Layman,
+					<title>Namespaces in XML</title>
+					,
+					W3C Recommendation, January 1999
+					<citetitle>
+						<ulink url="http://www.w3.org/TR/1999/REC-xml-names-19990114">http://www.w3.org/TR/1999/REC-xml-names-19990114
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+			</bibliography>
+		</section>
+	</section>
+
+	<appendix>
+		<title>eID Securty Token Service Specifications License
+		</title>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata format="PNG" fileref="cc-30-by-nc-nd.png"
+						scale="100" />
+				</imageobject>
+			</mediaobject>
+			This document has been released under the
+			<ulink url="http://creativecommons.org/licenses/by-nc-nd/3.0/">Creative Commons 3.0</ulink>
+			license.
+		</para>
+	</appendix>
+
+	<appendix>
+		<title>eID Security Token Service Project License</title>
+		<para>
+			The eID Security Token Service Project source code has
+			been released under the GNU LGPL version 3.0.
+		</para>
+		<para>
+			<code>
+				This is free software; you can redistribute it and/or modify it
+				under the terms of the GNU Lesser General Public License version 3.0
+				as published by the Free Software Foundation.
+			</code>
+		</para>
+		<para>
+			<code>
+				This software is distributed in the hope that it will be
+				useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+				of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+				Lesser General Public License for more details.
+			</code>
+		</para>
+		<para>
+			<code>
+				You should have received a copy of the GNU Lesser General
+				Public License along with this software; if not, see
+				http://www.gnu.org/licenses/.
+			</code>
+		</para>
+	</appendix>
+
+</article>
