@@ -35,8 +35,196 @@
 	<section>
 		<title>Introduction</title>
 		<para>
-			TODO
+			eID authentication in a web context can be easily achieved
+			using
+			for example the eID Identity Provider. Different protocols can be
+			used
+			for web based authentication: SAML 2.0 Browser POST profile,
+			WS-Federation web passive profile, OpenID 2.0, OAuth 2.0 or OpenID
+			Connect.
+			When a relying party (a web application) authenticates an
+			end-user, based on the eID, it can trust the received claims.
 		</para>
+		<para>
+			In the context of native (desktop/fat-client) applications
+			however,
+			achieving a trust relationship towards a remote relying
+			party can be a
+			challenge. In this document we define the
+			specifications for an
+			Identity Provider Security Token Service
+			(IP-STS) that accepts eID as
+			primary credential. This eID IP-STS is based on open standards like
+			<xref linkend="ws-trust" />
+			.
+			The most important features of the eID IP-STS are:
+			<itemizedlist>
+				<listitem>
+					<para>
+						The eID IP-STS is based on open standards.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						The eID IP-STS offers a secure challenge-response
+						authentication
+						based on the eID card.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						The eID IP-STS can be used with different out-of-the-box STS
+						clients like Windows Identity Foundations or Apache CXF STS
+						Client.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						The eID IP-STS also supports 'lightweight' profiles for clients
+						that have difficulties constructing a
+						<xref linkend="ws-sec" />
+						based signature.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						The usage of symmetric proof-of-possession keys can be made
+						either mandatory or optional.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						The eID IP-STS provides a mechanism to allow remote relying
+						parties to trust the authenticated user.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<section>
+			<title>Namespaces</title>
+			<para>
+				The XML namespaces used in the following sections are described in
+				<xref linkend="table-namespaces" />
+				.
+			</para>
+			<table id="table-namespaces">
+				<title>XML Namespaces</title>
+				<tgroup cols="2">
+					<colspec colwidth="1*" />
+					<colspec colwidth="5*" />
+					<thead>
+						<row>
+							<entry>Prefix</entry>
+							<entry>Namespace</entry>
+						</row>
+					</thead>
+					<tbody>
+						<row>
+							<entry>
+								<code>ds</code>
+							</entry>
+							<entry>
+								<code>http://www.w3.org/2000/09/xmldsig#</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>soap</code>
+							</entry>
+							<entry>
+								<code>http://www.w3.org/2003/05/soap-envelope</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>wsa</code>
+							</entry>
+							<entry>
+								<code>
+									http://www.w3.org/2005/08/addressing
+								</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>wsse</code>
+							</entry>
+							<entry>
+								<code>
+									http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd
+								</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>wsu</code>
+							</entry>
+							<entry>
+								<code>
+									http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd
+								</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>wst</code>
+							</entry>
+							<entry>
+								<code>
+									http://docs.oasis-open.org/ws-sx/ws-trust/200512
+								</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>wsp</code>
+							</entry>
+							<entry>
+								<code>
+									http://schemas.xmlsoap.org/ws/2004/09/policy
+								</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>ec</code>
+							</entry>
+							<entry>
+								<code>http://www.w3.org/2001/10/xml-exc-c14n#</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>wsc</code>
+							</entry>
+							<entry>
+								<code>
+									http://docs.oasis-open.org/ws-sx/ws-secureconversation/200512
+								</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>saml2</code>
+							</entry>
+							<entry>
+								<code>
+									urn:oasis:names:tc:SAML:2.0:assertion
+								</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>xsi</code>
+							</entry>
+							<entry>
+								<code>http://www.w3.org/2001/XMLSchema-instance</code>
+							</entry>
+						</row>
+					</tbody>
+				</tgroup>
+			</table>
+		</section>
 		<section>
 			<title>References</title>
 			<bibliography>
@@ -55,67 +243,6 @@
 					</citetitle>
 				</bibliomixed>
 
-				<bibliomixed id="dssAsync">
-					<abbrev>DSSAsync</abbrev>
-					A. Kuehne et al.,
-					<title>Asynchronous Processing Abstract Profile of the OASIS
-						Digital Signature Services Version 1.0
-					</title>
-					,
-					OASIS, April 2007
-					<citetitle>
-						<ulink
-							url="http://docs.oasis-open.org/dss/v1.0/oasis-dss-profiles-asynchronous_processing-spec-v1.0-os.pdf">http://docs.oasis-open.org/dss/v1.0/oasis-dss-profiles-asynchronous_processing-spec-v1.0-os.pdf
-						</ulink>
-					</citetitle>
-				</bibliomixed>
-
-				<bibliomixed id="dssCore">
-					<abbrev>DSSCore</abbrev>
-					S. Drees et al.,
-					<title>Digital Signature Service Core Protocols and Elements
-					</title>
-					,
-					OASIS, April 2007
-					<citetitle>
-						<ulink
-							url="http://docs.oasis-open.org/dss/v1.0/oasis-dss-core-spec-v1.0-os.pdf">http://docs.oasis-open.org/dss/v1.0/oasis-dss-core-spec-v1.0-os.pdf
-						</ulink>
-					</citetitle>
-				</bibliomixed>
-
-				<bibliomixed id="dssVerify">
-					<abbrev>DSSVer</abbrev>
-					D. H&uuml;hnlein
-					et al.,
-					<title>Profile for Comprehensive Multi-Signature Verification
-						Reports Version 1.0
-					</title>
-					,
-					OASIS, November 2010
-					<citetitle>
-						<ulink
-							url="http://docs.oasis-open.org/dss-x/profiles/verificationreport/oasis-dssx-1.0-profiles-vr-cs01.pdf">http://docs.oasis-open.org/dss-x/profiles/verificationreport/oasis-dssx-1.0-profiles-vr-cs01.pdf
-						</ulink>
-					</citetitle>
-				</bibliomixed>
-
-				<bibliomixed id="dssVisSig">
-					<abbrev>DSSVisSig</abbrev>
-					Ezer Farhi
-					et al.,
-					<title>
-						Visible Signature Profile of the OASIS Digital Signature
-						Services Version 1.0
-					</title>
-					,
-					OASIS, 8 May 2010
-					<citetitle>
-						<ulink
-							url="http://docs.oasis-open.org/dss-x/profiles/visualsig/v1.0/cs01/oasis-dssx-1.0-profiles-visualsig-cs1.pdf">http://docs.oasis-open.org/dss-x/profiles/visualsig/v1.0/cs01/oasis-dssx-1.0-profiles-visualsig-cs1.pdf
-						</ulink>
-					</citetitle>
-				</bibliomixed>
 
 				<bibliomixed id="Excl-C14N">
 					<abbrev>Excl-C14N</abbrev>
@@ -128,19 +255,6 @@
 					Consortium, July 2002
 					<citetitle>
 						<ulink url="http://www.w3.org/TR/xml-exc-c14n/">http://www.w3.org/TR/xml-exc-c14n/
-						</ulink>
-					</citetitle>
-				</bibliomixed>
-
-				<bibliomixed id="HTML401">
-					<abbrev>HTML401</abbrev>
-					D. Raggett et al.,
-					<title>HTML 4.01 Specification
-					</title>
-					,
-					World Wide Web Consortium, December 1999
-					<citetitle>
-						<ulink url="http://www.w3.org/TR/html4">http://www.w3.org/TR/html4
 						</ulink>
 					</citetitle>
 				</bibliomixed>
@@ -166,17 +280,6 @@
 						<ulink url="http://www.w3.org/TR/soap12-part1/">SOAP Version 1.2</ulink>
 					</citetitle>
 					W3C Recommendation 27 April 2007
-				</bibliomixed>
-
-				<bibliomixed id="swa">
-					<abbrev>SwA</abbrev>
-					WS-I,
-					<title>Attachments Profile Version 1.0</title>
-					,
-					<citetitle>
-						<ulink url="http://www.ws-i.org/Profiles/AttachmentsProfile-1.0.html">WS-I Attachments Profile Version 1.0</ulink>
-					</citetitle>
-					Web Services Interoperability Organization
 				</bibliomixed>
 
 				<bibliomixed id="TLS1.0">
@@ -206,7 +309,7 @@
 				</bibliomixed>
 
 				<bibliomixed id="ws-sec">
-					<abbrev>WS-Sec</abbrev>
+					<abbrev>WS-Security</abbrev>
 					Kelvin Lawrence, Chris Kaler,
 					<title>OASIS Web Services Security: SOAP Message Security 1.1
 					</title>
@@ -231,6 +334,20 @@
 					</citetitle>
 				</bibliomixed>
 
+				<bibliomixed id="wss-x509t">
+					<abbrev>WSS-X509</abbrev>
+					Anthony Nadalin, Chris Kaler, Ronald Monzillo, Phillip Hallam-Baker
+					<title>OASIS Web Services Security: X.509 Certificate Token Profile
+						1.1
+					</title>
+					,
+					OASIS, February 2006
+					<citetitle>
+						<ulink
+							url="http://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-os-x509TokenProfile.pdf">OASIS WS-Security X.509 Certificate Token Profile 1.1</ulink>
+					</citetitle>
+				</bibliomixed>
+
 				<bibliomixed id="ws-trust">
 					<abbrev>WS-Trust</abbrev>
 					A. Nadalin et al.,
@@ -241,20 +358,6 @@
 					<citetitle>
 						<ulink
 							url="http://docs.oasis-open.org/ws-sx/ws-trust/200512/ws-trust-1.3-os.html">http://docs.oasis-open.org/ws-sx/ws-trust/200512/ws-trust-1.3-os.html
-						</ulink>
-					</citetitle>
-				</bibliomixed>
-
-				<bibliomixed id="XACML">
-					<abbrev>XACML</abbrev>
-					<title>eXtensible Access Control Markup Language (XACML) Version
-						2.0
-					</title>
-					,
-					OASIS, 1 Feb 2005
-					<citetitle>
-						<ulink
-							url="http://docs.oasis-open.org/xacml/2.0/access_control-xacml-2.0-core-spec-os.pdf">http://docs.oasis-open.org/xacml/2.0/access_control-xacml-2.0-core-spec-os.pdf
 						</ulink>
 					</citetitle>
 				</bibliomixed>
@@ -299,8 +402,356 @@
 		</section>
 	</section>
 
+	<section>
+		<title>X.509 Certificate Token Profile</title>
+		<para>
+			The first authentication construct is based on the OASIS WS-Security
+			X.509 Certificate Profile version 1.1
+			<xref linkend="wss-x509t" />
+			.
+		</para>
+		<section>
+			<title>Request</title>
+			<para>
+				The WS-Trust request SOAP message from the native client
+				towards
+				the
+				eID
+				IP-STS looks as follows.
+			</para>
+			<programlisting language="xml"><![CDATA[<soap:Envelope>
+  <soap:Header>
+    <wsa:Action soap:mustUnderstand="1">
+      http://docs.oasis-open.org/ws-sx/ws-trust/200512/RST/Issue
+    </wsa:Action>
+    <wsa:MessageID>urn:uuid:...</wsa:MessageID>
+    <wsa:ReplyTo>
+      <wsa:Address>http://www.w3.org/2005/08/addressing/anonymous</wsa:Address>
+    </wsa:ReplyTo>
+    <wsa:To s:mustUnderstand="1" u:Id="to">https://...</wsa:To>
+    <wsse:Security soap:mustUnderstand="1">
+      <wsu:Timestamp wsu:Id="timestamp">
+        <wsu:Created>2012-01-17T09:31:27.700Z</wsu:Created>
+        <wsu:Expires>2012-01-17T09:36:27.700Z</wsu:Expires>
+      </wsu:Timestamp>
+      <wsse:BinarySecurityToken wsu:Id="uuid-bst"
+        ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509PKIPathv1"
+        EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">
+        ...
+      </wsse:BinarySecurityToken>
+      <ds:Signature>
+        <ds:SignedInfo>
+          <ds:CanonicalizationMethod
+            Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+          <ds:SignatureMethod
+            Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+          <ds:Reference URI="#timestamp">
+            <ds:Transforms>
+              <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+            </ds:Transforms>
+            <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+            <ds:DigestValue>...</ds:DigestValue>
+          </ds:Reference>
+          <ds:Reference URI="#to">
+            <ds:Transforms>
+              <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+            </ds:Transforms>
+            <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+            <ds:DigestValue>...</DigestValue>
+          </ds:Reference>
+        </ds:SignedInfo>
+        <ds:SignatureValue>...</ds:SignatureValue>
+        <ds:KeyInfo>
+          <wsse:SecurityTokenReference>
+            <wsse:Reference URI="#uuid-bst"/>
+          </wsse:SecurityTokenReference>
+        </ds:KeyInfo>
+      </ds:Signature>
+    </wsse:Security>
+  </soap:Header>
+  <soap:Body>
+    <wst:RequestSecurityToken>
+      <wst:RequestType>
+        http://docs.oasis-open.org/ws-sx/ws-trust/200512/Issue
+      </wst:RequestType>
+      <wst:KeyType>
+        http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer
+      </wst:KeyType>
+      <wst:TokenType>
+      	urn:oasis:names:tc:SAML:2.0:assertion
+      <wst:TokenType>
+      <wsp:AppliesTo>
+        <wsa:EndpointReference>
+          <wsa:Address>urn:some-target-application</wsa:Address>
+        </wsa:EndpointReference>
+      </wsp:AppliesTo>
+    </wst:RequestSecurityToken>
+  </soap:Body>
+</soap:Envelope>]]></programlisting>
+			<para>
+				The client sends this request towards the eID IP-STS over SSL (
+				<xref linkend="TLS1.0" />
+				).
+				This allows the client to authenticate the eID IP-STS and gives us
+				confidentiality and integrity.
+			</para>
+			<para>
+				The WS-Security XML signature SHOULD at least digest the
+				<code>&lt;wsa:To&gt;</code>
+				element
+				and the
+				<code>&lt;wsu:Timestamp&gt;</code>
+				element
+				to achieve the required security properties for an entity
+				authentication.
+				The signing of the
+				<code>&lt;wsa:To&gt;</code>
+				element prevents reuse of the XML signature within another context
+				(MITM attack).
+				The value of the
+				<code>&lt;wsa:To&gt;</code>
+				element SHOULD correspond with the address of the eID IP-STS
+				instance
+				used by the client application.
+				The signing of the
+				<code>&lt;wsu:Timestamp&gt;</code>
+				element serves as proof of message freshness towards the eID IP-STS
+				as premisse for the entity authentication.
+			</para>
+			<para>
+				The
+				<code>&lt;wsse:BinarySecurityToken&gt;</code>
+				is using
+				<code>#X509PKIPathv1</code>
+				as the eID IP-STS needs the complete X509 certificate chain to be
+				able to
+				perform a
+				PKI validation. Note that an eID IP-STS
+				implementation can also accept other non-eID X509 certificate
+				chains.
+			</para>
+			<para>
+				The
+				<code>&lt;wst:KeyType&gt;</code>
+				element indicates which type of proof of possession key should be
+				returned by the eID IP-STS. In this case, the client SHOULD require
+				a
+				bearer token that does not provide any proof of possession.
+			</para>
+			<para>
+				The
+				<code>&lt;wst:TokenType&gt;</code>
+				element indicates the type of the token that should be returned by
+				the eID IP-STS. In this case a SAML 2.0 assertion bearer token will
+				be returned.
+			</para>
+			<para>
+				The
+				<code>&lt;wsp:AppliesTo&gt;</code>
+				elements allows the eID IP-STS to determine which claims it can
+				release within the response SAML assertion.
+			</para>
+		</section>
+		<section>
+			<title>Processing</title>
+			<para>
+				The eID IP-STS performs the following processing:
+				<itemizedlist>
+					<listitem>
+						<para>
+							The XML signature SHOULD be verified using the
+							<code>&lt;wsse:BinarySecurityToken&gt;</code>
+							end-entity certificate.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							The
+							<code>&lt;wsse:BinarySecurityToken&gt;</code>
+							X509 certificate chain should be validated using common PKI
+							validation rules (OCSP, CRL).
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							The XML signature SHOULD at least sign the
+							<code>&lt;wsa:To&gt;</code>
+							element
+							and the
+							<code>&lt;wsu:Timestamp&gt;</code>
+							element.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							The
+							<code>&lt;wsu:Timestamp&gt;</code>
+							element SHOULD contain a valid time mark.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							The content of the
+							<code>&lt;wsa:To&gt;</code>
+							element
+							SHOULD correspond with the eID IP-STS endpoint address.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							The
+							<code>&lt;wsp:AppliesTo&gt;</code>
+							SHOULD indicate a known application.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>Response</title>
+			<para>
+				After a successful validation of the request message the eID
+				IP-STS responds as follows.
+			</para>
+			<programlisting language="xml"><![CDATA[<soap:Envelope>
+  <soap:Header>
+    <wsa:Action soap:mustUnderstand="1">
+      http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTRC/IssueFinal
+    </wsa:Action>
+    <wsa:RelatesTo>urn:uuid:...</wsa:RelatesTo>
+    <wsse:Security soap:mustUnderstand="1">
+      <wsu:Timestamp wsu:Id="timestamp">
+        <wsu:Created>2012-01-17T09:31:27.700Z</wsu:Created>
+        <wsu:Expires>2012-01-17T09:36:27.700Z</wsu:Expires>
+      </wsu:Timestamp>
+    </wsse:Security>
+  </soap:Header>
+  <soap:Body>
+    <wst:RequestSecurityTokenResponseCollection>
+      <wst:RequestSecurityTokenResponse>
+        <wst:Lifetime>
+          <wsu:Created>2012-01-17T09:31:29.143Z</wsu:Created>
+          <wsu:Expires>2012-01-17T10:31:29.143Z</wsu:Expires>
+        </trust:Lifetime>
+        <wsp:AppliesTo>
+          <wsa:EndpointReference>
+            <wsa:Address>urn:some-target-application</a:Address>
+          </wsa:EndpointReference>
+        </wsp:AppliesTo>
+        <wst:RequestedSecurityToken>
+          <saml2:Assertion ID="assertion"
+            IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
+            <saml2:Issuer>https://...</saml2:Issuer>
+            <saml2:Subject>
+              <saml2:NameID
+                Format="urn:oasis:names:tc:SAML:1.1:nameid-format:transient">
+                71715100070
+              </saml2:NameID>
+              <saml2:SubjectConfirmation
+                Method="urn:oasis:names:tc:SAML:2.0:cm:bearer"/>
+            </saml2:Subject>
+            <saml2:Conditions NotBefore="2011-05-09T08:36:37.359Z"
+              NotOnOrAfter="2011-05-09T10:36:37.359Z">
+              <saml2:AudienceRestriction>
+                <saml2:Audience>
+                  urn:some-target-application
+                </saml2:Audience>
+			  </saml2:AudienceRestriction>
+            </saml2:Conditions>
+            <saml2:AuthnStatement AuthnInstant="2011-05-09T09:36:37.515Z">
+              <saml2:AuthnContext>
+                <saml2:AuthnContextClassRef>
+                  urn:oasis:names:tc:SAML:2.0:ac:classes:SmartcardPKI
+                </saml2:AuthnContextClassRef>
+              </saml2:AuthnContext>
+            </saml2:AuthnStatement>
+            <ds:Signature>
+              <ds:SignedInfo>
+                <ds:CanonicalizationMethod
+                  Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                <ds:SignatureMethod
+                  Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+                <ds:Reference URI="#assertion">
+                  <ds:Transforms>
+                    <ds:Transform
+                      Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+                    <ds:Transform
+                      Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                  </ds:Transforms>
+                  <ds:DigestMethod
+                    Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+                  <ds:DigestValue>...</ds:DigestValue>
+                </ds:Reference>
+              </ds:SignedInfo>
+              <ds:SignatureValue>...</ds:SignatureValue>
+              <ds:KeyInfo>
+                <ds:X509Data>
+                  <ds:X509Certificate>...</ds:X509Certificate>
+                </ds:X509Data>
+              </ds:KeyInfo>
+            </ds:Signature>
+          </saml2:Assertion>
+        </wst:RequestedSecurityToken>
+        <wst:RequestedAttachedReference>
+          <wsse:SecurityTokenReference 
+            wsse:TokenType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0">
+            <wsse:KeyIdentifier
+              ValueType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.0#SAMLAssertionID">
+              assertion
+            </wsse:KeyIdentifier>
+          </wsse:SecurityTokenReference>
+        </wst:RequestedAttachedReference>
+        <wst:TokenType>
+          http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0
+        </wst:TokenType>
+        <wst:RequestType>
+          http://docs.oasis-open.org/ws-sx/ws-trust/200512/Issue
+        </wst:RequestType>
+        <wst:KeyType>
+          http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer
+        </wst:KeyType>
+      </wst:RequestSecurityTokenResponse>
+    </wst:RequestSecurityTokenResponseCollection>
+  </soap:Body>
+</soap:Envelope>]]></programlisting>
+		</section>
+		<para>
+			The value of the
+			<code>&lt;wsa:RelatesTo&gt;</code>
+			element corresponds with the value of
+			the
+			<code>&lt;wsa:MessageID&gt;</code>
+			element within the request message.
+		</para>
+		<para>
+			Both the
+			<code>&lt;wsu:Timestamp&gt;</code>
+			and the
+			<code>&lt;wst:Lifetime&gt;</code>
+			serve as proof of the message freshness towards the client.
+		</para>
+		<para>
+			The
+			<code>&lt;wst:RequestedSecurityToken&gt;</code>
+			element contains the
+			<code>&lt;saml2:Assertion&gt;</code>
+			SAML 2.0 bearer token.
+			The SAML 2.0 assertion has been signed using
+			the eID IP-STS signing certificate. This XML signature MAY be
+			verified by the requesting client before consuming the
+			<code>&lt;saml2:NameID&gt;</code>
+			element
+			within the SAML 2.0 assertion.
+			The XML signature SHOULD be
+			verified by
+			alien relying parties when the SAML 2.0 assertion is used
+			as a bearer
+			token towards WS-Security secured SOAP web services.
+		</para>
+	</section>
+
 	<appendix>
-		<title>eID Securty Token Service Specifications License
+		<title>eID Security Token Service Specifications License
 		</title>
 		<para>
 			<mediaobject>
@@ -319,7 +770,8 @@
 		<title>eID Security Token Service Project License</title>
 		<para>
 			The eID Security Token Service Project source code has
-			been released under the GNU LGPL version 3.0.
+			been
+			released under the GNU LGPL version 3.0.
 		</para>
 		<para>
 			<code>
