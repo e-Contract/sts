@@ -229,6 +229,15 @@
 								<code>http://docs.oasis-open.org/wsfed/federation/200706</code>
 							</entry>
 						</row>
+						<row>
+							<entry>
+								<code>auth</code>
+							</entry>
+							<entry>
+								<code>http://docs.oasis-open.org/wsfed/authorization/200706
+								</code>
+							</entry>
+						</row>
 					</tbody>
 				</tgroup>
 			</table>
@@ -423,7 +432,7 @@
 		</section>
 	</section>
 
-	<section>
+	<section id="sts-x509">
 		<title>X.509 Certificate Token Profile</title>
 		<para>
 			The first authentication construct is based on the OASIS WS-Security
@@ -431,7 +440,7 @@
 			<xref linkend="wss-x509t" />
 			.
 		</para>
-		<section>
+		<section id="sts-x509-request">
 			<title>Request</title>
 			<para>
 				The WS-Trust request SOAP message from the native client
@@ -573,7 +582,7 @@
 				release within the response SAML assertion.
 			</para>
 		</section>
-		<section>
+		<section id="sts-x509-processing">
 			<title>Processing</title>
 			<para>
 				The eID IP-STS performs the following processing:
@@ -975,6 +984,10 @@
   </soap:Body>
 </soap:Envelope>]]></programlisting>
 			<para>
+				The relying party should send the request over SSL towards the
+				trusted eID IP-STS instance.
+			</para>
+			<para>
 				Via the
 				<code>&lt;wsp:AppliesTo&gt;</code>
 				element the relying party can restrict
@@ -1087,12 +1100,576 @@
   </soap:Body>
 </soap:Envelope>]]></programlisting>
 			<para>
-				The relying party SHOULD check whether the
+				The relying party SHOULD at least check whether the
 				<code>&lt;wst:Code&gt;</code>
 				element value indeed indicates a
 				<code>valid</code>
 				status.
 			</para>
+		</section>
+	</section>
+
+	<section>
+		<title>eID attributes</title>
+		<para>
+			The active authentication as specified under
+			<xref linkend="sts-x509" />
+			results in a SAML assertion that only contains a subject
+			<code>&lt;saml2:NameID&gt;</code>
+			as unique user identifier.
+			As the eID card also offers different
+			attributes (name, address, ...), relying parties probably also want
+			to access these eID attributes.
+			To allow the eID IP-STS to issue SAML
+			assertions containing eID attributes, the relying party needs to pass
+			an eID specific SAML 2.0 assertion as part of the
+			<xref linkend="sts-x509-request" />
+			.
+			This eID specific SAML assertion should be passed as SAML 2.0 bearer
+			token within the
+			<code>&lt;wsse:Security&gt;</code>
+			SOAP header element.
+			The eID specific SAML assertion looks as follows.
+		</para>
+		<programlisting language="xml"><![CDATA[<saml2:Assertion ID="assertion"
+  IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
+  <saml2:AttributeStatement>
+  	<saml2:Attribute Name="urn:be:e-contract:sts:eid:identity">
+  	  <saml2:AttributeValue xsi:type="xs:base64Binary">
+  	    ...
+  	  </saml2:AttributeValue>
+  	</saml2:Attribute>
+  	<saml2:Attribute Name="urn:be:e-contract:sts:eid:identity-signature">
+  	  <saml2:AttributeValue xsi:type="xs:base64Binary">
+  	    ...
+  	  </saml2:AttributeValue>
+  	</saml2:Attribute>
+  	<saml2:Attribute Name="urn:be:e-contract:sts:eid:nr-cert">
+  	  <saml2:AttributeValue xsi:type="xs:base64Binary">
+  	    ...
+  	  </saml2:AttributeValue>
+  	</saml2:Attribute>
+  </saml2:AttributeStatement>
+</saml2:Assertion>]]></programlisting>
+		<para>
+			Depending on the eID attributes that the eID IP-STS should return,
+			other
+			<code>&lt;saml2:Attribute&gt;</code>
+			elements should be passed.
+			The eID IP-STS should support the following
+			eID specific input attributes:
+			<variablelist>
+				<varlistentry>
+					<term>
+						<code>urn:be:e-contract:sts:eid:identity</code>
+					</term>
+					<listitem>
+						<para>
+							The eID identity file.
+							The attribute value type should be
+							<code>xs:base64Binary</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>urn:be:e-contract:sts:eid:identity-signature</code>
+					</term>
+					<listitem>
+						<para>
+							The eID identity file signature by the national registration
+							authority. The attribute value type should be
+							<code>xs:base64Binary</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>urn:be:e-contract:sts:eid:nr-cert</code>
+					</term>
+					<listitem>
+						<para>
+							The X509 signing certificate used by the national
+							registration
+							authority. The attribute value type should be
+							<code>xs:base64Binary</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>urn:be:e-contract:sts:eid:address</code>
+					</term>
+					<listitem>
+						<para>
+							The eID address file.
+							The attribute value type should be
+							<code>xs:base64Binary</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>urn:be:e-contract:sts:eid:address-signature</code>
+					</term>
+					<listitem>
+						<para>
+							The eID address file signature by the national registration
+							authority. The attribute value type should be
+							<code>xs:base64Binary</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>urn:be:e-contract:sts:eid:photo</code>
+					</term>
+					<listitem>
+						<para>
+							The eID photo file.
+							The attribute value type should be
+							<code>xs:base64Binary</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</para>
+		<para>
+			Eventually the eID IP-STS will deliver eID attributes as part of
+			the
+			SAML 2.0 bearer token. These eID attributes are made available
+			as
+			<code>&lt;saml2:AttributeStatement&gt;</code>
+			attributes within the SAML 2.0 bearer token.
+			The eID IP-STS SHOULD
+			support the following eID attributes:
+			<variablelist>
+				<varlistentry>
+					<term>
+						<code>http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The URI for a claim that specifies the full name of an eID user.
+							The
+							attribute value type should be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The URI for a claim that specifies the surname of an eID user.
+							The
+							attribute value type should be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The URI for a claim that specifies the given name of an eID user.
+							The
+							attribute value type should be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>http://schemas.xmlsoap.org/ws/2005/05/identity/claims/x500distinguishedname
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The URI for a distinguished name claim of the eID X.509
+							authentication certificate.
+							The
+							attribute value type should be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>http://schemas.xmlsoap.org/ws/2005/05/identity/claims/country
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The URI for a claim that specifies the given name of an eID user.
+							For eID users this defaults to BE.
+							The
+							attribute value type should
+							be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>http://schemas.xmlsoap.org/ws/2005/05/identity/claims/dateofbirth
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The URI for a claim that specifies the date of birth of an eID
+							user.
+							The
+							attribute value type should
+							be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>http://schemas.xmlsoap.org/ws/2005/05/identity/claims/gender
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The URI for a claim that specifies the gender an eID
+							user.
+							The
+							attribute value type should
+							be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>http://schemas.xmlsoap.org/ws/2005/05/identity/claims/locality
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The URI for a claim that specifies the locality in which an eID
+							user resides.
+							The
+							attribute value type should
+							be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>http://schemas.xmlsoap.org/ws/2005/05/identity/claims/postalcode
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The URI for a claim that specifies the postal code of an eID
+							user.
+							The
+							attribute value type should
+							be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>http://schemas.xmlsoap.org/ws/2005/05/identity/claims/privatepersonalidentifier
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The URI for a claim that specifies the private personal
+							identifier (PPI) of the eID
+							user.
+							The
+							attribute value type should
+							be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>http://schemas.xmlsoap.org/ws/2005/05/identity/claims/streetaddress
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The URI for a claim that specifies the street address (street and
+							house number) of the eID
+							user.
+							The
+							attribute value type should
+							be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+			</variablelist>
+		</para>
+		<para>
+			Depending on the eID IP-STS policy, the eID IP-STS will enrich the
+			SAML 2.0 bearer token with attributes based on:
+			<itemizedlist>
+				<listitem>
+					<para>
+						The
+						<code>&lt;wsp:AppliesTo&gt;</code>
+						element.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						The optional
+						<code>&lt;wst:Claims&gt;</code>
+						element that should be part of the
+						<code>&lt;wst:RequestSecurityToken&gt;</code>
+						element.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<section>
+			<title>Request</title>
+			<para>
+				A request that demonstrates the usage of eID attributes is
+				given
+				below. Here we omitted most elements from the
+				<xref linkend="sts-x509-request" />
+				message to better highlight the eID attribute sections.
+			</para>
+			<programlisting language="xml"><![CDATA[<soap:Envelope>
+  <soap:Header>
+    ...
+    <wsse:Security soap:mustUnderstand="1">
+      ...
+      <saml2:Assertion ID="assertion"
+        IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
+        <saml2:AttributeStatement>
+  	      <saml2:Attribute Name="urn:be:e-contract:sts:eid:identity">
+  	        <saml2:AttributeValue xsi:type="xs:base64Binary">
+  	          ...
+  	        </saml2:AttributeValue>
+  	      </saml2:Attribute>
+  	      <saml2:Attribute Name="urn:be:e-contract:sts:eid:identity-signature">
+  	        <saml2:AttributeValue xsi:type="xs:base64Binary">
+  	        ...
+  	        </saml2:AttributeValue>
+          </saml2:Attribute>
+  	      <saml2:Attribute Name="urn:be:e-contract:sts:eid:nr-cert">
+  	        <saml2:AttributeValue xsi:type="xs:base64Binary">
+  	          ...
+  	        </saml2:AttributeValue>
+  	      </saml2:Attribute>
+  	    </saml2:AttributeStatement>
+      </saml2:Assertion>
+    </wsse:Security>
+  </soap:Header>
+  <soap:Body>
+    <wst:RequestSecurityToken>
+      ...
+      <wst:Claims>
+        <auth:ClaimType
+          Uri="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"/>
+        <auth:ClaimType
+          Uri="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"/>
+      </wst:Claims>
+      <wsp:AppliesTo>
+        <wsa:EndpointReference>
+          <wsa:Address>urn:some-target-application</wsa:Address>
+        </wsa:EndpointReference>
+      </wsp:AppliesTo>
+    </wst:RequestSecurityToken>
+  </soap:Body>
+</soap:Envelope>]]></programlisting>
+			<para>
+				As you can see from the example, the request for the
+				<code>surname</code>
+				and
+				<code>givenname</code>
+				claims, will require the provisioning of the eID identity file, the
+				eID identity file signature, and the eID national registration
+				signing certificate. Otherwise the eID IP-STS cannot verify the
+				security properties on these eID data files, and thus cannot
+				securely parse and assert the requested eID attributes.
+				The following
+				table
+				<xref linkend="table-mapping" />
+				summarizes which eID data should be provided per requested
+				claim
+				type. Note that we omitted the prefixes for brevity.
+			</para>
+			<table id="table-mapping">
+				<title>eID Attribute mapping</title>
+				<tgroup cols="2">
+					<colspec colwidth="2*" />
+					<colspec colwidth="5*" />
+					<thead>
+						<row>
+							<entry>ClaimType Uri</entry>
+							<entry>eID data Uri</entry>
+						</row>
+					</thead>
+					<tbody>
+						<row>
+							<entry>
+								<code>name</code>
+							</entry>
+							<entry>
+								<code>identity</code>
+								,
+								<code>identity-signature</code>
+								,
+								<code>nr-cert</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>surname</code>
+							</entry>
+							<entry>
+								<code>identity</code>
+								,
+								<code>identity-signature</code>
+								,
+								<code>nr-cert</code>
+							</entry>
+						</row>
+					</tbody>
+				</tgroup>
+			</table>
+		</section>
+		<section>
+			<title>Processing</title>
+			<para>
+				When the eID IP-STS receives eID data files via the additional
+				<code>&lt;saml2:Assertion&gt;</code>
+				within the request, is SHOULD perform
+				the following additional
+				processing, next to
+				the processing already defined under
+				<xref linkend="sts-x509-processing" />
+				.
+				<itemizedlist>
+					<listitem>
+						<para>
+							Depending on the configured policy, determine whether the
+							requested
+							<code>&lt;wst:Claims&gt;</code>
+							are permitted by the calling application
+							as indicated via
+							<code>&lt;wsp:AppliesTo&gt;</code>
+							.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							Check whether the provided eID data files are sufficient to
+							meet the requested claims.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							Validate the eID identity file signature using the received
+							national registration X509 certificate.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							Perform a PKI validation against the national registration
+							X509 certificate.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							Check the indicated validity period within the eID identity
+							file.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							Check whether the national registration number within the
+							eID identity file corresponds with the SERIALNUMBER field of the
+							eID authentication certificate distinguished name.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							Parse and (depending on the claims type) transform the eID
+							identity attributes towards the requested claims.
+						</para>
+					</listitem>
+				</itemizedlist>
+				Similar processing applies to the eID address file if claims related
+				to this file are requested.
+			</para>
+		</section>
+		<section>
+			<title>Response</title>
+			<para>
+				After successful processing, the eID IP-STS responds as
+				follows. Again we omitted several response elements to highlight the
+				eID attribute relevant elements.
+			</para>
+			<programlisting language="xml"><![CDATA[<soap:Envelope>
+  <soap:Header>
+    ...
+  </soap:Header>
+  <soap:Body>
+    <wst:RequestSecurityTokenResponseCollection>
+      <wst:RequestSecurityTokenResponse>
+        ...
+        <wst:RequestedSecurityToken>
+          <saml2:Assertion ID="assertion"
+            IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
+            ...
+            <saml2:AttributeStatement>
+              <saml2:Attribute
+                Name="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname">
+  	            <saml2:AttributeValue xsi:type="xs:string">
+  	              Cornelis
+  	            </saml2:AttributeValue>
+  	          </saml2:Attribute>
+  	          <saml2:Attribute
+                Name="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname">
+  	            <saml2:AttributeValue xsi:type="xs:string">
+  	              Frank
+  	            </saml2:AttributeValue>
+  	          </saml2:Attribute>
+            </saml2:AttributeStatement>
+          </saml2:Assertion>
+        </wst:RequestedSecurityToken>
+      </wst:RequestSecurityTokenResponse>
+    </wst:RequestSecurityTokenResponseCollection>
+  </soap:Body>
+</soap:Envelope>]]></programlisting>
 		</section>
 	</section>
 
