@@ -221,6 +221,14 @@
 								<code>http://www.w3.org/2001/XMLSchema-instance</code>
 							</entry>
 						</row>
+						<row>
+							<entry>
+								<code>fed</code>
+							</entry>
+							<entry>
+								<code>http://docs.oasis-open.org/wsfed/federation/200706</code>
+							</entry>
+						</row>
 					</tbody>
 				</tgroup>
 			</table>
@@ -331,6 +339,19 @@
 					<citetitle>
 						<ulink
 							url="https://www.oasis-open.org/committees/download.php/16782/wss-v1.1-spec-os-UsernameTokenProfile.pdf">OASIS WS-Security UsernameToken Profile 1.1</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="wss-saml">
+					<abbrev>WSS-SAML</abbrev>
+					Anthony Nadalin, Chris Kaler, Ronald Monzillo, Phillip Hallam-Baker
+					<title>OASIS Web Services Security: SAML Token Profile 1.1
+					</title>
+					,
+					OASIS, June 2005
+					<citetitle>
+						<ulink
+							url="http://docs.oasis-open.org/wss/v1.1/wss-v1.1-spec-pr-SAMLTokenProfile-01.html">OASIS WS-Security SAML Token Profile 1.1</ulink>
 					</citetitle>
 				</bibliomixed>
 
@@ -696,7 +717,7 @@
           <wsse:SecurityTokenReference 
             wsse:TokenType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0">
             <wsse:KeyIdentifier
-              ValueType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.0#SAMLAssertionID">
+              ValueType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLID">
               assertion
             </wsse:KeyIdentifier>
           </wsse:SecurityTokenReference>
@@ -748,6 +769,331 @@
 			as a bearer
 			token towards WS-Security secured SOAP web services.
 		</para>
+	</section>
+
+	<section>
+		<title>
+			SAML Token Profile
+		</title>
+		<para>
+			A client can used the SAML 2.0 bearer token to secure the
+			communication towards relying parties.
+			A SOAP request message can
+			embed the SAML 2.0 bearer token according to OASIS WS-Security SAML
+			Token Profile 1.1.1
+			<xref linkend="wss-saml" />
+			. The following SOAP request message demonstrates the usage of such a
+			SAML 2.0 bearer token.
+		</para>
+		<programlisting language="xml"><![CDATA[<soap:Envelope>
+  <soap:Header>
+    <wsse:Security soap:mustUnderstand="1">
+      <saml2:Assertion ID="assertion"
+            IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
+        ...
+      </saml2:Assertion>
+      <wsse:SecurityTokenReference 
+        wsse:TokenType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0">
+        <wsse:KeyIdentifier
+          ValueType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLID">
+          assertion
+        </wsse:KeyIdentifier>
+      </wsse:SecurityTokenReference>
+    </wsse:Security>
+  </soap:Header>
+  <soap:Body>
+    ...
+  </soap:Body>
+</soap:Envelope>]]></programlisting>
+	</section>
+
+	<section id="section-validate-saml">
+		<title>Validating SAML assertions</title>
+		<para>
+			When a relying party receives a SAML 2.0 assertion as bearer
+			token it
+			SHOULD validate the SAML assertion before proceeding.
+			The relying
+			party should at least verify the following conditions:
+			<itemizedlist>
+				<listitem>
+					<para>
+						Validate the XML signature on the SAML assertion.
+						The XML signature
+						should contain a
+						<code>&lt;ds:Reference&gt;</code>
+						referring to the top-level
+						<code>&lt;saml2:Assertion&gt;</code>
+						element.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						The relying party SHOULD verify whether the value of the
+						<code>&lt;saml2:Issuer&gt;</code>
+						element corresponds with the trusted eID IP-STS instance.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						The relying party SHOULD verify whether the SAML signatory
+						corresponds with the trusted eID IP-STS instance.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						The relying party SHOULD verify the freshness of the SAML 2.0
+						assertion
+						via the
+						<code>NotBefore</code>
+						and
+						<code>NotAfter</code>
+						attributes
+						of the
+						<code>&lt;saml2:Conditions&gt;</code>
+						element.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						The relying party SHOULD verify that the SAML 2.0 assertion is
+						indeed intended
+						for him via the
+						<code>&lt;saml2:Audience&gt;</code>
+						element.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			A relying party can setup the trust relationship towards the eID
+			IP-STS instance in different ways.
+			The relying party could for example
+			keep reference of the SHA1 fingerprint of the trusted eID IP-STS
+			signing certificate. The relying party could also keep reference of
+			the X509 certificate of the trusted eID IP-STS instance.
+		</para>
+		<para>
+			To aid the
+			relying party in the bootstrapping of the trust
+			relationship towards
+			the eID IP-STS, an eID IP-STS instance should
+			expose an OASIS SAML
+			2.0 metadata document. This SAML 2.0 metadata
+			document SHOULD at
+			least contain the following elements.
+		</para>
+		<programlisting language="xml"><![CDATA[<md:EntityDescriptor entityID="https://...">
+  <md:RoleDescriptor xsi:type="fed:SecurityTokenServiceType"
+    protocolSupportEnumeration="http://docs.oasis-open.org/wsfed/federation/200706">
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo>
+        <ds:X509Data>
+          <ds:X509Certificate>...</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <fed:TokenTypesOffered>
+      <fed:TokenType Uri="urn:oasis:names:tc:SAML:2.0" />
+    </fed:TokenTypesOffered>
+    <fed:SecurityTokenServiceEndpoint>
+      <wsa:EndpointReference> 
+        <wsa:Address>https://...</wsa:Address> 
+      </wsa:EndpointReference>
+    </fed:SecurityTokenServiceEndpoint>
+  </md:RoleDescriptor>
+</md:EntityDescriptor>]]></programlisting>
+		<para>
+			A relying party SHOULD retrieve this SAML 2.0 metadata document
+			over
+			SSL. The eID IP-STS signing certificate is located within the
+			<code>&lt;md:KeyDescriptor&gt;</code>
+			element.
+		</para>
+	</section>
+
+	<section>
+		<title>STS based Validation</title>
+		<para>
+			While a relying party can perfectly validate a received SAML
+			assertion itself as described under
+			<xref linkend="section-validate-saml" />
+			, it might be easier for some relying parties to use the eID IP-STS
+			itself to validate the SAML assertions.
+		</para>
+		<section>
+			<title>Request</title>
+			<para>
+				A relying party can send the
+				following STS validation request to
+				the eID IP-STS.
+			</para>
+			<programlisting language="xml"><![CDATA[<soap:Envelope>
+  <soap:Header>
+  	<wsa:Action soap:mustUnderstand="1">
+      http://docs.oasis-open.org/ws-sx/ws-trust/200512/RST/Validate
+    </wsa:Action>
+    <wsa:MessageID>urn:uuid:...</wsa:MessageID>
+    <wsa:ReplyTo>
+      <wsa:Address>http://www.w3.org/2005/08/addressing/anonymous</wsa:Address>
+    </wsa:ReplyTo>
+    <wsa:To s:mustUnderstand="1" u:Id="to">https://...</wsa:To>
+    <wsse:Security soap:mustUnderstand="1">
+      <wsu:Timestamp wsu:Id="timestamp">
+        <wsu:Created>2012-01-17T09:31:27.700Z</wsu:Created>
+        <wsu:Expires>2012-01-17T09:36:27.700Z</wsu:Expires>
+      </wsu:Timestamp>
+      <saml2:Assertion ID="assertion-id"
+        IssueInstant="2012-02-09T09:27:17.433Z" Version="2.0">
+        ...
+      </saml2:Assertion>
+    </wsse:Security>
+  </soap:Header>
+  <soap:Body>
+    <wst:RequestSecurityToken>
+      <wst:RequestType>
+        http://docs.oasis-open.org/ws-sx/ws-trust/200512/Validate
+      </wst:RequestType>
+      <wst:TokenType>
+        http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status
+      </wst:TokenType>
+      <wst:ValidateTarget>
+        <wsse:SecurityTokenReference
+          wsse11:TokenType="http://docs.oasis-open.org/wss/oasis-wss-saml-tokenprofile-1.1#SAMLV2.0">
+          <wsse:KeyIdentifier
+            wsse:ValueType="http://docs.oasis-open.org/wss/oasis-wss-saml-tokenprofile-1.1#SAMLID">
+            assertion-id
+          </wsse:KeyIdentifier>
+        </wsse:SecurityTokenReference>
+      </wst:ValidateTarget>
+      <wsp:AppliesTo>
+        <wsa:EndpointReference>
+          <wsa:Address>urn:some-target-application</wsa:Address>
+        </wsa:EndpointReference>
+      </wsp:AppliesTo>
+    </wst:RequestSecurityToken>
+  </soap:Body>
+</soap:Envelope>]]></programlisting>
+			<para>
+				Via the
+				<code>&lt;wsp:AppliesTo&gt;</code>
+				element the relying party can restrict
+				the application context in
+				which the SAML assertion should be
+				validated.
+			</para>
+		</section>
+		<section>
+			<title>Processing</title>
+			<para>
+				The eID IP-STS SHOULD at least perform the following processing:
+				<itemizedlist>
+					<listitem>
+						<para>
+							The
+							<code>&lt;wsu:Timestamp&gt;</code>
+							element SHOULD contain a valid time mark.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							The content of the
+							<code>&lt;wsa:To&gt;</code>
+							element
+							SHOULD correspond with the eID IP-STS endpoint address.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							Validate the XML signature on the SAML assertion.
+							The XML
+							signature
+							should contain a
+							<code>&lt;ds:Reference&gt;</code>
+							referring to the top-level
+							<code>&lt;saml2:Assertion&gt;</code>
+							element.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							The eID IP-STS SHOULD verify whether the value of the
+							<code>&lt;saml2:Issuer&gt;</code>
+							element equals its own name.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							The eID IP-STS SHOULD verify that he is the SAML signatory.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							The eID IP-STS SHOULD verify the freshness of the SAML 2.0
+							assertion
+							via the
+							<code>NotBefore</code>
+							and
+							<code>NotAfter</code>
+							attributes
+							of the
+							<code>&lt;saml2:Conditions&gt;</code>
+							element.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							The eID IP-STS SHOULD verify that the SAML 2.0 assertion
+							<code>&lt;saml2:Audience&gt;</code>
+							element value corresponds with the
+							<code>&lt;wsp:AppliesTo&gt;</code>
+							element value from the request.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>Response</title>
+			<para>
+				Upon successful processing, the eID IP-STS responds with:
+			</para>
+			<programlisting language="xml"><![CDATA[<soap:Envelope>
+  <soap:Header>
+  	<wsa:Action soap:mustUnderstand="1">
+      http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/ValidateFinal
+    </wsa:Action>
+    <wsa:RelatesTo>urn:uuid:...</wsa:RelatesTo>
+    <wsse:Security soap:mustUnderstand="1">
+      <wsu:Timestamp>
+        <wsu:Created>2012-02-09T09:27:19.197Z</wsu:Created>
+        <wsu:Expires>2012-02-09T09:32:19.197Z</wsu:Expires>
+      </wsu:Timestamp>
+    </wsse:Security>
+  </soap:Header>
+  <soap:Body>
+    <wst:RequestSecurityTokenResponseCollection>
+      <wst:RequestSecurityTokenResponse>
+        <wst:TokenType>
+          http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status
+        </wst:TokenType>
+        <wst:Status>
+          <wst:Code>
+            http://docs.oasis-open.org/ws-sx/ws-trust/200512/status/valid
+          </wst:Code>
+        </wst:Status>
+      </wst:RequestSecurityTokenResponse>
+    </wst:RequestSecurityTokenResponseCollection>
+  </soap:Body>
+</soap:Envelope>]]></programlisting>
+			<para>
+				The relying party SHOULD check whether the
+				<code>&lt;wst:Code&gt;</code>
+				element value indeed indicates a
+				<code>valid</code>
+				status.
+			</para>
+		</section>
 	</section>
 
 	<appendix>
