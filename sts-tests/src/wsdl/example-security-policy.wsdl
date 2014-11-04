@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+	targetNamespace="urn:be:e-contract:sts:example" xmlns:tns="urn:be:e-contract:sts:example"
+	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsp="http://www.w3.org/ns/ws-policy"
+	xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+	xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702">
+
+	<types>
+		<schema xmlns="http://www.w3.org/2001/XMLSchema">
+			<import namespace="urn:be:e-contract:sts:example"
+				schemaLocation="example.xsd" />
+		</schema>
+	</types>
+
+	<message name="EchoRequest">
+		<part name="EchoRequest" element="tns:EchoRequest" />
+	</message>
+	<message name="EchoResponse">
+		<part name="EchoResponse" element="tns:EchoResponse" />
+	</message>
+
+	<portType name="ExampleServicePortType">
+		<operation name="echo">
+			<input message="tns:EchoRequest" />
+			<output message="tns:EchoResponse" />
+		</operation>
+	</portType>
+
+	<binding name="ExampleServiceBinding" type="tns:ExampleServicePortType">
+		<wsp:PolicyReference URI="#ExamplePolicy" />
+		<soap:binding transport="http://schemas.xmlsoap.org/soap/http"
+			style="document" />
+		<operation name="echo">
+			<soap:operation />
+			<input>
+				<soap:body use="literal" />
+			</input>
+			<output>
+				<soap:body use="literal" />
+			</output>
+		</operation>
+	</binding>
+
+	<service name="ExampleService">
+		<port name="ExampleServicePort" binding="tns:ExampleServiceBinding">
+			<soap:address location="http://localhost:8080/example" />
+		</port>
+	</service>
+
+	<wsp:Policy wsu:Id="ExamplePolicy">
+		<sp:SupportingTokens>
+			<wsp:Policy>
+				<sp:UsernameToken
+					sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
+					<wsp:Policy />
+				</sp:UsernameToken>
+			</wsp:Policy>
+		</sp:SupportingTokens>
+	</wsp:Policy>
+
+</definitions>

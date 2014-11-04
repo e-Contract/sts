@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:be:e-contract:sts:example"
+	elementFormDefault="qualified" attributeFormDefault="unqualified"
+	xmlns:tns="urn:be:e-contract:sts:example" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+	<element name="EchoRequest" type="xs:string" />
+	<element name="EchoResponse" type="xs:string" />
+
+</schema>
