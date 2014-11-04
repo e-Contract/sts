@@ -669,7 +669,7 @@
           </wsa:EndpointReference>
         </wsp:AppliesTo>
         <wst:RequestedSecurityToken>
-          <saml2:Assertion ID="assertion"
+          <saml2:Assertion ID="assertionId"
             IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
             <saml2:Issuer>https://...</saml2:Issuer>
             <saml2:Subject>
@@ -727,7 +727,7 @@
             wsse:TokenType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0">
             <wsse:KeyIdentifier
               ValueType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLID">
-              assertion
+              assertionId
             </wsse:KeyIdentifier>
           </wsse:SecurityTokenReference>
         </wst:RequestedAttachedReference>
@@ -780,7 +780,7 @@
 		</para>
 	</section>
 
-	<section>
+	<section id="section-saml-token">
 		<title>
 			SAML Token Profile
 		</title>
@@ -805,7 +805,7 @@
         wsse:TokenType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0">
         <wsse:KeyIdentifier
           ValueType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLID">
-          assertion
+          assertionId
         </wsse:KeyIdentifier>
       </wsse:SecurityTokenReference>
     </wsse:Security>
@@ -952,7 +952,7 @@
         <wsu:Created>2012-01-17T09:31:27.700Z</wsu:Created>
         <wsu:Expires>2012-01-17T09:36:27.700Z</wsu:Expires>
       </wsu:Timestamp>
-      <saml2:Assertion ID="assertion-id"
+      <saml2:Assertion ID="assertionId"
         IssueInstant="2012-02-09T09:27:17.433Z" Version="2.0">
         ...
       </saml2:Assertion>
@@ -971,7 +971,7 @@
           wsse11:TokenType="http://docs.oasis-open.org/wss/oasis-wss-saml-tokenprofile-1.1#SAMLV2.0">
           <wsse:KeyIdentifier
             wsse:ValueType="http://docs.oasis-open.org/wss/oasis-wss-saml-tokenprofile-1.1#SAMLID">
-            assertion-id
+            assertionId
           </wsse:KeyIdentifier>
         </wsse:SecurityTokenReference>
       </wst:ValidateTarget>
@@ -1131,7 +1131,7 @@
 			SOAP header element.
 			The eID specific SAML assertion looks as follows.
 		</para>
-		<programlisting language="xml"><![CDATA[<saml2:Assertion ID="assertion"
+		<programlisting language="xml"><![CDATA[<saml2:Assertion ID="eid-assertion-id"
   IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
   <saml2:AttributeStatement>
   	<saml2:Attribute Name="urn:be:e-contract:sts:eid:identity">
@@ -1470,7 +1470,7 @@
     ...
     <wsse:Security soap:mustUnderstand="1">
       ...
-      <saml2:Assertion ID="assertion"
+      <saml2:Assertion ID="eid-assertion-id"
         IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
         <saml2:AttributeStatement>
   	      <saml2:Attribute Name="urn:be:e-contract:sts:eid:identity">
@@ -1647,7 +1647,7 @@
       <wst:RequestSecurityTokenResponse>
         ...
         <wst:RequestedSecurityToken>
-          <saml2:Assertion ID="assertion"
+          <saml2:Assertion ID="assertionId"
             IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
             ...
             <saml2:AttributeStatement>
@@ -1671,6 +1671,109 @@
   </soap:Body>
 </soap:Envelope>]]></programlisting>
 		</section>
+	</section>
+
+	<section>
+		<title>Holder-of-key tokens</title>
+		<para>
+			Under
+			<xref linkend="sts-x509" />
+			we described a way to retrieve bearer tokens.
+			Bearer tokens do not
+			have proof keys while holder-of-key tokens do.
+			A holder-of-key token
+			is used to ensure that
+			messages sent from subject to RP are indeed
+			from the subject claiming
+			to have sent them. This protocol-level
+			protection guards against man
+			in the middle attacks.
+			Depending on the
+			relying party's web service policy some relying parties might require
+			holder-of-key tokens.
+		</para>
+		<para>
+			In this section we describe how the eID IP-STS can issue
+			holder-of-key tokens where the proof-of-possession key is the eID
+			authentication private key itself.
+			For a relying party to request a
+			holder-of-key token it should extend the
+			<xref linkend="sts-x509-request" />
+			message under
+			<code>&lt;wst:RequestSecurityToken&gt;</code>
+			as follows:
+		</para>
+		<programlisting language="xml"><![CDATA[<wst:KeyType>
+  http://docs.oasis-open.org/ws-sx/ws-trust/200512/PublicKey
+</wst:KeyType>
+<wst:UseKey>
+  <wsse:SecurityTokenReference>
+    <wsse:Reference URI="#uuid-bst"/>
+  </wsse:SecurityTokenReference>
+</wst:UseKey>]]></programlisting>
+		<para>
+			Here the
+			<code>&lt;wsse:SecurityTokenReference&gt;</code>
+			simply refers to the
+			<code>&lt;wsse:BinarySecurityToken&gt;</code>
+			that holds the eID authentication X509 certificate chain and which is
+			already part of the
+			<code>&lt;wsse:Security&gt;</code>
+			SOAP header.
+			Of course the client proves possession of this key by
+			means of the WS-Security XML signature.
+		</para>
+		<para>
+			When the eID IP-STS receives a request to issue a holder-of-key
+			token,
+			it will put the following
+			<code>&lt;saml2:SubjectConfirmation&gt;</code>
+			within
+			the returned
+			<code>&lt;saml2:Assertion&gt;</code>
+			.
+		</para>
+		<programlisting language="xml"><![CDATA[<saml2:SubjectConfirmation
+  Method="urn:oasis:names:tc:SAML:2.0:cm:holder-of-key">
+  <saml2:SubjectConfirmationData>
+    <ds:KeyInfo>
+      <ds:X509Data>
+        <ds:X509Certificate>...</ds:X509Certificate>
+      </ds:X509Data>
+    </ds:KeyInfo>
+  </saml2:SubjectConfirmationData>
+</saml2:SubjectConfirmation>]]></programlisting>
+		<para>
+			By using such eID based holder-of-key token we basically switch
+			from
+			the X509 certificate trust model to a SAML based trust model.
+			Important to note here that the client keeps using the eID
+			authentication key towards relying parties when presenting the
+			corresponding SAML holder-of-key token.
+			The advantage of this
+			mechanism is that the relying party no longer needs to perform a full
+			PKI validation of the eID authentication certificate chain.
+			The
+			relying party can simply trust the eID IP-STS to already have
+			executed the relevant PKI verifications as part of the token issuing.
+			The holder-of-key SAML token is used as described under
+			<xref linkend="section-saml-token" />
+			except that we also include an XML signature as part of the
+			WS-Security header. This XML signature refers to the SAML token
+			within
+			its
+			<code>&lt;ds:KeyInfo&gt;</code>
+			as follows.
+		</para>
+		<programlisting language="xml"><![CDATA[<ds:KeyInfo>
+  <wsse:SecurityTokenReference 
+    wsse:TokenType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0">
+    <wsse:KeyIdentifier
+      ValueType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLID">
+      assertionId
+    </wsse:KeyIdentifier>
+  </wsse:SecurityTokenReference>
+</ds:KeyInfo>]]></programlisting>
 	</section>
 
 	<appendix>
