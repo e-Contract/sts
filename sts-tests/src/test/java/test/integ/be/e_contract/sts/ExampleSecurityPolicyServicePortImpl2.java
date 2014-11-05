@@ -21,7 +21,6 @@ package test.integ.be.e_contract.sts;
 import java.security.Principal;
 
 import javax.annotation.Resource;
-import javax.jws.HandlerChain;
 import javax.jws.WebService;
 import javax.xml.ws.WebServiceContext;
 
@@ -32,14 +31,13 @@ import org.slf4j.LoggerFactory;
 
 import be.e_contract.sts.example.ExampleServicePortType;
 
-@WebService(endpointInterface = "be.e_contract.sts.example.ExampleServicePortType", targetNamespace = "urn:be:e-contract:sts:example", serviceName = "ExampleService", wsdlLocation = "example-security-policy.wsdl", portName = "ExampleServicePort")
+@WebService(endpointInterface = "be.e_contract.sts.example.ExampleServicePortType", targetNamespace = "urn:be:e-contract:sts:example", serviceName = "ExampleService", wsdlLocation = "example-security-policy.wsdl", portName = "ExampleServicePort2")
 @EndpointProperties({ @EndpointProperty(key = "ws-security.callback-handler", value = "test.integ.be.e_contract.sts.ExampleSecurityPolicyCallbackHandler") })
-@HandlerChain(file = "/example-ws-handlers.xml")
-public class ExampleSecurityPolicyServicePortImpl implements
+public class ExampleSecurityPolicyServicePortImpl2 implements
 		ExampleServicePortType {
 
 	private static final Logger LOGGER = LoggerFactory
-			.getLogger(ExampleSecurityPolicyServicePortImpl.class);
+			.getLogger(ExampleSecurityPolicyServicePortImpl2.class);
 
 	@Resource
 	private WebServiceContext context;
