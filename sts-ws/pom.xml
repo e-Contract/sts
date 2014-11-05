@@ -28,4 +28,36 @@
 	<groupId>be.e_contract.sts</groupId>
 	<artifactId>sts-ws</artifactId>
 	<packaging>jar</packaging>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.jvnet.jax-ws-commons</groupId>
+				<artifactId>jaxws-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>wsimport</id>
+						<goals>
+							<goal>wsimport</goal>
+						</goals>
+						<configuration>
+							<target>2.1</target>
+							<xnoAddressingDataBinding>true</xnoAddressingDataBinding>
+							<xnocompile>true</xnocompile>
+							<verbose>true</verbose>
+							<xdebug>true</xdebug>
+							<extension>true</extension>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+		<resources>
+			<resource>
+				<directory>src/wsdl</directory>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+		</resources>
+	</build>
 </project>
