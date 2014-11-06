@@ -31,8 +31,7 @@
 	OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES 
 	OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. -->
 <wsdl:definitions targetNamespace="http://docs.oasis-open.org/ws-sx/ws-trust/200512"
-	xmlns:tns="http://docs.oasis-open.org/ws-sx/ws-trust/200512" 
-	xmlns:wst="http://docs.oasis-open.org/ws-sx/ws-trust/200512"
+	xmlns:tns="http://docs.oasis-open.org/ws-sx/ws-trust/200512" xmlns:wst="http://docs.oasis-open.org/ws-sx/ws-trust/200512"
 	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xs="http://www.w3.org/2001/XMLSchema"
 	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/"
 	xmlns:wsp="http://www.w3.org/ns/ws-policy"
@@ -104,14 +103,9 @@
 						</sp:TransportToken>
 						<sp:AlgorithmSuite>
 							<wsp:Policy>
-								<sp:Basic256 />
+								<sp:Basic128 />
 							</wsp:Policy>
 						</sp:AlgorithmSuite>
-						<sp:Layout>
-							<wsp:Policy>
-								<sp:Strict />
-							</wsp:Policy>
-						</sp:Layout>
 						<sp:IncludeTimestamp />
 					</wsp:Policy>
 				</sp:TransportBinding>
@@ -120,7 +114,6 @@
 						<sp:X509Token
 							sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
 							<wsp:Policy>
-								<sp:RequireThumbprintReference />
 								<sp:WssX509V3Token10 />
 							</wsp:Policy>
 						</sp:X509Token>

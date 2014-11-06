@@ -21,6 +21,7 @@ package test.integ.be.e_contract.sts;
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.net.ServerSocket;
+import java.net.URL;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
@@ -28,6 +29,8 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +43,9 @@ import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.ws.security.SecurityConstants;
+import org.apache.cxf.ws.security.sts.provider.SecurityTokenServiceImpl;
+import org.apache.cxf.ws.security.sts.provider.SecurityTokenServiceProvider;
+import org.apache.cxf.ws.security.trust.STSClient;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -78,6 +84,16 @@ public class SecurityPolicyTest {
 
 	private Endpoint endpoint4;
 
+	private String url5;
+
+	private Endpoint endpoint5;
+
+	private String stsUrl;
+
+	private Endpoint stsEndpoint;
+
+	private Bus bus;
+
 	@Before
 	public void setUp() throws Exception {
 		int sslFreePort = getFreePort();
@@ -86,8 +102,8 @@ public class SecurityPolicyTest {
 				Integer.toString(sslFreePort));
 
 		SpringBusFactory bf = new SpringBusFactory();
-		Bus bus = bf.createBus("jaxws-server.xml");
-		BusFactory.setDefaultBus(bus);
+		this.bus = bf.createBus("jaxws-server.xml");
+		BusFactory.setDefaultBus(this.bus);
 
 		this.url2 = "https://localhost:" + sslFreePort + "/example/ws2";
 		this.endpoint2 = Endpoint.publish(this.url2,
@@ -101,6 +117,14 @@ public class SecurityPolicyTest {
 		this.endpoint4 = Endpoint.publish(this.url4,
 				new ExampleSecurityPolicyServicePortImpl4());
 
+		this.url5 = "https://localhost:" + sslFreePort + "/example/ws5";
+		this.endpoint5 = Endpoint.publish(this.url5,
+				new ExampleSecurityPolicyServicePortImpl5());
+
+		this.stsUrl = "https://localhost:" + sslFreePort + "/example/sts";
+		this.stsEndpoint = Endpoint.publish(this.stsUrl,
+				new ExampleSecurityTokenService());
+
 		int freePort = getFreePort();
 		this.url = "http://localhost:" + freePort + "/example/ws";
 		this.endpoint = Endpoint.publish(this.url,
@@ -113,6 +137,55 @@ public class SecurityPolicyTest {
 		this.endpoint2.stop();
 		this.endpoint3.stop();
 		this.endpoint4.stop();
+		this.endpoint5.stop();
+		this.stsEndpoint.stop();
+	}
+
+	@Test
+	public void testCXFSTSClient() throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf_https.xml");
+		STSClient stsClient = new STSClient(bus);
+		stsClient.setSoap12();
+		URL wsdlLocation = CXFSTSClientTest.class
+				.getResource("/ws-trust-1.3.wsdl");
+		// stsClient.setWsdlLocation(wsdlLocation.toURI().toURL().toString());
+		stsClient.setWsdlLocation(this.stsUrl + "?wsdl");
+		stsClient.setLocation(this.stsUrl);
+		stsClient
+				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient
+				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient
+				.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
+		stsClient.setTokenType("urn:oasis:names:tc:SAML:2.0:assertion");
+		stsClient.setAllowRenewing(false);
+
+		//
+		// properties.put(SecurityConstants.STS_TOKEN_USERNAME, "username");
+		// properties.put(SecurityConstants.CALLBACK_HANDLER,
+		// new UTCallbackHandler());
+		//
+
+		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+		PrivateKey privateKey = keyPair.getPrivate();
+		PublicKey publicKey = keyPair.getPublic();
+		X509Certificate certificate = getCertificate(privateKey, publicKey);
+		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		certificates.add(certificate);
+		certificates.add(certificate);
+
+		// Apache CXF specific configuration
+		Map<String, Object> properties = stsClient.getProperties();
+		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		properties.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new ClientCrypto(
+				privateKey, certificates));
+		stsClient.setProperties(properties);
+
+		stsClient.requestSecurityToken("https://demo.app.applies.to");
 	}
 
 	@Test
@@ -224,12 +297,42 @@ public class SecurityPolicyTest {
 		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "username");
 		requestContext.put(SecurityConstants.CALLBACK_HANDLER,
 				new ExampleSecurityPolicyCallbackHandler());
-		requestContext.put(SecurityConstants.SIGNATURE_CRYPTO,
-				new ClientCrypto(privateKey, certificate));
+		requestContext.put(
+				SecurityConstants.SIGNATURE_CRYPTO,
+				new ClientCrypto(privateKey, Collections
+						.singletonList(certificate)));
 
 		// invoke the web service
 		String result = port.echo("hello world");
 		Assert.assertEquals("CN=Test:hello world", result);
+
+		bus.shutdown(true);
+	}
+
+	@Test
+	public void testTransportBindingHttpsTokenSupportingTokensSamlTokenViaSTS()
+			throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf_https.xml");
+		BusFactory.setDefaultBus(bus);
+		// get the JAX-WS client
+		ExampleService exampleService = new ExampleService();
+		ExampleServicePortType port = exampleService.getExampleServicePort5();
+
+		// set the web service address on the client stub
+		BindingProvider bindingProvider = (BindingProvider) port;
+		Map<String, Object> requestContext = bindingProvider
+				.getRequestContext();
+		requestContext
+				.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, this.url5);
+
+		// Apache CXF specific configuration
+		STSClient stsClient = new STSClient(bus);
+		requestContext.put(SecurityConstants.STS_CLIENT, stsClient);
+
+		// invoke the web service
+		String result = port.echo("hello world");
+		Assert.assertEquals("hello world", result);
 
 		bus.shutdown(true);
 	}

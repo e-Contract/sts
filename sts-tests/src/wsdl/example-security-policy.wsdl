@@ -4,7 +4,8 @@
 	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsp="http://www.w3.org/ns/ws-policy"
 	xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
 	xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702"
-	xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl">
+	xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:wst="http://docs.oasis-open.org/ws-sx/ws-trust/200512"
+	xmlns:wsa="http://www.w3.org/2005/08/addressing" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex">
 
 	<types>
 		<schema xmlns="http://www.w3.org/2001/XMLSchema">
@@ -87,6 +88,21 @@
 		</operation>
 	</binding>
 
+	<binding name="ExampleServiceBinding5" type="tns:ExampleServicePortType">
+		<wsp:PolicyReference URI="#ExamplePolicy5" />
+		<soap:binding transport="http://schemas.xmlsoap.org/soap/http"
+			style="document" />
+		<operation name="echo">
+			<soap:operation />
+			<input>
+				<soap:body use="literal" />
+			</input>
+			<output>
+				<soap:body use="literal" />
+			</output>
+		</operation>
+	</binding>
+
 	<service name="ExampleService">
 		<port name="ExampleServicePort" binding="tns:ExampleServiceBinding">
 			<soap:address location="http://localhost:8080/example" />
@@ -99,6 +115,9 @@
 		</port>
 		<port name="ExampleServicePort4" binding="tns:ExampleServiceBinding4">
 			<soap:address location="http://localhost:8080/example4" />
+		</port>
+		<port name="ExampleServicePort5" binding="tns:ExampleServiceBinding5">
+			<soap:address location="http://localhost:8080/example5" />
 		</port>
 	</service>
 
@@ -203,6 +222,56 @@
 					</wsp:Policy>
 				</sp:EndorsingSupportingTokens>
 				<wsaw:UsingAddressing />
+			</wsp:All>
+		</wsp:ExactlyOne>
+	</wsp:Policy>
+
+	<wsp:Policy wsu:Id="ExamplePolicy5">
+		<wsp:ExactlyOne>
+			<wsp:All>
+				<sp:TransportBinding>
+					<wsp:Policy>
+						<sp:TransportToken>
+							<wsp:Policy>
+								<sp:HttpsToken />
+							</wsp:Policy>
+						</sp:TransportToken>
+						<sp:AlgorithmSuite>
+							<wsp:Policy>
+								<sp:Basic128 />
+							</wsp:Policy>
+						</sp:AlgorithmSuite>
+					</wsp:Policy>
+				</sp:TransportBinding>
+				<sp:EndorsingSupportingTokens>
+					<wsp:Policy>
+						<sp:IssuedToken
+							sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
+							<sp:RequestSecurityTokenTemplate>
+								<wst:TokenType>http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0
+								</wst:TokenType>
+								<wst:KeyType>http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer
+								</wst:KeyType>
+							</sp:RequestSecurityTokenTemplate>
+							<wsp:Policy>
+								<sp:RequireInternalReference />
+							</wsp:Policy>
+							<sp:Issuer>
+								<wsaw:Address>http://www.w3.org/2005/08/addressing/anonymous</wsaw:Address>
+								<wsa:Metadata>
+									<wsx:Metadata>
+										<wsx:MetadataSection>
+											<wsx:MetadataReference>
+												<wsa:Address>https://localhost/sts/mex
+												</wsa:Address>
+											</wsx:MetadataReference>
+										</wsx:MetadataSection>
+									</wsx:Metadata>
+								</wsa:Metadata>
+							</sp:Issuer>
+						</sp:IssuedToken>
+					</wsp:Policy>
+				</sp:EndorsingSupportingTokens>
 			</wsp:All>
 		</wsp:ExactlyOne>
 	</wsp:Policy>

@@ -23,6 +23,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.List;
 
 import javax.security.auth.callback.CallbackHandler;
 
@@ -39,11 +40,12 @@ public class ClientCrypto implements Crypto {
 
 	private final PrivateKey privateKey;
 
-	private final X509Certificate certificate;
+	private final List<X509Certificate> certificates;
 
-	public ClientCrypto(PrivateKey privateKey, X509Certificate certificate) {
+	public ClientCrypto(PrivateKey privateKey,
+			List<X509Certificate> certificates) {
 		this.privateKey = privateKey;
-		this.certificate = certificate;
+		this.certificates = certificates;
 		LOGGER.debug("constructor");
 	}
 
@@ -105,8 +107,8 @@ public class ClientCrypto implements Crypto {
 	public X509Certificate[] getX509Certificates(CryptoType cryptoType)
 			throws WSSecurityException {
 		LOGGER.debug("getX509Certificates");
-		X509Certificate[] certificates = new X509Certificate[] { this.certificate };
-		return certificates;
+		return this.certificates.toArray(new X509Certificate[this.certificates
+				.size()]);
 	}
 
 	@Override
