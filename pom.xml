@@ -253,6 +253,11 @@
 				<version>${cxf.version}</version>
 			</dependency>
 			<dependency>
+				<groupId>org.apache.cxf.services.sts</groupId>
+				<artifactId>cxf-services-sts-core</artifactId>
+				<version>${cxf.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-api</artifactId>
 				<version>${slf4j.version}</version>

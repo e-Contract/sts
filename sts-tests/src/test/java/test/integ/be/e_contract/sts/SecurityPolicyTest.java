@@ -21,7 +21,6 @@ package test.integ.be.e_contract.sts;
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.net.ServerSocket;
-import java.net.URL;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
@@ -43,8 +42,6 @@ import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.ws.security.SecurityConstants;
-import org.apache.cxf.ws.security.sts.provider.SecurityTokenServiceImpl;
-import org.apache.cxf.ws.security.sts.provider.SecurityTokenServiceProvider;
 import org.apache.cxf.ws.security.trust.STSClient;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -92,6 +89,10 @@ public class SecurityPolicyTest {
 
 	private Endpoint stsEndpoint;
 
+	private String sts2Url;
+
+	private Endpoint sts2Endpoint;
+
 	private Bus bus;
 
 	@Before
@@ -125,6 +126,10 @@ public class SecurityPolicyTest {
 		this.stsEndpoint = Endpoint.publish(this.stsUrl,
 				new ExampleSecurityTokenService());
 
+		this.sts2Url = "https://localhost:" + sslFreePort + "/example/sts2";
+		this.sts2Endpoint = Endpoint.publish(this.sts2Url,
+				new ExampleSecurityTokenServiceProvider());
+
 		int freePort = getFreePort();
 		this.url = "http://localhost:" + freePort + "/example/ws";
 		this.endpoint = Endpoint.publish(this.url,
@@ -147,9 +152,6 @@ public class SecurityPolicyTest {
 		Bus bus = bf.createBus("cxf_https.xml");
 		STSClient stsClient = new STSClient(bus);
 		stsClient.setSoap12();
-		URL wsdlLocation = CXFSTSClientTest.class
-				.getResource("/ws-trust-1.3.wsdl");
-		// stsClient.setWsdlLocation(wsdlLocation.toURI().toURL().toString());
 		stsClient.setWsdlLocation(this.stsUrl + "?wsdl");
 		stsClient.setLocation(this.stsUrl);
 		stsClient
@@ -161,11 +163,43 @@ public class SecurityPolicyTest {
 		stsClient.setTokenType("urn:oasis:names:tc:SAML:2.0:assertion");
 		stsClient.setAllowRenewing(false);
 
-		//
-		// properties.put(SecurityConstants.STS_TOKEN_USERNAME, "username");
-		// properties.put(SecurityConstants.CALLBACK_HANDLER,
-		// new UTCallbackHandler());
-		//
+		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+		PrivateKey privateKey = keyPair.getPrivate();
+		PublicKey publicKey = keyPair.getPublic();
+		X509Certificate certificate = getCertificate(privateKey, publicKey);
+		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		certificates.add(certificate);
+		certificates.add(certificate);
+
+		// Apache CXF specific configuration
+		Map<String, Object> properties = stsClient.getProperties();
+		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		properties.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new ClientCrypto(
+				privateKey, certificates));
+		stsClient.setProperties(properties);
+
+		stsClient.requestSecurityToken("https://demo.app.applies.to");
+	}
+
+	@Test
+	public void testCXFSTS() throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf_https.xml");
+		STSClient stsClient = new STSClient(bus);
+		stsClient.setSoap12();
+		stsClient.setWsdlLocation(this.sts2Url + "?wsdl");
+		stsClient.setLocation(this.sts2Url);
+		stsClient
+				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient
+				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient
+				.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
+		stsClient.setTokenType("urn:oasis:names:tc:SAML:2.0:assertion");
+		stsClient.setAllowRenewing(false);
 
 		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
 		KeyPair keyPair = keyPairGenerator.generateKeyPair();
