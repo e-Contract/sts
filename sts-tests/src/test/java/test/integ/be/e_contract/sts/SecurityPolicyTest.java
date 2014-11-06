@@ -21,15 +21,20 @@ package test.integ.be.e_contract.sts;
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.net.ServerSocket;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.List;
 import java.util.Map;
 
+import javax.xml.ws.Binding;
 import javax.xml.ws.BindingProvider;
 import javax.xml.ws.Endpoint;
+import javax.xml.ws.handler.Handler;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
@@ -69,6 +74,10 @@ public class SecurityPolicyTest {
 
 	private Endpoint endpoint3;
 
+	private String url4;
+
+	private Endpoint endpoint4;
+
 	@Before
 	public void setUp() throws Exception {
 		int sslFreePort = getFreePort();
@@ -88,6 +97,10 @@ public class SecurityPolicyTest {
 		this.endpoint3 = Endpoint.publish(this.url3,
 				new ExampleSecurityPolicyServicePortImpl3());
 
+		this.url4 = "https://localhost:" + sslFreePort + "/example/ws4";
+		this.endpoint4 = Endpoint.publish(this.url4,
+				new ExampleSecurityPolicyServicePortImpl4());
+
 		int freePort = getFreePort();
 		this.url = "http://localhost:" + freePort + "/example/ws";
 		this.endpoint = Endpoint.publish(this.url,
@@ -98,6 +111,8 @@ public class SecurityPolicyTest {
 	public void tearDown() throws Exception {
 		this.endpoint.stop();
 		this.endpoint2.stop();
+		this.endpoint3.stop();
+		this.endpoint4.stop();
 	}
 
 	@Test
@@ -173,6 +188,48 @@ public class SecurityPolicyTest {
 		// invoke the web service
 		String result = port.echo("hello world");
 		Assert.assertEquals("hello world", result);
+
+		bus.shutdown(true);
+	}
+
+	@Test
+	public void testTransportBindingHttpsTokenSupportingTokensX509Token()
+			throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf_https.xml");
+		BusFactory.setDefaultBus(bus);
+		// get the JAX-WS client
+		ExampleService exampleService = new ExampleService();
+		ExampleServicePortType port = exampleService.getExampleServicePort4();
+
+		// set the web service address on the client stub
+		BindingProvider bindingProvider = (BindingProvider) port;
+		Map<String, Object> requestContext = bindingProvider
+				.getRequestContext();
+		requestContext
+				.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, this.url4);
+
+		Binding binding = bindingProvider.getBinding();
+		List<Handler> handlerChain = binding.getHandlerChain();
+		handlerChain.add(new LoggingSOAPHandler());
+		binding.setHandlerChain(handlerChain);
+
+		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+		PrivateKey privateKey = keyPair.getPrivate();
+		PublicKey publicKey = keyPair.getPublic();
+		X509Certificate certificate = getCertificate(privateKey, publicKey);
+
+		// Apache CXF specific configuration
+		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		requestContext.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		requestContext.put(SecurityConstants.SIGNATURE_CRYPTO,
+				new ClientCrypto(privateKey, certificate));
+
+		// invoke the web service
+		String result = port.echo("hello world");
+		Assert.assertEquals("CN=Test:hello world", result);
 
 		bus.shutdown(true);
 	}

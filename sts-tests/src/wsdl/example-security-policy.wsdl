@@ -3,7 +3,8 @@
 	targetNamespace="urn:be:e-contract:sts:example" xmlns:tns="urn:be:e-contract:sts:example"
 	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsp="http://www.w3.org/ns/ws-policy"
 	xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
-	xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702">
+	xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702"
+	xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl">
 
 	<types>
 		<schema xmlns="http://www.w3.org/2001/XMLSchema">
@@ -71,6 +72,21 @@
 		</operation>
 	</binding>
 
+	<binding name="ExampleServiceBinding4" type="tns:ExampleServicePortType">
+		<wsp:PolicyReference URI="#ExamplePolicy4" />
+		<soap:binding transport="http://schemas.xmlsoap.org/soap/http"
+			style="document" />
+		<operation name="echo">
+			<soap:operation />
+			<input>
+				<soap:body use="literal" />
+			</input>
+			<output>
+				<soap:body use="literal" />
+			</output>
+		</operation>
+	</binding>
+
 	<service name="ExampleService">
 		<port name="ExampleServicePort" binding="tns:ExampleServiceBinding">
 			<soap:address location="http://localhost:8080/example" />
@@ -80,6 +96,9 @@
 		</port>
 		<port name="ExampleServicePort3" binding="tns:ExampleServiceBinding3">
 			<soap:address location="http://localhost:8080/example3" />
+		</port>
+		<port name="ExampleServicePort4" binding="tns:ExampleServiceBinding4">
+			<soap:address location="http://localhost:8080/example4" />
 		</port>
 	</service>
 
@@ -148,6 +167,42 @@
 						</sp:SamlToken>
 					</wsp:Policy>
 				</sp:SupportingTokens>
+			</wsp:All>
+		</wsp:ExactlyOne>
+	</wsp:Policy>
+
+	<wsp:Policy wsu:Id="ExamplePolicy4">
+		<wsp:ExactlyOne>
+			<wsp:All>
+				<sp:TransportBinding>
+					<wsp:Policy>
+						<sp:TransportToken>
+							<wsp:Policy>
+								<sp:HttpsToken />
+							</wsp:Policy>
+						</sp:TransportToken>
+						<sp:AlgorithmSuite>
+							<wsp:Policy>
+								<sp:Basic128 />
+							</wsp:Policy>
+						</sp:AlgorithmSuite>
+						<sp:IncludeTimestamp />
+					</wsp:Policy>
+				</sp:TransportBinding>
+				<sp:EndorsingSupportingTokens>
+					<wsp:Policy>
+						<sp:X509Token
+							sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
+							<wsp:Policy>
+								<sp:WssX509V3Token10 />
+							</wsp:Policy>
+						</sp:X509Token>
+						<sp:SignedParts>
+							<sp:Header Name="To" Namespace="http://www.w3.org/2005/08/addressing" />
+						</sp:SignedParts>
+					</wsp:Policy>
+				</sp:EndorsingSupportingTokens>
+				<wsaw:UsingAddressing />
 			</wsp:All>
 		</wsp:ExactlyOne>
 	</wsp:Policy>
