@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<saml2:Assertion ID="assertionId" IssueInstant="2011-05-09T09:36:37.359Z"
+	Version="2.0" xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">
+	<saml2:Issuer>https://...</saml2:Issuer>
+	<saml2:Subject>
+		<saml2:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:transient">
+			71715100070
+		</saml2:NameID>
+		<saml2:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer" />
+	</saml2:Subject>
+	<saml2:Conditions NotBefore="2011-05-09T08:36:37.359Z"
+		NotOnOrAfter="2011-05-09T10:36:37.359Z">
+		<saml2:AudienceRestriction>
+			<saml2:Audience>
+				urn:some-target-application
+			</saml2:Audience>
+		</saml2:AudienceRestriction>
+	</saml2:Conditions>
+	<saml2:AuthnStatement AuthnInstant="2011-05-09T09:36:37.515Z">
+		<saml2:AuthnContext>
+			<saml2:AuthnContextClassRef>
+				urn:oasis:names:tc:SAML:2.0:ac:classes:SmartcardPKI
+			</saml2:AuthnContextClassRef>
+		</saml2:AuthnContext>
+	</saml2:AuthnStatement>
+</saml2:Assertion>

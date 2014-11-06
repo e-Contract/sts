@@ -34,6 +34,7 @@ import javax.xml.ws.Endpoint;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.apache.cxf.ws.security.SecurityConstants;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -64,6 +65,10 @@ public class SecurityPolicyTest {
 
 	private Endpoint endpoint2;
 
+	private String url3;
+
+	private Endpoint endpoint3;
+
 	@Before
 	public void setUp() throws Exception {
 		int sslFreePort = getFreePort();
@@ -75,11 +80,15 @@ public class SecurityPolicyTest {
 		Bus bus = bf.createBus("jaxws-server.xml");
 		BusFactory.setDefaultBus(bus);
 
-		int freePort = getFreePort();
 		this.url2 = "https://localhost:" + sslFreePort + "/example/ws2";
 		this.endpoint2 = Endpoint.publish(this.url2,
 				new ExampleSecurityPolicyServicePortImpl2());
 
+		this.url3 = "https://localhost:" + sslFreePort + "/example/ws3";
+		this.endpoint3 = Endpoint.publish(this.url3,
+				new ExampleSecurityPolicyServicePortImpl3());
+
+		int freePort = getFreePort();
 		this.url = "http://localhost:" + freePort + "/example/ws";
 		this.endpoint = Endpoint.publish(this.url,
 				new ExampleSecurityPolicyServicePortImpl());
@@ -104,8 +113,8 @@ public class SecurityPolicyTest {
 		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, this.url);
 
 		// Apache CXF specific configuration
-		requestContext.put("ws-security.username", "username");
-		requestContext.put("ws-security.password", "password");
+		requestContext.put(SecurityConstants.USERNAME, "username");
+		requestContext.put(SecurityConstants.PASSWORD, "password");
 
 		// invoke the web service
 		String result = port.echo("hello world");
@@ -130,12 +139,40 @@ public class SecurityPolicyTest {
 				.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, this.url2);
 
 		// Apache CXF specific configuration
-		requestContext.put("ws-security.username", "username");
-		requestContext.put("ws-security.password", "password");
+		requestContext.put(SecurityConstants.USERNAME, "username");
+		requestContext.put(SecurityConstants.PASSWORD, "password");
 
 		// invoke the web service
 		String result = port.echo("hello world");
 		Assert.assertEquals("username:hello world", result);
+
+		bus.shutdown(true);
+	}
+
+	@Test
+	public void testTransportBindingHttpsTokenSupportingTokensSamlToken()
+			throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf_https.xml");
+		BusFactory.setDefaultBus(bus);
+		// get the JAX-WS client
+		ExampleService exampleService = new ExampleService();
+		ExampleServicePortType port = exampleService.getExampleServicePort3();
+
+		// set the web service address on the client stub
+		BindingProvider bindingProvider = (BindingProvider) port;
+		Map<String, Object> requestContext = bindingProvider
+				.getRequestContext();
+		requestContext
+				.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, this.url3);
+
+		// Apache CXF specific configuration
+		requestContext.put(SecurityConstants.SAML_CALLBACK_HANDLER,
+				new SamlClientCallbackHandler());
+
+		// invoke the web service
+		String result = port.echo("hello world");
+		Assert.assertEquals("hello world", result);
 
 		bus.shutdown(true);
 	}

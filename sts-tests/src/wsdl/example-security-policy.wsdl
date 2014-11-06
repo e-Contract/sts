@@ -56,12 +56,30 @@
 		</operation>
 	</binding>
 
+	<binding name="ExampleServiceBinding3" type="tns:ExampleServicePortType">
+		<wsp:PolicyReference URI="#ExamplePolicy3" />
+		<soap:binding transport="http://schemas.xmlsoap.org/soap/http"
+			style="document" />
+		<operation name="echo">
+			<soap:operation />
+			<input>
+				<soap:body use="literal" />
+			</input>
+			<output>
+				<soap:body use="literal" />
+			</output>
+		</operation>
+	</binding>
+
 	<service name="ExampleService">
 		<port name="ExampleServicePort" binding="tns:ExampleServiceBinding">
 			<soap:address location="http://localhost:8080/example" />
 		</port>
 		<port name="ExampleServicePort2" binding="tns:ExampleServiceBinding2">
 			<soap:address location="http://localhost:8080/example2" />
+		</port>
+		<port name="ExampleServicePort3" binding="tns:ExampleServiceBinding3">
+			<soap:address location="http://localhost:8080/example3" />
 		</port>
 	</service>
 
@@ -99,6 +117,35 @@
 							sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
 							<wsp:Policy />
 						</sp:UsernameToken>
+					</wsp:Policy>
+				</sp:SupportingTokens>
+			</wsp:All>
+		</wsp:ExactlyOne>
+	</wsp:Policy>
+
+	<wsp:Policy wsu:Id="ExamplePolicy3">
+		<wsp:ExactlyOne>
+			<wsp:All>
+				<sp:TransportBinding>
+					<wsp:Policy>
+						<sp:TransportToken>
+							<wsp:Policy>
+								<sp:HttpsToken />
+							</wsp:Policy>
+						</sp:TransportToken>
+						<sp:AlgorithmSuite>
+							<wsp:Policy>
+								<sp:Basic128 />
+							</wsp:Policy>
+						</sp:AlgorithmSuite>
+					</wsp:Policy>
+				</sp:TransportBinding>
+				<sp:SupportingTokens>
+					<wsp:Policy>
+						<sp:SamlToken>
+							<wsp:Policy>
+							</wsp:Policy>
+						</sp:SamlToken>
 					</wsp:Policy>
 				</sp:SupportingTokens>
 			</wsp:All>
