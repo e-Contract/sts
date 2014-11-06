@@ -27,8 +27,6 @@ import javax.xml.ws.WebServiceContext;
 
 import org.apache.cxf.annotations.EndpointProperties;
 import org.apache.cxf.annotations.EndpointProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import be.e_contract.sts.example.ExampleServicePortType;
 
@@ -38,19 +36,13 @@ import be.e_contract.sts.example.ExampleServicePortType;
 public class ExampleSecurityPolicyServicePortImpl implements
 		ExampleServicePortType {
 
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(ExampleSecurityPolicyServicePortImpl.class);
-
 	@Resource
 	private WebServiceContext context;
 
 	@Override
 	public String echo(String echoRequest) {
 		Principal userPrincipal = this.context.getUserPrincipal();
-		if (null != userPrincipal) {
-			String username = userPrincipal.getName();
-			LOGGER.debug("username: {}", username);
-		}
-		return echoRequest;
+		String username = userPrincipal.getName();
+		return username + ":" + echoRequest;
 	}
 }

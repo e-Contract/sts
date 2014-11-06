@@ -31,11 +31,14 @@
 	OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES 
 	OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. -->
 <wsdl:definitions targetNamespace="http://docs.oasis-open.org/ws-sx/ws-trust/200512"
-	xmlns:tns="http://docs.oasis-open.org/ws-sx/ws-trust/200512"
+	xmlns:tns="http://docs.oasis-open.org/ws-sx/ws-trust/200512" 
 	xmlns:wst="http://docs.oasis-open.org/ws-sx/ws-trust/200512"
 	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xs="http://www.w3.org/2001/XMLSchema"
-	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-	xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/">
+	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/"
+	xmlns:wsp="http://www.w3.org/ns/ws-policy"
+	xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+	xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702"
+	xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl">
 	<!-- this is the WS-I BP-compliant way to import a schema -->
 	<wsdl:types>
 		<xs:schema>
@@ -58,45 +61,22 @@
 		<wsdl:part name="responseCollection" element="wst:RequestSecurityTokenResponseCollection" />
 	</wsdl:message>
 
-	<!-- This portType models the full request/response the Security Token Service: -->
-
-	<wsdl:portType name="WSSecurityRequestor">
-		<wsdl:operation name="SecurityTokenResponse">
-			<wsdl:input message="tns:RequestSecurityTokenResponseMsg" />
-		</wsdl:operation>
-		<wsdl:operation name="SecurityTokenResponse2">
-			<wsdl:input message="tns:RequestSecurityTokenResponseCollectionMsg" />
-		</wsdl:operation>
-		<wsdl:operation name="Challenge">
-			<wsdl:input message="tns:RequestSecurityTokenResponseMsg" />
-			<wsdl:output message="tns:RequestSecurityTokenResponseMsg" />
-		</wsdl:operation>
-		<wsdl:operation name="Challenge2">
-			<wsdl:input message="tns:RequestSecurityTokenResponseMsg" />
-			<wsdl:output message="tns:RequestSecurityTokenResponseCollectionMsg" />
-		</wsdl:operation>
-	</wsdl:portType>
-
-	<!-- These portTypes model the individual message exchanges -->
-
-	<wsdl:portType name="SecurityTokenRequestService">
-		<wsdl:operation name="RequestSecurityToken">
-			<wsdl:input message="tns:RequestSecurityTokenMsg" />
-		</wsdl:operation>
-	</wsdl:portType>
-
 	<wsdl:portType name="SecurityTokenServicePort">
 		<wsdl:operation name="RequestSecurityToken">
-			<wsdl:input message="tns:RequestSecurityTokenMsg" />
-			<wsdl:output message="tns:RequestSecurityTokenResponseCollectionMsg" />
+			<wsdl:input message="tns:RequestSecurityTokenMsg"
+				wsaw:Action="http://docs.oasis-open.org/ws-sx/ws-trust/200512/RST/Issue" />
+			<wsdl:output message="tns:RequestSecurityTokenResponseCollectionMsg"
+				wsaw:Action="http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTRC/IssueFinal" />
 		</wsdl:operation>
 	</wsdl:portType>
 
 	<wsdl:binding name="SecurityTokenServiceBinding" type="tns:SecurityTokenServicePort">
-		<wsoap12:binding transport="http://www.w3.org/2003/05/soap/bindings/HTTP/"
-			style="document" />
+		<wsoap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+		<wsp:PolicyReference URI="#SecurityTokenServicePolicy" />
 		<wsdl:operation name="RequestSecurityToken">
-			<wsoap12:operation soapAction="" />
+			<wsoap12:operation
+				soapAction="http://docs.oasis-open.org/ws-sx/ws-trust/200512/RST/Issue"
+				style="document" />
 			<wsdl:input>
 				<wsoap12:body use="literal" />
 			</wsdl:input>
@@ -111,4 +91,59 @@
 			<wsoap12:address location="http://localhost:8080/eid-idp-ws/sts" />
 		</wsdl:port>
 	</wsdl:service>
+
+	<wsp:Policy wsu:Id="SecurityTokenServicePolicy">
+		<wsp:ExactlyOne>
+			<wsp:All>
+				<sp:TransportBinding>
+					<wsp:Policy>
+						<sp:TransportToken>
+							<wsp:Policy>
+								<sp:HttpsToken />
+							</wsp:Policy>
+						</sp:TransportToken>
+						<sp:AlgorithmSuite>
+							<wsp:Policy>
+								<sp:Basic256 />
+							</wsp:Policy>
+						</sp:AlgorithmSuite>
+						<sp:Layout>
+							<wsp:Policy>
+								<sp:Strict />
+							</wsp:Policy>
+						</sp:Layout>
+						<sp:IncludeTimestamp />
+					</wsp:Policy>
+				</sp:TransportBinding>
+				<sp:EndorsingSupportingTokens>
+					<wsp:Policy>
+						<sp:X509Token
+							sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
+							<wsp:Policy>
+								<sp:RequireThumbprintReference />
+								<sp:WssX509V3Token10 />
+							</wsp:Policy>
+						</sp:X509Token>
+						<sp:SignedParts>
+							<sp:Header Name="To" Namespace="http://www.w3.org/2005/08/addressing" />
+						</sp:SignedParts>
+					</wsp:Policy>
+				</sp:EndorsingSupportingTokens>
+				<sp:Wss11>
+					<wsp:Policy>
+						<sp:MustSupportRefThumbprint />
+					</wsp:Policy>
+				</sp:Wss11>
+				<sp:Trust13>
+					<wsp:Policy>
+						<sp:MustSupportIssuedTokens />
+						<sp:RequireClientEntropy />
+						<sp:RequireServerEntropy />
+					</wsp:Policy>
+				</sp:Trust13>
+				<wsaw:UsingAddressing />
+			</wsp:All>
+		</wsp:ExactlyOne>
+	</wsp:Policy>
+
 </wsdl:definitions>

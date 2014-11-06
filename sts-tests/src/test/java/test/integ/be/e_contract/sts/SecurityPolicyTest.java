@@ -21,8 +21,6 @@ package test.integ.be.e_contract.sts;
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.net.ServerSocket;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -35,6 +33,7 @@ import javax.xml.ws.Endpoint;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
+import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -67,18 +66,23 @@ public class SecurityPolicyTest {
 
 	@Before
 	public void setUp() throws Exception {
-		// publish the JAX-WS endpoint
+		int sslFreePort = getFreePort();
+
+		System.setProperty("testutil.ports.Server",
+				Integer.toString(sslFreePort));
+
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("jaxws-server.xml");
+		BusFactory.setDefaultBus(bus);
+
 		int freePort = getFreePort();
+		this.url2 = "https://localhost:" + sslFreePort + "/example/ws2";
+		this.endpoint2 = Endpoint.publish(this.url2,
+				new ExampleSecurityPolicyServicePortImpl2());
+
 		this.url = "http://localhost:" + freePort + "/example/ws";
 		this.endpoint = Endpoint.publish(this.url,
 				new ExampleSecurityPolicyServicePortImpl());
-
-		Bus bus = BusFactory.getDefaultBus();
-		
-		freePort = getFreePort();
-		this.url2 = "https://localhost:" + freePort + "/example/ws2";
-		this.endpoint2 = Endpoint.publish(this.url2,
-				new ExampleSecurityPolicyServicePortImpl2());
 	}
 
 	@After
@@ -88,7 +92,7 @@ public class SecurityPolicyTest {
 	}
 
 	@Test
-	public void testWebService() throws Exception {
+	public void testSupportingTokensUsernameToken() throws Exception {
 		// get the JAX-WS client
 		ExampleService exampleService = new ExampleService();
 		ExampleServicePortType port = exampleService.getExampleServicePort();
@@ -105,11 +109,15 @@ public class SecurityPolicyTest {
 
 		// invoke the web service
 		String result = port.echo("hello world");
-		Assert.assertEquals("hello world", result);
+		Assert.assertEquals("username:hello world", result);
 	}
 
 	@Test
-	public void testWebService2() throws Exception {
+	public void testTransportBindingHttpsTokenSupportingTokensUsernameToken()
+			throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf_https.xml");
+		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
 		ExampleService exampleService = new ExampleService();
 		ExampleServicePortType port = exampleService.getExampleServicePort2();
@@ -121,19 +129,15 @@ public class SecurityPolicyTest {
 		requestContext
 				.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, this.url2);
 
-		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-		KeyPair keyPair = keyPairGenerator.genKeyPair();
-		PublicKey publicKey = keyPair.getPublic();
-		PrivateKey privateKey = keyPair.getPrivate();
-		X509Certificate certificate = getCertificate(privateKey, publicKey);
-
 		// Apache CXF specific configuration
-		requestContext.put("ws-security.signature.crypto",
-				new ClientCrypto(privateKey, certificate));
+		requestContext.put("ws-security.username", "username");
+		requestContext.put("ws-security.password", "password");
 
 		// invoke the web service
 		String result = port.echo("hello world");
-		Assert.assertEquals("hello world", result);
+		Assert.assertEquals("username:hello world", result);
+
+		bus.shutdown(true);
 	}
 
 	private static int getFreePort() throws Exception {

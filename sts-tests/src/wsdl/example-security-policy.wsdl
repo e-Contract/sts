@@ -95,16 +95,10 @@
 				</sp:TransportBinding>
 				<sp:SupportingTokens>
 					<wsp:Policy>
-						<sp:X509Token
+						<sp:UsernameToken
 							sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
-							<wsp:Policy>
-								<sp:WssX509V3Token10 />
-								<sp:RequireThumbprintReference />
-							</wsp:Policy>
-						</sp:X509Token>
-						<sp:SignedElements xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-							<sp:XPath>/soapenv:Envelope/soapenv:Body</sp:XPath>
-						</sp:SignedElements>
+							<wsp:Policy />
+						</sp:UsernameToken>
 					</wsp:Policy>
 				</sp:SupportingTokens>
 			</wsp:All>

@@ -21,23 +21,20 @@ package test.integ.be.e_contract.sts;
 import java.security.Principal;
 
 import javax.annotation.Resource;
+import javax.jws.HandlerChain;
 import javax.jws.WebService;
 import javax.xml.ws.WebServiceContext;
 
 import org.apache.cxf.annotations.EndpointProperties;
 import org.apache.cxf.annotations.EndpointProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import be.e_contract.sts.example.ExampleServicePortType;
 
 @WebService(endpointInterface = "be.e_contract.sts.example.ExampleServicePortType", targetNamespace = "urn:be:e-contract:sts:example", serviceName = "ExampleService", wsdlLocation = "example-security-policy.wsdl", portName = "ExampleServicePort2")
 @EndpointProperties({ @EndpointProperty(key = "ws-security.callback-handler", value = "test.integ.be.e_contract.sts.ExampleSecurityPolicyCallbackHandler") })
+@HandlerChain(file = "/example-ws-handlers.xml")
 public class ExampleSecurityPolicyServicePortImpl2 implements
 		ExampleServicePortType {
-
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(ExampleSecurityPolicyServicePortImpl2.class);
 
 	@Resource
 	private WebServiceContext context;
@@ -45,10 +42,7 @@ public class ExampleSecurityPolicyServicePortImpl2 implements
 	@Override
 	public String echo(String echoRequest) {
 		Principal userPrincipal = this.context.getUserPrincipal();
-		if (null != userPrincipal) {
-			String username = userPrincipal.getName();
-			LOGGER.debug("username: {}", username);
-		}
-		return echoRequest;
+		String username = userPrincipal.getName();
+		return username + ":" + echoRequest;
 	}
 }
