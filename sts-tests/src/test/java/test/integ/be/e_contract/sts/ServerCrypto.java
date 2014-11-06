@@ -18,12 +18,16 @@
 
 package test.integ.be.e_contract.sts;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Properties;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -68,7 +72,21 @@ public class ServerCrypto implements Crypto {
 	public X509Certificate[] getCertificatesFromBytes(byte[] data)
 			throws WSSecurityException {
 		LOGGER.debug("getCertificatesFromBytes");
-		return null;
+		Collection<? extends Certificate> certificates;
+		try {
+			certificates = this.certificateFactory
+					.generateCertificates(new ByteArrayInputStream(data));
+		} catch (CertificateException e) {
+			throw new RuntimeException(e);
+		}
+		X509Certificate[] result = new X509Certificate[certificates.size()];
+		int idx = 0;
+		Iterator<? extends Certificate> iter = certificates.iterator();
+		while (iter.hasNext()) {
+			result[idx] = (X509Certificate) iter.next();
+			idx++;
+		}
+		return result;
 	}
 
 	@Override

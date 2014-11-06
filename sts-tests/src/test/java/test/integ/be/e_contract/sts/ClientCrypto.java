@@ -18,6 +18,7 @@
 
 package test.integ.be.e_contract.sts;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -53,7 +54,15 @@ public class ClientCrypto implements Crypto {
 	public byte[] getBytesFromCertificates(X509Certificate[] certs)
 			throws WSSecurityException {
 		LOGGER.debug("getBytesFromCertificates");
-		return null;
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		for (X509Certificate cert : certs) {
+			try {
+				output.write(cert.getEncoded());
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return output.toByteArray();
 	}
 
 	@Override

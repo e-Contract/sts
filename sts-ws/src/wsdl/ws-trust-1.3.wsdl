@@ -87,7 +87,7 @@
 
 	<wsdl:service name="SecurityTokenService">
 		<wsdl:port name="SecurityTokenServicePort" binding="tns:SecurityTokenServiceBinding">
-			<wsoap12:address location="http://localhost:8080/eid-idp-ws/sts" />
+			<wsoap12:address location="https://localhost/iam/sts" />
 		</wsdl:port>
 	</wsdl:service>
 
@@ -114,7 +114,7 @@
 						<sp:X509Token
 							sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
 							<wsp:Policy>
-								<sp:WssX509V3Token10 />
+								<sp:WssX509PkiPathV1Token11/>
 							</wsp:Policy>
 						</sp:X509Token>
 						<sp:SignedParts>
