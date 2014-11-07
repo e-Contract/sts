@@ -18,11 +18,14 @@
 
 package test.integ.be.e_contract.sts;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -42,6 +45,7 @@ import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.ws.security.SecurityConstants;
+import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.trust.STSClient;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -59,11 +63,16 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import be.e_contract.sts.example.ExampleService;
 import be.e_contract.sts.example.ExampleServicePortType;
 
 public class SecurityPolicyTest {
+
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(SecurityPolicyTest.class);
 
 	private String url;
 
@@ -219,7 +228,14 @@ public class SecurityPolicyTest {
 				privateKey, certificates));
 		stsClient.setProperties(properties);
 
-		stsClient.requestSecurityToken("https://demo.app.applies.to");
+		SecurityToken securityToken = stsClient
+				.requestSecurityToken("https://demo.app.applies.to");
+		Principal principal = securityToken.getPrincipal();
+		LOGGER.debug("principal: {}", principal);
+		LOGGER.debug("token type: {}", securityToken.getTokenType());
+		assertEquals("urn:oasis:names:tc:SAML:2.0:assertion",
+				securityToken.getTokenType());
+		LOGGER.debug("security token expires: {}", securityToken.getExpires());
 	}
 
 	@Test
@@ -363,10 +379,34 @@ public class SecurityPolicyTest {
 		// Apache CXF specific configuration
 		STSClient stsClient = new STSClient(bus);
 		requestContext.put(SecurityConstants.STS_CLIENT, stsClient);
+		stsClient.setLocation(this.sts2Url);
+		stsClient.setWsdlLocation(this.sts2Url + "?wsdl");
+		stsClient
+				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient
+				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+		PrivateKey privateKey = keyPair.getPrivate();
+		PublicKey publicKey = keyPair.getPublic();
+		X509Certificate certificate = getCertificate(privateKey, publicKey);
+		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		certificates.add(certificate);
+		certificates.add(certificate);
+
+		Map<String, Object> properties = stsClient.getProperties();
+		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		properties.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new ClientCrypto(
+				privateKey, certificates));
+		stsClient.setProperties(properties);
+
+		ExampleServiceMBean.trustAddress(this.url5);
 
 		// invoke the web service
 		String result = port.echo("hello world");
-		Assert.assertEquals("hello world", result);
+		Assert.assertEquals("CN=Test:hello world", result);
 
 		bus.shutdown(true);
 	}

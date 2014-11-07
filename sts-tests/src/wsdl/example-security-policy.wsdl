@@ -241,9 +241,10 @@
 								<sp:Basic128 />
 							</wsp:Policy>
 						</sp:AlgorithmSuite>
+						<sp:IncludeTimestamp />
 					</wsp:Policy>
 				</sp:TransportBinding>
-				<sp:EndorsingSupportingTokens>
+				<sp:SignedSupportingTokens>
 					<wsp:Policy>
 						<sp:IssuedToken
 							sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
@@ -271,7 +272,7 @@
 							</sp:Issuer>
 						</sp:IssuedToken>
 					</wsp:Policy>
-				</sp:EndorsingSupportingTokens>
+				</sp:SignedSupportingTokens>
 			</wsp:All>
 		</wsp:ExactlyOne>
 	</wsp:Policy>

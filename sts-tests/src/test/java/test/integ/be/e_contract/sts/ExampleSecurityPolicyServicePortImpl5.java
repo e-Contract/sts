@@ -47,9 +47,8 @@ public class ExampleSecurityPolicyServicePortImpl5 implements
 	@Override
 	public String echo(String echoRequest) {
 		Principal userPrincipal = this.context.getUserPrincipal();
-		//String username = userPrincipal.getName();
-		//LOGGER.debug("username: {}", username);
-		//return username + ":" + echoRequest;
-		return echoRequest;
+		String username = userPrincipal.getName();
+		LOGGER.debug("username: {}", username);
+		return username + ":" + echoRequest;
 	}
 }

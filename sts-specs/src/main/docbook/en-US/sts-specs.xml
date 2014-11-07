@@ -508,7 +508,7 @@
         http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer
       </wst:KeyType>
       <wst:TokenType>
-      	urn:oasis:names:tc:SAML:2.0:assertion
+      	http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0
       <wst:TokenType>
       <wsp:AppliesTo>
         <wsa:EndpointReference>
