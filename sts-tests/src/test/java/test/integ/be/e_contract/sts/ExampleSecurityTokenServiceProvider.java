@@ -39,10 +39,13 @@ import org.apache.cxf.annotations.EndpointProperty;
 import org.apache.cxf.sts.STSPropertiesMBean;
 import org.apache.cxf.sts.StaticSTSProperties;
 import org.apache.cxf.sts.operation.TokenIssueOperation;
+import org.apache.cxf.sts.operation.TokenValidateOperation;
 import org.apache.cxf.sts.service.ServiceMBean;
 import org.apache.cxf.sts.token.provider.AuthenticationStatementProvider;
 import org.apache.cxf.sts.token.provider.SAMLTokenProvider;
 import org.apache.cxf.sts.token.provider.TokenProvider;
+import org.apache.cxf.sts.token.validator.SAMLTokenValidator;
+import org.apache.cxf.sts.token.validator.TokenValidator;
 import org.apache.cxf.ws.security.sts.provider.SecurityTokenServiceProvider;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -100,6 +103,20 @@ public class ExampleSecurityTokenServiceProvider extends
 		issueOperation.setTokenProviders(tokenProviders);
 
 		setIssueOperation(issueOperation);
+
+		// validation
+		TokenValidateOperation validateOperation = new TokenValidateOperation();
+
+		stsProperties = new StaticSTSProperties();
+		validateOperation.setStsProperties(stsProperties);
+		stsProperties.setSignatureCrypto(new ServerCrypto());
+
+		List<TokenValidator> tokenValidators = new LinkedList<TokenValidator>();
+		SAMLTokenValidator samlTokenValidator = new SAMLTokenValidator();
+		tokenValidators.add(new SAMLTokenValidatorWrapper(samlTokenValidator));
+		validateOperation.setTokenValidators(tokenValidators);
+
+		setValidateOperation(validateOperation);
 	}
 
 	private static X509Certificate getCertificate(PrivateKey privateKey,

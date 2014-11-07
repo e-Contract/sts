@@ -45,13 +45,17 @@ public class ServerCrypto implements Crypto {
 
 	private final CertificateFactory certificateFactory;
 
-	public ServerCrypto(Properties map, ClassLoader loader) {
+	public ServerCrypto() {
 		LOGGER.debug("constructor");
 		try {
 			this.certificateFactory = CertificateFactory.getInstance("X.509");
 		} catch (CertificateException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public ServerCrypto(Properties map, ClassLoader loader) {
+		this();
 	}
 
 	@Override
@@ -126,7 +130,7 @@ public class ServerCrypto implements Crypto {
 	public X509Certificate[] getX509Certificates(CryptoType cryptoType)
 			throws WSSecurityException {
 		LOGGER.debug("getX509Certificates");
-		return null;
+		return new X509Certificate[] { this.certificate };
 	}
 
 	@Override
@@ -135,6 +139,8 @@ public class ServerCrypto implements Crypto {
 		LOGGER.debug("getX509Identifier");
 		return null;
 	}
+
+	private X509Certificate certificate;
 
 	@Override
 	public X509Certificate loadCertificate(InputStream in)
@@ -181,6 +187,8 @@ public class ServerCrypto implements Crypto {
 	public boolean verifyTrust(X509Certificate[] certs, boolean enableRevocation)
 			throws WSSecurityException {
 		LOGGER.debug("verifyTrust(certs, enableRevocation)");
+		// artificially construct here...
+		this.certificate = certs[0];
 		return true; // called
 	}
 }

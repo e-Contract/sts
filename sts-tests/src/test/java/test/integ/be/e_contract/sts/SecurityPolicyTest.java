@@ -242,6 +242,7 @@ public class SecurityPolicyTest {
 
 		LOGGER.debug("---------------------------------------------------------------");
 		stsClient.setEnableAppliesTo(true);
+		stsClient.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
 		stsClient.validateSecurityToken(securityToken);
 	}
 
