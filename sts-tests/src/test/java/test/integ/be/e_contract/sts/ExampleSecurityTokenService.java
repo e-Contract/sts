@@ -25,6 +25,7 @@ import org.apache.cxf.annotations.EndpointProperties;
 import org.apache.cxf.annotations.EndpointProperty;
 
 import be.e_contract.sts.ws.jaxb.wst.RequestSecurityTokenResponseCollectionType;
+import be.e_contract.sts.ws.jaxb.wst.RequestSecurityTokenResponseType;
 import be.e_contract.sts.ws.jaxb.wst.RequestSecurityTokenType;
 import be.e_contract.sts.ws.jaxws.SecurityTokenServicePort;
 
@@ -34,7 +35,13 @@ import be.e_contract.sts.ws.jaxws.SecurityTokenServicePort;
 public class ExampleSecurityTokenService implements SecurityTokenServicePort {
 
 	@Override
-	public RequestSecurityTokenResponseCollectionType requestSecurityToken(
+	public RequestSecurityTokenResponseCollectionType issue(
+			RequestSecurityTokenType request) {
+		return null;
+	}
+
+	@Override
+	public RequestSecurityTokenResponseType validate(
 			RequestSecurityTokenType request) {
 		return null;
 	}

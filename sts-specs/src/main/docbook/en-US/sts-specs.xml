@@ -1112,10 +1112,6 @@
         <wsu:Created>2012-01-17T09:31:27.700Z</wsu:Created>
         <wsu:Expires>2012-01-17T09:36:27.700Z</wsu:Expires>
       </wsu:Timestamp>
-      <saml2:Assertion ID="assertionId"
-        IssueInstant="2012-02-09T09:27:17.433Z" Version="2.0">
-        ...
-      </saml2:Assertion>
     </wsse:Security>
   </soap:Header>
   <soap:Body>
@@ -1127,13 +1123,10 @@
         http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status
       </wst:TokenType>
       <wst:ValidateTarget>
-        <wsse:SecurityTokenReference
-          wsse11:TokenType="http://docs.oasis-open.org/wss/oasis-wss-saml-tokenprofile-1.1#SAMLV2.0">
-          <wsse:KeyIdentifier
-            wsse:ValueType="http://docs.oasis-open.org/wss/oasis-wss-saml-tokenprofile-1.1#SAMLID">
-            assertionId
-          </wsse:KeyIdentifier>
-        </wsse:SecurityTokenReference>
+        <saml2:Assertion ID="assertionId"
+          IssueInstant="2012-02-09T09:27:17.433Z" Version="2.0">
+          ...
+        </saml2:Assertion>
       </wst:ValidateTarget>
       <wsp:AppliesTo>
         <wsa:EndpointReference>
@@ -1153,7 +1146,15 @@
 				element the relying party can restrict
 				the application context in
 				which the SAML assertion should be
-				validated.
+				validated. Since according to the
+				WS-Trust specification
+				<xref linkend="ws-trust" />
+				the
+				<code>&lt;wsp:AppliesTo&gt;</code>
+				element is not mandatory, eID IP-STS implementations should also
+				consider this element
+				as optional. This to prevent that vanilla STS
+				clients cannot invoke the validation operation on the STS.
 			</para>
 		</section>
 		<section>
@@ -1220,7 +1221,9 @@
 							<code>&lt;saml2:Audience&gt;</code>
 							element value corresponds with the
 							<code>&lt;wsp:AppliesTo&gt;</code>
-							element value from the request.
+							element value from the request. This only if the
+							<code>&lt;wsp:AppliesTo&gt;</code>
+							element has been provided.
 						</para>
 					</listitem>
 				</itemizedlist>
