@@ -153,6 +153,7 @@ public class SecurityPolicyTest {
 		this.endpoint4.stop();
 		this.endpoint5.stop();
 		this.stsEndpoint.stop();
+		this.sts2Endpoint.stop();
 	}
 
 	@Test
@@ -406,7 +407,7 @@ public class SecurityPolicyTest {
 
 		// invoke the web service
 		String result = port.echo("hello world");
-		Assert.assertEquals("CN=Test:hello world", result);
+		Assert.assertEquals("custom-CN=Test:hello world", result);
 
 		bus.shutdown(true);
 	}

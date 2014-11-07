@@ -40,6 +40,7 @@ import org.apache.cxf.sts.STSPropertiesMBean;
 import org.apache.cxf.sts.StaticSTSProperties;
 import org.apache.cxf.sts.operation.TokenIssueOperation;
 import org.apache.cxf.sts.service.ServiceMBean;
+import org.apache.cxf.sts.token.provider.AuthenticationStatementProvider;
 import org.apache.cxf.sts.token.provider.SAMLTokenProvider;
 import org.apache.cxf.sts.token.provider.TokenProvider;
 import org.apache.cxf.ws.security.sts.provider.SecurityTokenServiceProvider;
@@ -89,6 +90,12 @@ public class ExampleSecurityTokenServiceProvider extends
 
 		List<TokenProvider> tokenProviders = new LinkedList<TokenProvider>();
 		SAMLTokenProvider samlTokenProvider = new SAMLTokenProvider();
+		samlTokenProvider.setSubjectProvider(new ExampleSubjectProvider());
+		List<AuthenticationStatementProvider> authnStatementProviders = new LinkedList<AuthenticationStatementProvider>();
+		authnStatementProviders
+				.add(new ExampleAuthenticationStatementProvider());
+		samlTokenProvider
+				.setAuthenticationStatementProviders(authnStatementProviders);
 		tokenProviders.add(samlTokenProvider);
 		issueOperation.setTokenProviders(tokenProviders);
 
