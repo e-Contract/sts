@@ -911,7 +911,7 @@
           <sp:IncludeTimestamp />
         </wsp:Policy>
       </sp:TransportBinding>
-      <sp:SupportingTokens>
+      <sp:SignedSupportingTokens>
         <wsp:Policy>
           <sp:SamlToken>
             <wsp:Policy>
@@ -919,12 +919,58 @@
             </wsp:Policy>
           </sp:SamlToken>
         </wsp:Policy>
-      </sp:SupportingTokens>
+      </sp:SignedSupportingTokens>
       <sp:Wss11>
         <wsp:Policy>
           <sp:MustSupportRefEmbeddedToken />
         </wsp:Policy>
       </sp:Wss11>
+    </wsp:All>
+  </wsp:ExactlyOne>
+</wsp:Policy>]]></programlisting>
+		<para>
+			A relying party web service could even refer directly to the eID
+			IP-STS within the security policy as shown below.
+		</para>
+		<programlisting language="xml"><![CDATA[<wsp:Policy wsu:Id="ExampleSamlSecurityPolicy">
+  <wsp:ExactlyOne>
+    <wsp:All>
+      <sp:TransportBinding>
+        <wsp:Policy>
+          <sp:TransportToken>
+            <wsp:Policy>
+              <sp:HttpsToken />
+            </wsp:Policy>
+          </sp:TransportToken>
+          <sp:AlgorithmSuite>
+            <wsp:Policy>
+              <sp:Basic128 />
+            </wsp:Policy>
+          </sp:AlgorithmSuite>
+          <sp:IncludeTimestamp />
+        </wsp:Policy>
+      </sp:TransportBinding>
+      <sp:SignedSupportingTokens>
+        <wsp:Policy>
+          <sp:IssuedToken
+            sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
+            <sp:RequestSecurityTokenTemplate>
+              <wst:TokenType>
+                http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0
+              </wst:TokenType>
+              <wst:KeyType>
+                http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer
+              </wst:KeyType>
+            </sp:RequestSecurityTokenTemplate>
+            <wsp:Policy>
+              <sp:RequireInternalReference />
+            </wsp:Policy>
+            <sp:Issuer>
+              <wsaw:Address>https://www.e-contract.be/iam/sts</wsaw:Address>
+            </sp:Issuer>
+          </sp:IssuedToken>
+        </wsp:Policy>
+      </sp:SignedSupportingTokens>
     </wsp:All>
   </wsp:ExactlyOne>
 </wsp:Policy>]]></programlisting>

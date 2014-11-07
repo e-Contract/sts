@@ -179,7 +179,7 @@
 						<sp:IncludeTimestamp />
 					</wsp:Policy>
 				</sp:TransportBinding>
-				<sp:SupportingTokens>
+				<sp:SignedSupportingTokens>
 					<wsp:Policy>
 						<sp:SamlToken>
 							<wsp:Policy>
@@ -187,7 +187,7 @@
 							</wsp:Policy>
 						</sp:SamlToken>
 					</wsp:Policy>
-				</sp:SupportingTokens>
+				</sp:SignedSupportingTokens>
 				<sp:Wss11>
 					<wsp:Policy>
 						<sp:MustSupportRefEmbeddedToken />
@@ -266,16 +266,6 @@
 							</wsp:Policy>
 							<sp:Issuer>
 								<wsaw:Address>http://www.w3.org/2005/08/addressing/anonymous</wsaw:Address>
-								<wsa:Metadata>
-									<wsx:Metadata>
-										<wsx:MetadataSection>
-											<wsx:MetadataReference>
-												<wsa:Address>https://localhost/sts/mex
-												</wsa:Address>
-											</wsx:MetadataReference>
-										</wsx:MetadataSection>
-									</wsx:Metadata>
-								</wsa:Metadata>
 							</sp:Issuer>
 						</sp:IssuedToken>
 					</wsp:Policy>

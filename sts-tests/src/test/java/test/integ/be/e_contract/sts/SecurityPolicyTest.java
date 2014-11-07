@@ -237,6 +237,8 @@ public class SecurityPolicyTest {
 		assertEquals("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
 				securityToken.getTokenType());
 		LOGGER.debug("security token expires: {}", securityToken.getExpires());
+		
+		stsClient.validateSecurityToken(securityToken);
 	}
 
 	@Test
@@ -380,7 +382,6 @@ public class SecurityPolicyTest {
 		// Apache CXF specific configuration
 		STSClient stsClient = new STSClient(bus);
 		requestContext.put(SecurityConstants.STS_CLIENT, stsClient);
-		stsClient.setLocation(this.sts2Url);
 		stsClient.setWsdlLocation(this.sts2Url + "?wsdl");
 		stsClient
 				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
