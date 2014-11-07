@@ -238,6 +238,24 @@
 								</code>
 							</entry>
 						</row>
+						<row>
+							<entry>
+								<code>sp</code>
+							</entry>
+							<entry>
+								<code>http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702
+								</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>wsaw</code>
+							</entry>
+							<entry>
+								<code>http://www.w3.org/2006/05/addressing/wsdl
+								</code>
+							</entry>
+						</row>
 					</tbody>
 				</tgroup>
 			</table>
@@ -335,6 +353,19 @@
 					<citetitle>
 						<ulink
 							url="https://www.oasis-open.org/committees/download.php/16790/wss-v1.1-spec-os-SOAPMessageSecurity.pdf">OASIS WS-Security 1.1</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="ws-sp">
+					<abbrev>WS-SP</abbrev>
+					Kelvin Lawrence, Chris Kaler,
+					<title>OASIS WS-SecurityPolicy 1.2
+					</title>
+					,
+					OASIS, July 2007
+					<citetitle>
+						<ulink
+							url="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/ws-securitypolicy-1.2-spec-os.html">OASIS WS-SecurityPolicy 1.2</ulink>
 					</citetitle>
 				</bibliomixed>
 
@@ -744,40 +775,86 @@
     </wst:RequestSecurityTokenResponseCollection>
   </soap:Body>
 </soap:Envelope>]]></programlisting>
+			<para>
+				The value of the
+				<code>&lt;wsa:RelatesTo&gt;</code>
+				element corresponds with the value of
+				the
+				<code>&lt;wsa:MessageID&gt;</code>
+				element within the request message.
+			</para>
+			<para>
+				Both the
+				<code>&lt;wsu:Timestamp&gt;</code>
+				and the
+				<code>&lt;wst:Lifetime&gt;</code>
+				serve as proof of the message freshness towards the client.
+			</para>
+			<para>
+				The
+				<code>&lt;wst:RequestedSecurityToken&gt;</code>
+				element contains the
+				<code>&lt;saml2:Assertion&gt;</code>
+				SAML 2.0 bearer token.
+				The SAML 2.0 assertion has been signed using
+				the eID IP-STS signing certificate. This XML signature MAY be
+				verified by the requesting client before consuming the
+				<code>&lt;saml2:NameID&gt;</code>
+				element
+				within the SAML 2.0 assertion.
+				The XML signature SHOULD be
+				verified by
+				alien relying parties when the SAML 2.0 assertion is used
+				as a bearer
+				token towards WS-Security secured SOAP web services.
+			</para>
 		</section>
-		<para>
-			The value of the
-			<code>&lt;wsa:RelatesTo&gt;</code>
-			element corresponds with the value of
-			the
-			<code>&lt;wsa:MessageID&gt;</code>
-			element within the request message.
-		</para>
-		<para>
-			Both the
-			<code>&lt;wsu:Timestamp&gt;</code>
-			and the
-			<code>&lt;wst:Lifetime&gt;</code>
-			serve as proof of the message freshness towards the client.
-		</para>
-		<para>
-			The
-			<code>&lt;wst:RequestedSecurityToken&gt;</code>
-			element contains the
-			<code>&lt;saml2:Assertion&gt;</code>
-			SAML 2.0 bearer token.
-			The SAML 2.0 assertion has been signed using
-			the eID IP-STS signing certificate. This XML signature MAY be
-			verified by the requesting client before consuming the
-			<code>&lt;saml2:NameID&gt;</code>
-			element
-			within the SAML 2.0 assertion.
-			The XML signature SHOULD be
-			verified by
-			alien relying parties when the SAML 2.0 assertion is used
-			as a bearer
-			token towards WS-Security secured SOAP web services.
-		</para>
+		<section>
+			<title>Security Policy</title>
+			<para>
+				To easy integration with existing STS clients, eID IP-STS
+				implementations should use the following
+				WS-SecurityPolicy
+				<xref linkend="ws-sp" />
+				configuration.
+			</para>
+			<programlisting language="xml"><![CDATA[<wsp:Policy wsu:Id="SecurityTokenServicePolicy">
+  <wsp:ExactlyOne>
+    <wsp:All>
+      <sp:TransportBinding>
+        <wsp:Policy>
+          <sp:TransportToken>
+            <wsp:Policy>
+              <sp:HttpsToken />
+            </wsp:Policy>
+          </sp:TransportToken>
+          <sp:AlgorithmSuite>
+            <wsp:Policy>
+              <sp:Basic128 />
+            </wsp:Policy>
+          </sp:AlgorithmSuite>
+          <sp:IncludeTimestamp />
+        </wsp:Policy>
+      </sp:TransportBinding>
+      <sp:EndorsingSupportingTokens>
+        <wsp:Policy>
+          <sp:X509Token
+  sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
+            <wsp:Policy>
+              <sp:WssX509PkiPathV1Token11 />
+            </wsp:Policy>
+          </sp:X509Token>
+          <sp:SignedParts>
+            <sp:Header Name="To"
+              Namespace="http://www.w3.org/2005/08/addressing" />
+          </sp:SignedParts>
+        </wsp:Policy>
+      </sp:EndorsingSupportingTokens>
+      <wsaw:UsingAddressing />
+    </wsp:All>
+  </wsp:ExactlyOne>
+</wsp:Policy>]]></programlisting>
+		</section>
 	</section>
 
 	<section id="section-saml-token">
@@ -797,23 +874,60 @@
 		<programlisting language="xml"><![CDATA[<soap:Envelope>
   <soap:Header>
     <wsse:Security soap:mustUnderstand="1">
+      <wsu:Timestamp wsu:Id="timestamp">
+        <wsu:Created>2012-01-17T09:31:27.700Z</wsu:Created>
+        <wsu:Expires>2012-01-17T09:36:27.700Z</wsu:Expires>
+      </wsu:Timestamp>
       <saml2:Assertion ID="assertion"
             IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
         ...
       </saml2:Assertion>
-      <wsse:SecurityTokenReference 
-        wsse:TokenType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0">
-        <wsse:KeyIdentifier
-          ValueType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLID">
-          assertionId
-        </wsse:KeyIdentifier>
-      </wsse:SecurityTokenReference>
     </wsse:Security>
   </soap:Header>
   <soap:Body>
     ...
   </soap:Body>
 </soap:Envelope>]]></programlisting>
+		<para>
+			A relying party web service supporting WS-SecurityPolicy
+			<xref linkend="ws-sp" />
+			could use the following security policy.
+		</para>
+		<programlisting language="xml"><![CDATA[<wsp:Policy wsu:Id="ExampleSamlSecurityPolicy">
+  <wsp:ExactlyOne>
+    <wsp:All>
+      <sp:TransportBinding>
+        <wsp:Policy>
+          <sp:TransportToken>
+            <wsp:Policy>
+              <sp:HttpsToken />
+            </wsp:Policy>
+          </sp:TransportToken>
+          <sp:AlgorithmSuite>
+            <wsp:Policy>
+              <sp:Basic128 />
+            </wsp:Policy>
+          </sp:AlgorithmSuite>
+          <sp:IncludeTimestamp />
+        </wsp:Policy>
+      </sp:TransportBinding>
+      <sp:SupportingTokens>
+        <wsp:Policy>
+          <sp:SamlToken>
+            <wsp:Policy>
+              <sp:WssSamlV20Token11 />
+            </wsp:Policy>
+          </sp:SamlToken>
+        </wsp:Policy>
+      </sp:SupportingTokens>
+      <sp:Wss11>
+        <wsp:Policy>
+          <sp:MustSupportRefEmbeddedToken />
+        </wsp:Policy>
+      </sp:Wss11>
+    </wsp:All>
+  </wsp:ExactlyOne>
+</wsp:Policy>]]></programlisting>
 	</section>
 
 	<section id="section-validate-saml">

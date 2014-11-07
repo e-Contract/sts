@@ -207,7 +207,7 @@ public class SecurityPolicyTest {
 				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
 		stsClient
 				.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
-		stsClient.setTokenType("urn:oasis:names:tc:SAML:2.0:assertion");
+		stsClient.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
 		stsClient.setAllowRenewing(false);
 
 		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
@@ -233,7 +233,7 @@ public class SecurityPolicyTest {
 		Principal principal = securityToken.getPrincipal();
 		LOGGER.debug("principal: {}", principal);
 		LOGGER.debug("token type: {}", securityToken.getTokenType());
-		assertEquals("urn:oasis:names:tc:SAML:2.0:assertion",
+		assertEquals("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
 				securityToken.getTokenType());
 		LOGGER.debug("security token expires: {}", securityToken.getExpires());
 	}

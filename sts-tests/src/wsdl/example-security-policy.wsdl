@@ -176,16 +176,23 @@
 								<sp:Basic128 />
 							</wsp:Policy>
 						</sp:AlgorithmSuite>
+						<sp:IncludeTimestamp />
 					</wsp:Policy>
 				</sp:TransportBinding>
 				<sp:SupportingTokens>
 					<wsp:Policy>
 						<sp:SamlToken>
 							<wsp:Policy>
+								<sp:WssSamlV20Token11 />
 							</wsp:Policy>
 						</sp:SamlToken>
 					</wsp:Policy>
 				</sp:SupportingTokens>
+				<sp:Wss11>
+					<wsp:Policy>
+						<sp:MustSupportRefEmbeddedToken />
+					</wsp:Policy>
+				</sp:Wss11>
 			</wsp:All>
 		</wsp:ExactlyOne>
 	</wsp:Policy>
