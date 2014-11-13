@@ -94,6 +94,10 @@ public class SecurityPolicyTest {
 
 	private Endpoint endpoint5;
 
+	private String url6;
+
+	private Endpoint endpoint6;
+
 	private String stsUrl;
 
 	private Endpoint stsEndpoint;
@@ -143,6 +147,10 @@ public class SecurityPolicyTest {
 		this.url = "http://localhost:" + freePort + "/example/ws";
 		this.endpoint = Endpoint.publish(this.url,
 				new ExampleSecurityPolicyServicePortImpl());
+
+		this.url6 = "https://localhost:" + sslFreePort + "/example/ws6";
+		this.endpoint6 = Endpoint.publish(this.url6,
+				new ExampleSecurityPolicyServicePortImpl6());
 	}
 
 	@After
@@ -152,6 +160,7 @@ public class SecurityPolicyTest {
 		this.endpoint3.stop();
 		this.endpoint4.stop();
 		this.endpoint5.stop();
+		this.endpoint6.stop();
 		this.stsEndpoint.stop();
 		this.sts2Endpoint.stop();
 	}
@@ -242,7 +251,8 @@ public class SecurityPolicyTest {
 
 		LOGGER.debug("---------------------------------------------------------------");
 		stsClient.setEnableAppliesTo(true);
-		stsClient.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
+		stsClient
+				.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
 		stsClient.validateSecurityToken(securityToken);
 	}
 
@@ -261,6 +271,31 @@ public class SecurityPolicyTest {
 		// Apache CXF specific configuration
 		requestContext.put(SecurityConstants.USERNAME, "username");
 		requestContext.put(SecurityConstants.PASSWORD, "password");
+
+		// invoke the web service
+		String result = port.echo("hello world");
+		Assert.assertEquals("username:hello world", result);
+	}
+
+	@Test
+	public void testSecureConversationBootstrapUsernameToken() throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf_https.xml");
+		BusFactory.setDefaultBus(bus);
+		// get the JAX-WS client
+		ExampleService exampleService = new ExampleService();
+		ExampleServicePortType port = exampleService.getExampleServicePort6();
+
+		// set the web service address on the client stub
+		BindingProvider bindingProvider = (BindingProvider) port;
+		Map<String, Object> requestContext = bindingProvider
+				.getRequestContext();
+		requestContext
+				.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, this.url6);
+
+		// Apache CXF specific configuration
+		requestContext.put(SecurityConstants.USERNAME + ".sct", "username");
+		requestContext.put(SecurityConstants.PASSWORD + ".sct", "password");
 
 		// invoke the web service
 		String result = port.echo("hello world");

@@ -103,6 +103,21 @@
 		</operation>
 	</binding>
 
+	<binding name="ExampleServiceBinding6" type="tns:ExampleServicePortType">
+		<wsp:PolicyReference URI="#ExamplePolicy6" />
+		<soap:binding transport="http://schemas.xmlsoap.org/soap/http"
+			style="document" />
+		<operation name="echo">
+			<soap:operation />
+			<input>
+				<soap:body use="literal" />
+			</input>
+			<output>
+				<soap:body use="literal" />
+			</output>
+		</operation>
+	</binding>
+
 	<service name="ExampleService">
 		<port name="ExampleServicePort" binding="tns:ExampleServiceBinding">
 			<soap:address location="http://localhost:8080/example" />
@@ -118,6 +133,9 @@
 		</port>
 		<port name="ExampleServicePort5" binding="tns:ExampleServiceBinding5">
 			<soap:address location="http://localhost:8080/example5" />
+		</port>
+		<port name="ExampleServicePort6" binding="tns:ExampleServiceBinding6">
+			<soap:address location="http://localhost:8080/example6" />
 		</port>
 	</service>
 
@@ -153,7 +171,9 @@
 					<wsp:Policy>
 						<sp:UsernameToken
 							sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
-							<wsp:Policy />
+							<wsp:Policy>
+								<sp:WssUsernameToken11 />
+							</wsp:Policy>
 						</sp:UsernameToken>
 					</wsp:Policy>
 				</sp:SupportingTokens>
@@ -270,6 +290,132 @@
 						</sp:IssuedToken>
 					</wsp:Policy>
 				</sp:SignedSupportingTokens>
+			</wsp:All>
+		</wsp:ExactlyOne>
+	</wsp:Policy>
+
+	<wsp:Policy wsu:Id="ExamplePolicy6">
+		<wsp:ExactlyOne>
+			<wsp:All>
+				<sp:TransportBinding>
+					<wsp:Policy>
+						<sp:TransportToken>
+							<wsp:Policy>
+								<sp:HttpsToken />
+							</wsp:Policy>
+						</sp:TransportToken>
+						<sp:AlgorithmSuite>
+							<wsp:Policy>
+								<sp:Basic128 />
+							</wsp:Policy>
+						</sp:AlgorithmSuite>
+						<sp:Layout>
+							<wsp:Policy>
+								<sp:Lax />
+							</wsp:Policy>
+						</sp:Layout>
+						<sp:IncludeTimestamp />
+					</wsp:Policy>
+				</sp:TransportBinding>
+				<sp:EndorsingSupportingTokens
+					xmlns:sp="http://schemas.xmlsoap.org/ws/2005/07/securitypolicy">
+					<wsp:Policy>
+						<sp:SecureConversationToken
+							sp:IncludeToken="http://schemas.xmlsoap.org/ws/2005/07/securitypolicy/IncludeToken/AlwaysToRecipient">
+							<wsp:Policy>
+								<sp:BootstrapPolicy>
+									<wsp:Policy>
+										<sp:SignedParts>
+											<sp:Body />
+											<sp:Header Name="To"
+												Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing" />
+											<sp:Header Name="From"
+												Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing" />
+											<sp:Header Name="FaultTo"
+												Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing" />
+											<sp:Header Name="ReplyTo"
+												Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing" />
+											<sp:Header Name="MessageID"
+												Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing" />
+											<sp:Header Name="RelatesTo"
+												Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing" />
+											<sp:Header Name="Action"
+												Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing" />
+										</sp:SignedParts>
+										<sp:EncryptedParts>
+											<sp:Body />
+										</sp:EncryptedParts>
+										<sp:TransportBinding>
+											<wsp:Policy>
+												<sp:TransportToken>
+													<wsp:Policy>
+														<sp:HttpsToken />
+													</wsp:Policy>
+												</sp:TransportToken>
+												<sp:AlgorithmSuite>
+													<wsp:Policy>
+														<sp:Basic128 />
+													</wsp:Policy>
+												</sp:AlgorithmSuite>
+												<sp:Layout>
+													<wsp:Policy>
+														<sp:Strict />
+													</wsp:Policy>
+												</sp:Layout>
+												<sp:IncludeTimestamp />
+											</wsp:Policy>
+										</sp:TransportBinding>
+										<sp:SignedSupportingTokens>
+											<wsp:Policy>
+												<sp:UsernameToken
+													sp:IncludeToken="http://schemas.xmlsoap.org/ws/2005/07/securitypolicy/IncludeToken/AlwaysToRecipient">
+													<wsp:Policy>
+														<sp:WssUsernameToken10 />
+													</wsp:Policy>
+												</sp:UsernameToken>
+											</wsp:Policy>
+										</sp:SignedSupportingTokens>
+										<sp:Wss11>
+											<wsp:Policy>
+												<sp:MustSupportRefKeyIdentifier />
+												<sp:MustSupportRefIssuerSerial />
+												<sp:MustSupportRefThumbprint />
+												<sp:MustSupportRefEncryptedKey />
+											</wsp:Policy>
+										</sp:Wss11>
+										<sp:Trust10>
+											<wsp:Policy>
+												<sp:MustSupportIssuedTokens />
+												<sp:RequireClientEntropy />
+												<sp:RequireServerEntropy />
+											</wsp:Policy>
+										</sp:Trust10>
+									</wsp:Policy>
+								</sp:BootstrapPolicy>
+							</wsp:Policy>
+						</sp:SecureConversationToken>
+						<sp:SignedParts>
+							<sp:Header Name="To"
+								Namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing" />
+						</sp:SignedParts>
+					</wsp:Policy>
+				</sp:EndorsingSupportingTokens>
+				<sp:Wss11>
+					<wsp:Policy>
+						<sp:MustSupportRefKeyIdentifier />
+						<sp:MustSupportRefIssuerSerial />
+						<sp:MustSupportRefThumbprint />
+						<sp:MustSupportRefEncryptedKey />
+					</wsp:Policy>
+				</sp:Wss11>
+				<sp:Trust10 xmlns:sp="http://schemas.xmlsoap.org/ws/2005/07/securitypolicy">
+					<wsp:Policy>
+						<sp:MustSupportIssuedTokens />
+						<sp:RequireClientEntropy />
+						<sp:RequireServerEntropy />
+					</wsp:Policy>
+				</sp:Trust10>
+				<wsaw:UsingAddressing />
 			</wsp:All>
 		</wsp:ExactlyOne>
 	</wsp:Policy>
