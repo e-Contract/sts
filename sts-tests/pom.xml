@@ -147,6 +147,11 @@
 			<artifactId>cxf-services-sts-core</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>be.fedict.commons-eid</groupId>
+			<artifactId>commons-eid-jca</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<profiles>

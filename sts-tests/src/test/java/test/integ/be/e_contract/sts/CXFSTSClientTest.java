@@ -18,11 +18,15 @@
 
 package test.integ.be.e_contract.sts;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
-import java.net.URL;
+import java.security.Principal;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Map;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -38,11 +42,16 @@ import javax.xml.namespace.QName;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
+import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.databinding.source.SourceDataBinding;
+import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.endpoint.EndpointImpl;
 import org.apache.cxf.service.Service;
 import org.apache.cxf.service.model.EndpointInfo;
+import org.apache.cxf.transport.http.HTTPConduit;
+import org.apache.cxf.ws.security.SecurityConstants;
+import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.trust.STSClient;
 import org.apache.cxf.wsdl11.WSDLServiceFactory;
 import org.apache.ws.security.WSPasswordCallback;
@@ -50,6 +59,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import be.fedict.commons.eid.jca.BeIDProvider;
 
 public class CXFSTSClientTest {
 
@@ -67,6 +78,8 @@ public class CXFSTSClientTest {
 
 		HostnameVerifier hostnameVerifier = new MyHostnameVerifier();
 		HttpsURLConnection.setDefaultHostnameVerifier(hostnameVerifier);
+
+		Security.addProvider(new BeIDProvider());
 	}
 
 	public static class MyHostnameVerifier implements HostnameVerifier {
@@ -100,34 +113,56 @@ public class CXFSTSClientTest {
 	}
 
 	@Test
-	public void testCXFSTSClient() throws Exception {
+	public void testCXFSTS() throws Exception {
+		// SpringBusFactory bf = new SpringBusFactory();
+		// Bus bus = bf.createBus();
 		Bus bus = BusFactory.getDefaultBus();
 		STSClient stsClient = new STSClient(bus);
 		stsClient.setSoap12();
-		URL wsdlLocation = CXFSTSClientTest.class
-				.getResource("/ws-trust-1.3.wsdl");
-		// stsClient.setWsdlLocation(wsdlLocation.toURI().toURL().toString());
+		stsClient.setWsdlLocation("https://localhost/iam/sts?wsdl");
 		stsClient.setLocation("https://localhost/iam/sts");
-		// stsClient.setServiceQName(new QName(
-		// "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
-		// "SecurityTokenService"));
-		// stsClient.setEndpointQName(new QName(
-		// "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
-		// "SecurityTokenService"));
 		stsClient
-				.setAddressingNamespace("http://schemas.xmlsoap.org/ws/2004/08/addressing");
+				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient
+				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
 		stsClient
 				.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
-		stsClient.setTokenType("urn:oasis:names:tc:SAML:2.0:assertion");
+		stsClient
+				.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
 		stsClient.setAllowRenewing(false);
 
-		// Map<String, Object> properties = stsClient.getProperties();
-		// properties.put(SecurityConstants.STS_TOKEN_USERNAME, "username");
-		// properties.put(SecurityConstants.CALLBACK_HANDLER,
-		// new UTCallbackHandler());
-		// stsClient.setProperties(properties);
+		// Apache CXF specific configuration
+		Map<String, Object> properties = stsClient.getProperties();
+		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		properties.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
+		stsClient.setProperties(properties);
 
-		stsClient.requestSecurityToken("https://demo.app.applies.to");
+		Client client = stsClient.getClient();
+		HTTPConduit httpConduit = (HTTPConduit) client.getConduit();
+		TLSClientParameters tlsParams = new TLSClientParameters();
+		tlsParams.setSecureSocketProtocol("SSL");
+		tlsParams.setDisableCNCheck(true);
+		tlsParams.setTrustManagers(new TrustManager[] { new MyTrustManager() });
+		httpConduit.setTlsClientParameters(tlsParams);
+
+		LOGGER.debug("STS location: {}", stsClient.getLocation());
+		SecurityToken securityToken = stsClient
+				.requestSecurityToken("https://demo.app.applies.to");
+		Principal principal = securityToken.getPrincipal();
+		LOGGER.debug("principal: {}", principal);
+		LOGGER.debug("token type: {}", securityToken.getTokenType());
+		assertEquals(
+				"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
+				securityToken.getTokenType());
+		LOGGER.debug("security token expires: {}", securityToken.getExpires());
+
+		LOGGER.debug("---------------------------------------------------------------");
+		stsClient.setEnableAppliesTo(true);
+		stsClient
+				.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
+		stsClient.validateSecurityToken(securityToken);
 	}
 
 	@Test
@@ -160,8 +195,7 @@ public class CXFSTSClientTest {
 		String wsdlLocation = CXFSTSClientTest.class
 				.getResource("/example-security-policy.wsdl").toURI().toURL()
 				.toString();
-		QName serviceName = new QName(
-				"urn:be:e-contract:sts:example",
+		QName serviceName = new QName("urn:be:e-contract:sts:example",
 				"ExampleService");
 		WSDLServiceFactory factory = new WSDLServiceFactory(bus, wsdlLocation,
 				serviceName);

@@ -282,6 +282,13 @@
 				<artifactId>bcpkix-jdk15on</artifactId>
 				<version>${bouncycastle.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>be.fedict.commons-eid</groupId>
+				<artifactId>commons-eid-bom</artifactId>
+				<version>0.5.2</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	<repositories>
