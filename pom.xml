@@ -13,7 +13,7 @@
 	<name>eID Security Token Service Project</name>
 	<groupId>be.e_contract</groupId>
 	<artifactId>sts</artifactId>
-	<version>0.1.0</version>
+	<version>0.1.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<inceptionYear>2014</inceptionYear>
 	<organization>
@@ -160,7 +160,7 @@
 	</properties>
 	<scm>
 		<connection>scm:git:ssh://e-contract.be/home/fcorneli/git/sts.git</connection>
-		<tag>sts-0.1.0</tag>
+		<tag>HEAD</tag>
 	</scm>
 	<dependencyManagement>
 		<dependencies>
