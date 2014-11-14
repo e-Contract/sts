@@ -20,10 +20,13 @@ package test.integ.be.e_contract.sts;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
 import java.io.IOException;
+import java.security.KeyStore;
 import java.security.Principal;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Map;
@@ -40,6 +43,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.xml.namespace.QName;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
@@ -163,6 +167,16 @@ public class CXFSTSClientTest {
 		stsClient
 				.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
 		stsClient.validateSecurityToken(securityToken);
+	}
+
+	@Test
+	public void testBeIDAuthnCertToFile() throws Exception {
+		KeyStore keyStore = KeyStore.getInstance("BeID");
+		keyStore.load(null);
+		Certificate certificate = keyStore.getCertificate("Authentication");
+		File tmpFile = File.createTempFile("eid-authn-", ".der");
+		FileUtils.writeByteArrayToFile(tmpFile, certificate.getEncoded());
+		LOGGER.debug("eID authn cert file: {}", tmpFile.getAbsolutePath());
 	}
 
 	@Test
