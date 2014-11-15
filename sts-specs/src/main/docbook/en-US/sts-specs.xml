@@ -459,6 +459,20 @@
 					</citetitle>
 				</bibliomixed>
 
+				<bibliomixed id="bsp">
+					<abbrev>WSI-BSP</abbrev>
+					Michael McIntosh, Martin Gudgin, K. Scott Morrison, Abbie Barbir,
+					<title>Basic Security Profile Version 1.1</title>
+					,
+					The Web Services-Interoperability Organization (WS-I), January
+					2010
+					<citetitle>
+						<ulink
+							url="http://www.ws-i.org/profiles/basicsecurityprofile-1.1.html">http://www.ws-i.org/profiles/basicsecurityprofile-1.1.html
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
 			</bibliography>
 		</section>
 	</section>
@@ -496,7 +510,7 @@
         <wsu:Expires>2012-01-17T09:36:27.700Z</wsu:Expires>
       </wsu:Timestamp>
       <wsse:BinarySecurityToken wsu:Id="uuid-bst"
-        ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509PKIPathv1"
+        ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"
         EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">
         ...
       </wsse:BinarySecurityToken>
@@ -580,16 +594,36 @@
 				as premisse for the entity authentication.
 			</para>
 			<para>
-				The
+				Ideally
 				<code>&lt;wsse:BinarySecurityToken&gt;</code>
-				is using
+				would be using
 				<code>#X509PKIPathv1</code>
+				for
+				<code>wsse:BinarySecurityToken/@ValueType</code>
 				as the eID IP-STS needs the complete X509 certificate chain to be
 				able to
 				perform a
-				PKI validation. Note that an eID IP-STS
-				implementation can also accept other non-eID X509 certificate
-				chains.
+				PKI validation.
+				However, as Windows Communication
+				Foundation only supports
+				<code>#X509v3</code>
+				the eID IP-STS must be able to contruct the certificate chain
+				itself.
+			</para>
+			<para>
+				Note that an eID IP-STS
+				implementation can also accept other
+				non-eID X509
+				certificates.
+			</para>
+			<para>
+				To ensure interoperability with Windows Communication
+				Foundation, the
+				eID IP-STS should not require compliance with WS-I
+				Basic Security
+				Profile Version 1.1 (
+				<xref linkend="bsp" />
+				).
 			</para>
 			<para>
 				The
@@ -841,7 +875,7 @@
           <sp:X509Token
   sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
             <wsp:Policy>
-              <sp:WssX509PkiPathV1Token11 />
+              <sp:WssX509V3Token11 />
             </wsp:Policy>
           </sp:X509Token>
           <sp:SignedParts>
