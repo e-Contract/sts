@@ -11,7 +11,7 @@
         ">
 	<bean
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" />
-	<httpj:engine-factory>
+	<httpj:engine-factory bus="cxf">
 		<httpj:engine port="${testutil.ports.Server}">
 			<httpj:tlsServerParameters>
 				<sec:keyManagers keyPassword="password">

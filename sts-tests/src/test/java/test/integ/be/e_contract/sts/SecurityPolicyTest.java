@@ -36,6 +36,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 import javax.xml.ws.Binding;
 import javax.xml.ws.BindingProvider;
 import javax.xml.ws.Endpoint;
@@ -66,6 +71,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import test.integ.be.e_contract.sts.CXFSTSClientTest.MyHostnameVerifier;
+import test.integ.be.e_contract.sts.CXFSTSClientTest.MyTrustManager;
 import be.e_contract.sts.example.ExampleService;
 import be.e_contract.sts.example.ExampleServicePortType;
 
@@ -98,6 +105,10 @@ public class SecurityPolicyTest {
 
 	private Endpoint endpoint6;
 
+	private String url7;
+
+	private Endpoint endpoint7;
+
 	private String stsUrl;
 
 	private Endpoint stsEndpoint;
@@ -110,7 +121,7 @@ public class SecurityPolicyTest {
 
 	@Before
 	public void setUp() throws Exception {
-		int sslFreePort = getFreePort();
+		int sslFreePort = 8443;// getFreePort();
 
 		System.setProperty("testutil.ports.Server",
 				Integer.toString(sslFreePort));
@@ -151,6 +162,20 @@ public class SecurityPolicyTest {
 		this.url6 = "https://localhost:" + sslFreePort + "/example/ws6";
 		this.endpoint6 = Endpoint.publish(this.url6,
 				new ExampleSecurityPolicyServicePortImpl6());
+
+		this.url7 = "https://localhost:" + sslFreePort + "/example/ws7";
+		this.endpoint7 = Endpoint.publish(this.url7,
+				new ExampleSecurityPolicyServicePortImpl7());
+
+		TrustManager trustManager = new MyTrustManager();
+		TrustManager[] sslTrustManagers = new TrustManager[] { trustManager };
+		SSLContext ssl_ctx = SSLContext.getInstance("TLS");
+		ssl_ctx.init(null, sslTrustManagers, new SecureRandom());
+		SSLSocketFactory sslSocketFactory = ssl_ctx.getSocketFactory();
+		HttpsURLConnection.setDefaultSSLSocketFactory(sslSocketFactory);
+
+		HostnameVerifier hostnameVerifier = new MyHostnameVerifier();
+		HttpsURLConnection.setDefaultHostnameVerifier(hostnameVerifier);
 	}
 
 	@After
@@ -161,6 +186,7 @@ public class SecurityPolicyTest {
 		this.endpoint4.stop();
 		this.endpoint5.stop();
 		this.endpoint6.stop();
+		this.endpoint7.stop();
 		this.stsEndpoint.stop();
 		this.sts2Endpoint.stop();
 	}
@@ -481,7 +507,6 @@ public class SecurityPolicyTest {
 		X509Certificate certificate = getCertificate(privateKey, publicKey);
 		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
 		certificates.add(certificate);
-		certificates.add(certificate);
 
 		Map<String, Object> properties = stsClient.getProperties();
 		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
@@ -492,6 +517,51 @@ public class SecurityPolicyTest {
 		stsClient.setProperties(properties);
 
 		ExampleServiceMBean.trustAddress(this.url5);
+
+		// invoke the web service
+		String result = port.echo("hello world");
+		Assert.assertEquals("custom-CN=Test:hello world", result);
+
+		bus.shutdown(true);
+	}
+
+	@Test
+	public void testTransportBindingHttpsTokenSupportingTokensSamlTokenViaSTSWithMEX()
+			throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf_https.xml");
+		BusFactory.setDefaultBus(bus);
+		// get the JAX-WS client
+		ExampleService exampleService = new ExampleService();
+		ExampleServicePortType port = exampleService.getExampleServicePort7();
+
+		// set the web service address on the client stub
+		BindingProvider bindingProvider = (BindingProvider) port;
+		Map<String, Object> requestContext = bindingProvider
+				.getRequestContext();
+		requestContext
+				.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, this.url7);
+
+		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+		PrivateKey privateKey = keyPair.getPrivate();
+		PublicKey publicKey = keyPair.getPublic();
+		X509Certificate certificate = getCertificate(privateKey, publicKey);
+		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		certificates.add(certificate);
+
+		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
+		requestContext.put(SecurityConstants.SIGNATURE_CRYPTO,
+				new ClientCrypto(privateKey, certificates));
+		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO,
+				"true");
+		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		requestContext.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		requestContext.put(
+				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
+
+		ExampleServiceMBean.trustAddress(this.url7);
 
 		// invoke the web service
 		String result = port.echo("hello world");

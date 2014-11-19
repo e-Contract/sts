@@ -78,7 +78,7 @@
 	</wsdl:portType>
 
 	<wsdl:binding name="SecurityTokenServiceBinding" type="tns:SecurityTokenServicePort">
-		<wsoap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+		<wsoap12:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
 		<wsp:PolicyReference URI="#SecurityTokenServicePolicy" />
 		<wsdl:operation name="Issue">
 			<wsoap12:operation
