@@ -256,6 +256,24 @@
 								</code>
 							</entry>
 						</row>
+						<row>
+							<entry>
+								<code>wsam</code>
+							</entry>
+							<entry>
+								<code>http://www.w3.org/2007/05/addressing/metadata
+								</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>wsx</code>
+							</entry>
+							<entry>
+								<code>http://schemas.xmlsoap.org/ws/2004/09/mex
+								</code>
+							</entry>
+						</row>
 					</tbody>
 				</tgroup>
 			</table>
@@ -469,6 +487,19 @@
 					<citetitle>
 						<ulink
 							url="http://www.ws-i.org/profiles/basicsecurityprofile-1.1.html">http://www.ws-i.org/profiles/basicsecurityprofile-1.1.html
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="ws-mex">
+					<abbrev>WS-MEX</abbrev>
+					Doug Davis, Ashok Malhotra, Katy Warr, Wu Chou,
+					<title>Web Services Metadata Exchange (WS-MetadataExchange)
+					</title>
+					,
+					W3C Recommendation 13 December 2011
+					<citetitle>
+						<ulink url="http://www.w3.org/TR/ws-metadata-exchange/">http://www.w3.org/TR/ws-metadata-exchange/
 						</ulink>
 					</citetitle>
 				</bibliomixed>
@@ -888,6 +919,14 @@
     </wsp:All>
   </wsp:ExactlyOne>
 </wsp:Policy>]]></programlisting>
+			<para>
+				To improve interoperability, eID IP-STS implementations should
+				support WS-MetadataExchange
+				<xref linkend="ws-mex" />
+				via the
+				<code>/mex</code>
+				suffix.
+			</para>
 		</section>
 	</section>
 
@@ -1000,14 +1039,34 @@
               <sp:RequireInternalReference />
             </wsp:Policy>
             <sp:Issuer>
-              <wsaw:Address>https://www.e-contract.be/iam/sts</wsaw:Address>
+              <wsa:Address>
+                http://www.w3.org/2005/08/addressing/anonymous
+              </wsa:Address>
+              <wsa:Metadata>
+                <wsx:Metadata>
+                  <wsx:MetadataSection>
+                    <wsx:MetadataReference>
+                      <wsa:Address>
+                        https://www.e-contract.be/iam/sts/mex
+                      </wsa:Address>
+                    </wsx:MetadataReference>
+                  </wsx:MetadataSection>
+                </wsx:Metadata>
+              </wsa:Metadata>
             </sp:Issuer>
           </sp:IssuedToken>
         </wsp:Policy>
       </sp:SignedSupportingTokens>
+      <wsam:Addressing wsp:Optional="false">
+        <wsp:Policy />
+      </wsam:Addressing>
     </wsp:All>
   </wsp:ExactlyOne>
 </wsp:Policy>]]></programlisting>
+		<para>
+			The above security policy uses the WS-MetadataExchange feature
+			of the eID IP-STS to allow for easy configuration of STS clients.
+		</para>
 	</section>
 
 	<section id="section-validate-saml">

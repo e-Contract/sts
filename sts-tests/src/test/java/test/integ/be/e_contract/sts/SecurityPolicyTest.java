@@ -379,7 +379,7 @@ public class SecurityPolicyTest {
 	public void testTransportBindingHttpsTokenSupportingTokensUsernameToken()
 			throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
-		Bus bus = bf.createBus("cxf_https.xml");
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
 		ExampleService exampleService = new ExampleService();
@@ -407,7 +407,7 @@ public class SecurityPolicyTest {
 	public void testTransportBindingHttpsTokenSupportingTokensSamlToken()
 			throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
-		Bus bus = bf.createBus("cxf_https.xml");
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
 		ExampleService exampleService = new ExampleService();
@@ -435,7 +435,7 @@ public class SecurityPolicyTest {
 	public void testTransportBindingHttpsTokenSupportingTokensX509Token()
 			throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
-		Bus bus = bf.createBus("cxf_https.xml");
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
 		ExampleService exampleService = new ExampleService();
@@ -479,7 +479,7 @@ public class SecurityPolicyTest {
 	public void testTransportBindingHttpsTokenSupportingTokensSamlTokenViaSTS()
 			throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
-		Bus bus = bf.createBus("cxf_https.xml");
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
 		ExampleService exampleService = new ExampleService();
@@ -529,7 +529,7 @@ public class SecurityPolicyTest {
 	public void testTransportBindingHttpsTokenSupportingTokensSamlTokenViaSTSWithMEX()
 			throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
-		Bus bus = bf.createBus("cxf_https.xml");
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
 		ExampleService exampleService = new ExampleService();

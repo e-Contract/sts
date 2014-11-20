@@ -42,10 +42,12 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.xml.namespace.QName;
+import javax.xml.ws.BindingProvider;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
+import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.databinding.source.SourceDataBinding;
 import org.apache.cxf.endpoint.Client;
@@ -64,6 +66,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import be.e_contract.sts.example.ws.jaxws.ExampleService;
+import be.e_contract.sts.example.ws.jaxws.ExampleServicePortType;
 import be.fedict.commons.eid.jca.BeIDProvider;
 
 public class CXFSTSClientTest {
@@ -114,6 +118,40 @@ public class CXFSTSClientTest {
 		public X509Certificate[] getAcceptedIssuers() {
 			return null;
 		}
+	}
+
+	@Test
+	public void testExampleWebService() throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
+		BusFactory.setDefaultBus(bus);
+		// get the JAX-WS client
+		ExampleService exampleService = new ExampleService();
+		ExampleServicePortType port = exampleService.getExampleServicePort();
+
+		// set the web service address on the client stub
+		BindingProvider bindingProvider = (BindingProvider) port;
+		Map<String, Object> requestContext = bindingProvider
+				.getRequestContext();
+		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY,
+				"https://localhost/iam/example");
+
+		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
+		requestContext
+				.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
+		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO,
+				"true");
+		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		requestContext.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		requestContext.put(
+				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
+
+		// invoke the web service
+		String result = port.echo("hello world");
+		LOGGER.debug("result: " + result);
+
+		bus.shutdown(true);
 	}
 
 	@Test

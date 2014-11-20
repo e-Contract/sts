@@ -16,7 +16,8 @@
 	License along with this software; if not, see
 	http://www.gnu.org/licenses/.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>be.e_contract</groupId>
@@ -34,7 +35,7 @@
 				<artifactId>jaxws-maven-plugin</artifactId>
 				<executions>
 					<execution>
-						<id>wsimport</id>
+						<id>wsimport-ws-trust</id>
 						<goals>
 							<goal>wsimport</goal>
 						</goals>
@@ -45,6 +46,34 @@
 							<verbose>true</verbose>
 							<xdebug>true</xdebug>
 							<extension>true</extension>
+							<wsdlFiles>
+								<wsdlFile>ws-trust-1.3.wsdl</wsdlFile>
+							</wsdlFiles>
+							<bindingFiles>
+								<bindingFile>jaxws-bindings.xml</bindingFile>
+								<bindingFile>jaxb-bindings.xml</bindingFile>
+							</bindingFiles>
+						</configuration>
+					</execution>
+					<execution>
+						<id>wsimport-example</id>
+						<goals>
+							<goal>wsimport</goal>
+						</goals>
+						<configuration>
+							<target>2.1</target>
+							<xnoAddressingDataBinding>true</xnoAddressingDataBinding>
+							<xnocompile>true</xnocompile>
+							<verbose>true</verbose>
+							<xdebug>true</xdebug>
+							<extension>true</extension>
+							<wsdlFiles>
+								<wsdlFile>example.wsdl</wsdlFile>
+							</wsdlFiles>
+							<bindingFiles>
+								<bindingFile>example-jaxws-bindings.xml</bindingFile>
+								<bindingFile>example-jaxb-bindings.xml</bindingFile>
+							</bindingFiles>
 						</configuration>
 					</execution>
 				</executions>
