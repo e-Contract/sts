@@ -90,7 +90,7 @@
 									<wsx:Metadata>
 										<wsx:MetadataSection>
 											<wsx:MetadataReference>
-												<wsa:Address>https://www.e-contract.be/iam/sts/mex</wsa:Address>
+												<wsa:Address>https://localhost/iam/sts/mex</wsa:Address>
 											</wsx:MetadataReference>
 										</wsx:MetadataSection>
 									</wsx:Metadata>

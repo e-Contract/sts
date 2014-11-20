@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.security.KeyStore;
 import java.security.Principal;
 import java.security.SecureRandom;
@@ -126,7 +127,10 @@ public class CXFSTSClientTest {
 		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
-		ExampleService exampleService = new ExampleService();
+		URL wsdlLocation = CXFSTSClientTest.class
+				.getResource("/example-localhost-sts.wsdl");
+		ExampleService exampleService = new ExampleService(wsdlLocation,
+				new QName("urn:be:e-contract:sts:example", "ExampleService"));
 		ExampleServicePortType port = exampleService.getExampleServicePort();
 
 		// set the web service address on the client stub

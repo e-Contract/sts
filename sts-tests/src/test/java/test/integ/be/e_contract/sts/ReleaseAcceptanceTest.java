@@ -105,11 +105,9 @@ public class ReleaseAcceptanceTest {
 	 */
 	@Test
 	public void testExampleWebService() throws Exception {
-		// get the JAX-WS client
 		ExampleService exampleService = new ExampleService();
 		ExampleServicePortType port = exampleService.getExampleServicePort();
 
-		// set the web service address on the client stub
 		BindingProvider bindingProvider = (BindingProvider) port;
 		Map<String, Object> requestContext = bindingProvider
 				.getRequestContext();
@@ -119,15 +117,12 @@ public class ReleaseAcceptanceTest {
 		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
 		requestContext
 				.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
-		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO,
-				"true");
 		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "username");
 		requestContext.put(SecurityConstants.CALLBACK_HANDLER,
 				new ExampleSecurityPolicyCallbackHandler());
 		requestContext.put(
 				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
 
-		// invoke the web service
 		String result = port.echo("hello world");
 		LOGGER.debug("result: " + result);
 	}
