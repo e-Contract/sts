@@ -24,6 +24,8 @@ import java.security.Principal;
 import java.security.Security;
 import java.util.Map;
 
+import javax.xml.ws.BindingProvider;
+
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.ws.security.SecurityConstants;
@@ -34,6 +36,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import be.e_contract.sts.example.ws.jaxws.ExampleService;
+import be.e_contract.sts.example.ws.jaxws.ExampleServicePortType;
 import be.fedict.commons.eid.jca.BeIDProvider;
 
 /**
@@ -90,5 +94,41 @@ public class ReleaseAcceptanceTest {
 				"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
 				securityToken.getTokenType());
 		LOGGER.debug("security token expires: {}", securityToken.getExpires());
+	}
+
+	/**
+	 * Requires a patched version of Apache CXF. See also:
+	 * 
+	 * https://issues.apache.org/jira/browse/CXF-6110
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testExampleWebService() throws Exception {
+		// get the JAX-WS client
+		ExampleService exampleService = new ExampleService();
+		ExampleServicePortType port = exampleService.getExampleServicePort();
+
+		// set the web service address on the client stub
+		BindingProvider bindingProvider = (BindingProvider) port;
+		Map<String, Object> requestContext = bindingProvider
+				.getRequestContext();
+		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY,
+				"https://www.e-contract.be/iam/example");
+
+		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
+		requestContext
+				.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
+		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO,
+				"true");
+		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		requestContext.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		requestContext.put(
+				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
+
+		// invoke the web service
+		String result = port.echo("hello world");
+		LOGGER.debug("result: " + result);
 	}
 }

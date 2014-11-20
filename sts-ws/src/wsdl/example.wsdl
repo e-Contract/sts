@@ -46,7 +46,7 @@
 
 	<service name="ExampleService">
 		<port name="ExampleServicePort" binding="tns:ExampleServiceBinding">
-			<soap:address location="https://localhost:8080/example" />
+			<soap:address location="https://www.e-contract.be/iam/example" />
 		</port>
 	</service>
 

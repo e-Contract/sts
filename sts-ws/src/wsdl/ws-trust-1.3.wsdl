@@ -107,7 +107,7 @@
 
 	<wsdl:service name="SecurityTokenService">
 		<wsdl:port name="SecurityTokenServicePort" binding="tns:SecurityTokenServiceBinding">
-			<wsoap12:address location="https://localhost/iam/sts" />
+			<soap:address location="https://www.e-contract.be/iam/sts" />
 		</wsdl:port>
 	</wsdl:service>
 
