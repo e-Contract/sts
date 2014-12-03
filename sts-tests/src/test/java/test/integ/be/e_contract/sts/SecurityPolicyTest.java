@@ -109,6 +109,10 @@ public class SecurityPolicyTest {
 
 	private Endpoint endpoint7;
 
+	private String url8;
+
+	private Endpoint endpoint8;
+
 	private String stsUrl;
 
 	private Endpoint stsEndpoint;
@@ -167,6 +171,10 @@ public class SecurityPolicyTest {
 		this.endpoint7 = Endpoint.publish(this.url7,
 				new ExampleSecurityPolicyServicePortImpl7());
 
+		this.url8 = "https://localhost:" + sslFreePort + "/example/ws8";
+		this.endpoint8 = Endpoint.publish(this.url8,
+				new ExampleSecurityPolicyServicePortImpl8());
+
 		TrustManager trustManager = new MyTrustManager();
 		TrustManager[] sslTrustManagers = new TrustManager[] { trustManager };
 		SSLContext ssl_ctx = SSLContext.getInstance("TLS");
@@ -187,6 +195,7 @@ public class SecurityPolicyTest {
 		this.endpoint5.stop();
 		this.endpoint6.stop();
 		this.endpoint7.stop();
+		this.endpoint8.stop();
 		this.stsEndpoint.stop();
 		this.sts2Endpoint.stop();
 	}
@@ -562,6 +571,51 @@ public class SecurityPolicyTest {
 				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
 
 		ExampleServiceMBean.trustAddress(this.url7);
+
+		// invoke the web service
+		String result = port.echo("hello world");
+		Assert.assertEquals("custom-CN=Test:hello world", result);
+
+		bus.shutdown(true);
+	}
+	
+	@Test
+	public void testTransportBindingHttpsTokenSupportingTokensSamlTokenViaSTSWithMEXAndClaims()
+			throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
+		BusFactory.setDefaultBus(bus);
+		// get the JAX-WS client
+		ExampleService exampleService = new ExampleService();
+		ExampleServicePortType port = exampleService.getExampleServicePort8();
+
+		// set the web service address on the client stub
+		BindingProvider bindingProvider = (BindingProvider) port;
+		Map<String, Object> requestContext = bindingProvider
+				.getRequestContext();
+		requestContext
+				.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, this.url8);
+
+		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+		PrivateKey privateKey = keyPair.getPrivate();
+		PublicKey publicKey = keyPair.getPublic();
+		X509Certificate certificate = getCertificate(privateKey, publicKey);
+		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		certificates.add(certificate);
+
+		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
+		requestContext.put(SecurityConstants.SIGNATURE_CRYPTO,
+				new ClientCrypto(privateKey, certificates));
+		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO,
+				"true");
+		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		requestContext.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		requestContext.put(
+				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
+
+		ExampleServiceMBean.trustAddress(this.url8);
 
 		// invoke the web service
 		String result = port.echo("hello world");

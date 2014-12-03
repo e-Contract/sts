@@ -134,6 +134,21 @@
 		</operation>
 	</binding>
 
+	<binding name="ExampleServiceBinding8" type="tns:ExampleServicePortType">
+		<wsp:PolicyReference URI="#ExamplePolicy8" />
+		<soap:binding transport="http://schemas.xmlsoap.org/soap/http"
+			style="document" />
+		<operation name="echo">
+			<soap:operation />
+			<input>
+				<soap:body use="literal" />
+			</input>
+			<output>
+				<soap:body use="literal" />
+			</output>
+		</operation>
+	</binding>
+
 	<service name="ExampleService">
 		<port name="ExampleServicePort" binding="tns:ExampleServiceBinding">
 			<soap:address location="http://localhost:8080/example" />
@@ -155,6 +170,9 @@
 		</port>
 		<port name="ExampleServicePort7" binding="tns:ExampleServiceBinding7">
 			<soap:address location="http://localhost:8080/example7" />
+		</port>
+		<port name="ExampleServicePort8" binding="tns:ExampleServiceBinding8">
+			<soap:address location="http://localhost:8080/example8" />
 		</port>
 	</service>
 
@@ -488,7 +506,69 @@
 									<wsx:Metadata>
 										<wsx:MetadataSection>
 											<wsx:MetadataReference>
-												<wsa:Address>https://localhost:8443/example/sts2/mex</wsa:Address>
+												<wsa:Address>https://localhost:8443/example/sts2/mex
+												</wsa:Address>
+											</wsx:MetadataReference>
+										</wsx:MetadataSection>
+									</wsx:Metadata>
+								</wsa:Metadata>
+							</sp:Issuer>
+						</sp:IssuedToken>
+					</wsp:Policy>
+				</sp:SignedSupportingTokens>
+				<wsam:Addressing wsp:Optional="false">
+					<wsp:Policy />
+				</wsam:Addressing>
+			</wsp:All>
+		</wsp:ExactlyOne>
+	</wsp:Policy>
+
+	<wsp:Policy wsu:Id="ExamplePolicy8">
+		<wsp:ExactlyOne>
+			<wsp:All>
+				<sp:TransportBinding>
+					<wsp:Policy>
+						<sp:TransportToken>
+							<wsp:Policy>
+								<sp:HttpsToken>
+									<wsp:Policy />
+								</sp:HttpsToken>
+							</wsp:Policy>
+						</sp:TransportToken>
+						<sp:AlgorithmSuite>
+							<wsp:Policy>
+								<sp:Basic128 />
+							</wsp:Policy>
+						</sp:AlgorithmSuite>
+						<sp:IncludeTimestamp />
+					</wsp:Policy>
+				</sp:TransportBinding>
+				<sp:SignedSupportingTokens>
+					<wsp:Policy>
+						<sp:IssuedToken
+							sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
+							<sp:RequestSecurityTokenTemplate>
+								<wst:TokenType>http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0
+								</wst:TokenType>
+								<wst:KeyType>http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer
+								</wst:KeyType>
+								<wst:Claims Dialect="http://schemas.xmlsoap.org/ws/2005/05/identity">
+									<wsid:ClaimType
+										xmlns:wsid="http://schemas.xmlsoap.org/ws/2005/05/identity"
+										Uri="http://schemas.microsoft.com/ws/2008/06/identity/claims/role" />
+								</wst:Claims>
+							</sp:RequestSecurityTokenTemplate>
+							<wsp:Policy>
+								<sp:RequireInternalReference />
+							</wsp:Policy>
+							<sp:Issuer>
+								<wsa:Address>http://www.w3.org/2005/08/addressing/anonymous</wsa:Address>
+								<wsa:Metadata>
+									<wsx:Metadata>
+										<wsx:MetadataSection>
+											<wsx:MetadataReference>
+												<wsa:Address>https://localhost:8443/example/sts2/mex
+												</wsa:Address>
 											</wsx:MetadataReference>
 										</wsx:MetadataSection>
 									</wsx:Metadata>

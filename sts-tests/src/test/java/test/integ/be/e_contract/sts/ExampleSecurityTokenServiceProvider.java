@@ -38,9 +38,13 @@ import org.apache.cxf.annotations.EndpointProperties;
 import org.apache.cxf.annotations.EndpointProperty;
 import org.apache.cxf.sts.STSPropertiesMBean;
 import org.apache.cxf.sts.StaticSTSProperties;
+import org.apache.cxf.sts.claims.ClaimsAttributeStatementProvider;
+import org.apache.cxf.sts.claims.ClaimsHandler;
+import org.apache.cxf.sts.claims.ClaimsManager;
 import org.apache.cxf.sts.operation.TokenIssueOperation;
 import org.apache.cxf.sts.operation.TokenValidateOperation;
 import org.apache.cxf.sts.service.ServiceMBean;
+import org.apache.cxf.sts.token.provider.AttributeStatementProvider;
 import org.apache.cxf.sts.token.provider.AuthenticationStatementProvider;
 import org.apache.cxf.sts.token.provider.SAMLTokenProvider;
 import org.apache.cxf.sts.token.provider.TokenProvider;
@@ -89,6 +93,12 @@ public class ExampleSecurityTokenServiceProvider extends
 		service.setEndpoints(Collections
 				.singletonList("https://demo.app.applies.to"));
 		services.add(service);
+
+		ClaimsManager claimsManager = new ClaimsManager();
+		claimsManager.setClaimHandlers(Collections
+				.singletonList((ClaimsHandler) new ExampleClaimsHandler()));
+		issueOperation.setClaimsManager(claimsManager);
+
 		issueOperation.setServices(services);
 
 		List<TokenProvider> tokenProviders = new LinkedList<TokenProvider>();
@@ -99,6 +109,10 @@ public class ExampleSecurityTokenServiceProvider extends
 				.add(new ExampleAuthenticationStatementProvider());
 		samlTokenProvider
 				.setAuthenticationStatementProviders(authnStatementProviders);
+		List<AttributeStatementProvider> attributeStatementProviders = new LinkedList<>();
+		attributeStatementProviders.add(new ClaimsAttributeStatementProvider());
+		samlTokenProvider
+				.setAttributeStatementProviders(attributeStatementProviders);
 		tokenProviders.add(samlTokenProvider);
 		issueOperation.setTokenProviders(tokenProviders);
 
