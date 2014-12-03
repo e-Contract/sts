@@ -578,7 +578,7 @@ public class SecurityPolicyTest {
 
 		bus.shutdown(true);
 	}
-	
+
 	@Test
 	public void testTransportBindingHttpsTokenSupportingTokensSamlTokenViaSTSWithMEXAndClaims()
 			throws Exception {
@@ -614,6 +614,8 @@ public class SecurityPolicyTest {
 				new ExampleSecurityPolicyCallbackHandler());
 		requestContext.put(
 				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
+		requestContext.put(SecurityConstants.STS_TOKEN_ACT_AS,
+				new ActAsCallbackHandler());
 
 		ExampleServiceMBean.trustAddress(this.url8);
 

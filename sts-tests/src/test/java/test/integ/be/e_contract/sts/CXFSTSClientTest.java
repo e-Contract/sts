@@ -181,6 +181,43 @@ public class CXFSTSClientTest {
 
 		bus.shutdown(true);
 	}
+	
+	@Test
+	public void testExampleWebServiceWithClaims() throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
+		BusFactory.setDefaultBus(bus);
+		// get the JAX-WS client
+		URL wsdlLocation = CXFSTSClientTest.class
+				.getResource("/example-localhost-sts.wsdl");
+		ExampleService exampleService = new ExampleService(wsdlLocation,
+				new QName("urn:be:e-contract:sts:example", "ExampleService"));
+		ExampleServicePortType port = exampleService.getExampleServicePort();
+
+		// set the web service address on the client stub
+		BindingProvider bindingProvider = (BindingProvider) port;
+		Map<String, Object> requestContext = bindingProvider
+				.getRequestContext();
+		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY,
+				"https://localhost/iam/example");
+
+		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
+		requestContext
+				.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
+		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO,
+				"true");
+		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		requestContext.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		requestContext.put(
+				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
+
+		// invoke the web service
+		String result = port.echoWithClaims("hello world");
+		LOGGER.debug("result: " + result);
+
+		bus.shutdown(true);
+	}
 
 	@Test
 	public void testSelfSignedCertificateFails() throws Exception {
@@ -234,6 +271,66 @@ public class CXFSTSClientTest {
 
 	@Test
 	public void testCXFSTS() throws Exception {
+		// SpringBusFactory bf = new SpringBusFactory();
+		// Bus bus = bf.createBus();
+		Bus bus = BusFactory.getDefaultBus();
+		STSClient stsClient = new STSClient(bus);
+		stsClient.setSoap12();
+		stsClient.setWsdlLocation("https://localhost/iam/sts?wsdl");
+		stsClient.setLocation("https://localhost/iam/sts");
+		stsClient
+				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient
+				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient
+				.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
+		stsClient
+				.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
+		stsClient.setAllowRenewing(false);
+
+		// Apache CXF specific configuration
+		Map<String, Object> properties = stsClient.getProperties();
+		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		properties.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
+		stsClient.setProperties(properties);
+
+		Client client = stsClient.getClient();
+		HTTPConduit httpConduit = (HTTPConduit) client.getConduit();
+		TLSClientParameters tlsParams = new TLSClientParameters();
+		tlsParams.setSecureSocketProtocol("SSL");
+		tlsParams.setDisableCNCheck(true);
+		tlsParams.setTrustManagers(new TrustManager[] { new MyTrustManager() });
+		httpConduit.setTlsClientParameters(tlsParams);
+
+		LOGGER.debug("STS location: {}", stsClient.getLocation());
+		SecurityToken securityToken = stsClient
+				.requestSecurityToken("https://demo.app.applies.to");
+		Principal principal = securityToken.getPrincipal();
+		LOGGER.debug("principal: {}", principal);
+		LOGGER.debug("token type: {}", securityToken.getTokenType());
+		assertEquals(
+				"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
+				securityToken.getTokenType());
+		LOGGER.debug("security token expires: {}", securityToken.getExpires());
+
+		LOGGER.debug("---------------------------------------------------------------");
+		stsClient.setEnableAppliesTo(true);
+		stsClient
+				.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
+		List<SecurityToken> result = stsClient
+				.validateSecurityToken(securityToken);
+		assertEquals(1, result.size());
+		SecurityToken resultSecurityToken = result.get(0);
+		LOGGER.debug("token type: {}", resultSecurityToken.getTokenType());
+		assertEquals(
+				"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
+				resultSecurityToken.getTokenType());
+	}
+	
+	@Test
+	public void testCXFSTSWithClaimsAndActAsAssertion() throws Exception {
 		// SpringBusFactory bf = new SpringBusFactory();
 		// Bus bus = bf.createBus();
 		Bus bus = BusFactory.getDefaultBus();

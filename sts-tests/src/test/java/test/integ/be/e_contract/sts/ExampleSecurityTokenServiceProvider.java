@@ -44,6 +44,7 @@ import org.apache.cxf.sts.claims.ClaimsManager;
 import org.apache.cxf.sts.operation.TokenIssueOperation;
 import org.apache.cxf.sts.operation.TokenValidateOperation;
 import org.apache.cxf.sts.service.ServiceMBean;
+import org.apache.cxf.sts.token.delegation.TokenDelegationHandler;
 import org.apache.cxf.sts.token.provider.AttributeStatementProvider;
 import org.apache.cxf.sts.token.provider.AuthenticationStatementProvider;
 import org.apache.cxf.sts.token.provider.SAMLTokenProvider;
@@ -99,6 +100,11 @@ public class ExampleSecurityTokenServiceProvider extends
 				.singletonList((ClaimsHandler) new ExampleClaimsHandler()));
 		issueOperation.setClaimsManager(claimsManager);
 
+		List<TokenDelegationHandler> delegationHandlers = new LinkedList<>();
+		TokenDelegationHandler tokenDelegationHandler = new ExampleTokenDelegationHandler();
+		delegationHandlers.add(tokenDelegationHandler);
+		issueOperation.setDelegationHandlers(delegationHandlers);
+		
 		issueOperation.setServices(services);
 
 		List<TokenProvider> tokenProviders = new LinkedList<TokenProvider>();
