@@ -1341,18 +1341,19 @@
     </wsse:Security>
   </soap:Header>
   <soap:Body>
-    <wst:RequestSecurityTokenResponseCollection>
-      <wst:RequestSecurityTokenResponse>
-        <wst:TokenType>
-          http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status
-        </wst:TokenType>
-        <wst:Status>
-          <wst:Code>
-            http://docs.oasis-open.org/ws-sx/ws-trust/200512/status/valid
-          </wst:Code>
-        </wst:Status>
-      </wst:RequestSecurityTokenResponse>
-    </wst:RequestSecurityTokenResponseCollection>
+    <wst:RequestSecurityTokenResponse>
+      <wst:TokenType>
+        http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status
+      </wst:TokenType>
+      <wst:Status>
+        <wst:Code>
+          http://docs.oasis-open.org/ws-sx/ws-trust/200512/status/valid
+        </wst:Code>
+        <wst:Reason>
+          The Trust service successfully validated the input
+        </wst:Reason>
+      </wst:Status>
+    </wst:RequestSecurityTokenResponse>
   </soap:Body>
 </soap:Envelope>]]></programlisting>
 			<para>
