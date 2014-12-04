@@ -16,25 +16,27 @@
  * http://www.gnu.org/licenses/.
  */
 
-package be.e_contract.be.sts.client;
+package be.e_contract.sts.example.ws;
 
-import javax.xml.ws.BindingProvider;
+import java.net.URL;
 
-import be.e_contract.sts.ws.SecurityTokenServiceFactory;
-import be.e_contract.sts.ws.jaxws.SecurityTokenService;
-import be.e_contract.sts.ws.jaxws.SecurityTokenServicePort;
+import javax.xml.namespace.QName;
 
-public class STSClient {
+import be.e_contract.sts.example.ws.jaxws.ExampleService;
 
-	private final SecurityTokenServicePort stsPort;
+public class ExampleServiceFactory {
 
-	public STSClient(String address) {
-		SecurityTokenService securityTokenService = SecurityTokenServiceFactory
-				.newInstance();
-		this.stsPort = securityTokenService.getSecurityTokenServicePort();
+	private ExampleServiceFactory() {
+		super();
+	}
 
-		BindingProvider bindingProvider = (BindingProvider) this.stsPort;
-		bindingProvider.getRequestContext().put(
-				BindingProvider.ENDPOINT_ADDRESS_PROPERTY, address);
+	public static ExampleService newInstance() {
+		URL wsdlLocation = ExampleServiceFactory.class
+				.getResource("/example.wsdl");
+		QName EXAMPLESERVICE_QNAME = new QName("urn:be:e-contract:sts:example",
+				"ExampleService");
+		ExampleService securityTokenService = new ExampleService(wsdlLocation,
+				EXAMPLESERVICE_QNAME);
+		return securityTokenService;
 	}
 }

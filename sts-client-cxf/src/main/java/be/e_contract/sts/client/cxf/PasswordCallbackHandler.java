@@ -16,34 +16,25 @@
  * http://www.gnu.org/licenses/.
  */
 
-package be.e_contract.sts.ws;
+package be.e_contract.sts.client.cxf;
 
-import java.net.URL;
+import java.io.IOException;
 
-import javax.xml.namespace.QName;
-
-import be.e_contract.sts.ws.jaxws.SecurityTokenService;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 
 /**
- * Factory for the eID IP-STS JAX-WS web service client.
+ * Dummy JAAS password callback handler. Seems like Apache CXF really wants one,
+ * even if we don't really need it in the context of eID.
  * 
  * @author Frank Cornelis
  *
  */
-public class SecurityTokenServiceFactory {
+public class PasswordCallbackHandler implements CallbackHandler {
 
-	private SecurityTokenServiceFactory() {
-		super();
-	}
-
-	public static SecurityTokenService newInstance() {
-		URL wsdlLocation = SecurityTokenServiceFactory.class
-				.getResource("/ws-trust-1.3.wsdl");
-		QName SECURITYTOKENSERVICE_QNAME = new QName(
-				"http://docs.oasis-open.org/ws-sx/ws-trust/200512",
-				"SecurityTokenService");
-		SecurityTokenService securityTokenService = new SecurityTokenService(
-				wsdlLocation, SECURITYTOKENSERVICE_QNAME);
-		return securityTokenService;
+	@Override
+	public void handle(Callback[] callbacks) throws IOException,
+			UnsupportedCallbackException {
 	}
 }

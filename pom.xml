@@ -149,6 +149,7 @@
 		<module>sts-specs</module>
 		<module>sts-ws</module>
 		<module>sts-client</module>
+		<module>sts-client-cxf</module>
 		<module>sts-tests</module>
 	</modules>
 	<properties>

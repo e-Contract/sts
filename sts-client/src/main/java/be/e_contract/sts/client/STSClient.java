@@ -16,34 +16,26 @@
  * http://www.gnu.org/licenses/.
  */
 
-package be.e_contract.sts.ws;
+package be.e_contract.sts.client;
 
-import java.net.URL;
+import javax.xml.ws.BindingProvider;
 
-import javax.xml.namespace.QName;
-
+import be.e_contract.sts.ws.SecurityTokenServiceFactory;
 import be.e_contract.sts.ws.jaxws.SecurityTokenService;
+import be.e_contract.sts.ws.jaxws.SecurityTokenServicePort;
 
-/**
- * Factory for the eID IP-STS JAX-WS web service client.
- * 
- * @author Frank Cornelis
- *
- */
-public class SecurityTokenServiceFactory {
+public class STSClient {
 
-	private SecurityTokenServiceFactory() {
-		super();
-	}
+	private final SecurityTokenServicePort stsPort;
 
-	public static SecurityTokenService newInstance() {
-		URL wsdlLocation = SecurityTokenServiceFactory.class
-				.getResource("/ws-trust-1.3.wsdl");
-		QName SECURITYTOKENSERVICE_QNAME = new QName(
-				"http://docs.oasis-open.org/ws-sx/ws-trust/200512",
-				"SecurityTokenService");
-		SecurityTokenService securityTokenService = new SecurityTokenService(
-				wsdlLocation, SECURITYTOKENSERVICE_QNAME);
-		return securityTokenService;
+	public STSClient(String address) {
+		SecurityTokenService securityTokenService = SecurityTokenServiceFactory
+				.newInstance();
+		this.stsPort = securityTokenService.getSecurityTokenServicePort();
+
+		BindingProvider bindingProvider = (BindingProvider) this.stsPort;
+		bindingProvider.getRequestContext().put(
+				BindingProvider.ENDPOINT_ADDRESS_PROPERTY, address);
+		// TODO: implement me
 	}
 }
