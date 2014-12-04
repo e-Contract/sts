@@ -3,6 +3,7 @@
 	<body>
 		<menu name="Overview">
 			<item name="Introduction" href="index.html" />
+			<item name="Windows Communication Foundation" href="wcf.html" />
 		</menu>
 		<menu ref="modules" />
 		<menu ref="reports" />

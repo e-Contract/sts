@@ -16,6 +16,8 @@ eID Security Token Service Project
 
   {{{./sts-client-cxf}CXF Client Library}}
   
+  We also offer information on integration with {{{./wcf.html}Windows Communication Foundation}}.
+  
   An implementation of the eID IP-STS is available at {{{https://www.e-contract.be/iam/sts?wsdl}e-Contract.be IAM STS}}.
   
   An example web service that has been secured using the eID IP-STS is available at {{{https://www.e-contract.be/iam/example?wsdl}e-Contract.be IAM Example}}.
