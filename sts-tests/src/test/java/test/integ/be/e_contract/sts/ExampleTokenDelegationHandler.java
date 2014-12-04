@@ -5,6 +5,7 @@ import org.apache.cxf.sts.request.ReceivedToken.STATE;
 import org.apache.cxf.sts.token.delegation.TokenDelegationHandler;
 import org.apache.cxf.sts.token.delegation.TokenDelegationParameters;
 import org.apache.cxf.sts.token.delegation.TokenDelegationResponse;
+import org.apache.ws.security.CustomTokenPrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,8 +30,10 @@ public class ExampleTokenDelegationHandler implements TokenDelegationHandler {
 		response.setDelegationAllowed(true);
 		ReceivedToken receivedToken = paramTokenDelegationParameters.getToken();
 		receivedToken.setState(STATE.VALID);
-		receivedToken.setPrincipal(paramTokenDelegationParameters
-				.getPrincipal());
+		CustomTokenPrincipal customTokenPrincipal = new CustomTokenPrincipal(
+				paramTokenDelegationParameters.getPrincipal().getName());
+		customTokenPrincipal.setTokenObject(receivedToken);
+		receivedToken.setPrincipal(customTokenPrincipal);
 		response.setToken(receivedToken);
 		return response;
 	}

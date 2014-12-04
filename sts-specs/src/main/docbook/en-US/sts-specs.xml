@@ -283,6 +283,15 @@
 								</code>
 							</entry>
 						</row>
+						<row>
+							<entry>
+								<code>wst14</code>
+							</entry>
+							<entry>
+								<code>http://docs.oasis-open.org/ws-sx/ws-trust/200802
+								</code>
+							</entry>
+						</row>
 					</tbody>
 				</tgroup>
 			</table>
@@ -446,6 +455,20 @@
 					<citetitle>
 						<ulink
 							url="http://docs.oasis-open.org/ws-sx/ws-trust/200512/ws-trust-1.3-os.html">http://docs.oasis-open.org/ws-sx/ws-trust/200512/ws-trust-1.3-os.html
+						</ulink>
+					</citetitle>
+				</bibliomixed>
+
+				<bibliomixed id="ws-trust-14">
+					<abbrev>WS-Trust14</abbrev>
+					A. Nadalin et al.,
+					<title>WS-Trust 1.4
+					</title>
+					,
+					OASIS, 25 April 2012
+					<citetitle>
+						<ulink
+							url="http://docs.oasis-open.org/ws-sx/ws-trust/v1.4/ws-trust.html">http://docs.oasis-open.org/ws-sx/ws-trust/v1.4/ws-trust.html
 						</ulink>
 					</citetitle>
 				</bibliomixed>
@@ -1382,29 +1405,65 @@
 	</section>
 
 	<section>
-		<title>eID attributes</title>
+		<title>Attributes</title>
 		<para>
 			The active authentication as specified under
 			<xref linkend="sts-x509" />
-			results in a SAML assertion that only contains a subject
+			results in a SAML 2.0 assertion that only contains a subject
 			<code>&lt;saml2:NameID&gt;</code>
 			as unique user identifier.
-			As the eID card also offers different
-			attributes (name, address, ...), relying parties probably also want
-			to access these eID attributes.
-			To allow the eID IP-STS to issue SAML
-			assertions containing eID attributes, the relying party needs to pass
-			an eID specific SAML 2.0 assertion as part of the
+			This section describes various options to
+			enrich the retrieved SAML assertion with attributes.
+			Attributes can
+			have different origins:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<para>
+					Attributes can be self claimed.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					Attributes can be derived from the eID card.
+					As the eID card
+					also offers different
+					attributes (name, address, ...),
+					relying
+					parties probably also want
+					to access these eID attributes.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			To
+			allow the eID IP-STS to issue SAML
+			assertions containing
+			attributes,
+			the relying party needs to pass
+			a specific SAML 2.0
+			assertion as part
+			of the
 			<xref linkend="sts-x509-request" />
 			.
-			This eID specific SAML assertion should be passed as SAML 2.0 bearer
+			This specific SAML assertion should be passed as SAML 2.0 bearer
 			token within the
-			<code>&lt;wsse:Security&gt;</code>
-			SOAP header element.
-			The eID specific SAML assertion looks as follows.
+			<code>&lt;wst14:ActAs&gt;</code>
+			WS-Trust 1.4
+			<xref linkend="ws-trust-14" />
+			element.
+			We are using
+			<code>&lt;wst14:ActAs&gt;</code>
+			to achieve maximum interoperability when using web service
+			frameworks
+			like Apache CXF or Windows Communication Foundation.
+			The
+			specific SAML
+			assertion looks as follows.
 		</para>
-		<programlisting language="xml"><![CDATA[<saml2:Assertion ID="eid-assertion-id"
+		<programlisting language="xml"><![CDATA[<saml2:Assertion ID="assertion-id"
   IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
+  <saml2:Issuer>self-claimed</saml2:Issuer>
   <saml2:AttributeStatement>
   	<saml2:Attribute Name="urn:be:e-contract:sts:eid:identity">
   	  <saml2:AttributeValue xsi:type="xs:base64Binary">
@@ -1416,20 +1475,21 @@
   	    ...
   	  </saml2:AttributeValue>
   	</saml2:Attribute>
-  	<saml2:Attribute Name="urn:be:e-contract:sts:eid:nr-cert">
-  	  <saml2:AttributeValue xsi:type="xs:base64Binary">
+  	<saml2:Attribute Name="urn:be:e-contract:iam:claims:self-claimed:software-key">
+  	  <saml2:AttributeValue xsi:type="xs:string">
   	    ...
   	  </saml2:AttributeValue>
   	</saml2:Attribute>
   </saml2:AttributeStatement>
 </saml2:Assertion>]]></programlisting>
 		<para>
-			Depending on the eID attributes that the eID IP-STS should return,
+			Depending on the attributes that the eID IP-STS should return,
 			other
 			<code>&lt;saml2:Attribute&gt;</code>
-			elements should be passed.
-			The eID IP-STS should support the following
-			eID specific input attributes:
+			elements should be passed within the specific SAML 2.0 assertion.
+			The
+			eID IP-STS should support the following
+			specific input attributes:
 			<variablelist>
 				<varlistentry>
 					<term>
@@ -1510,17 +1570,45 @@
 						</para>
 					</listitem>
 				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>urn:be:e-contract:iam:claims:self-claimed:office-key</code>
+					</term>
+					<listitem>
+						<para>
+							The self claimed office key.
+							The attribute value type should be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>urn:be:e-contract:iam:claims:self-claimed:software-key
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The self claimed software key.
+							The attribute value type should be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
 			</variablelist>
 		</para>
 		<para>
-			Eventually the eID IP-STS will deliver eID attributes as part of
+			Eventually the eID IP-STS will deliver attributes as part of
 			the
-			SAML 2.0 bearer token. These eID attributes are made available
+			SAML
+			2.0 bearer token. These attributes are made available
 			as
 			<code>&lt;saml2:AttributeStatement&gt;</code>
 			attributes within the SAML 2.0 bearer token.
 			The eID IP-STS SHOULD
-			support the following eID attributes:
+			support the following attributes:
 			<variablelist>
 				<varlistentry>
 					<term>
@@ -1704,6 +1792,38 @@
 						</para>
 					</listitem>
 				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>urn:be:e-contract:iam:claims:self-claimed:office-key
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The self claimed office key.
+							The
+							attribute value type should
+							be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term>
+						<code>urn:be:e-contract:iam:claims:self-claimed:software-key
+						</code>
+					</term>
+					<listitem>
+						<para>
+							The self claimed software key.
+							The
+							attribute value type should
+							be
+							<code>xs:string</code>
+							.
+						</para>
+					</listitem>
+				</varlistentry>
 			</variablelist>
 		</para>
 		<para>
@@ -1735,33 +1855,13 @@
 				given
 				below. Here we omitted most elements from the
 				<xref linkend="sts-x509-request" />
-				message to better highlight the eID attribute sections.
+				message to better highlight the attribute sections.
 			</para>
 			<programlisting language="xml"><![CDATA[<soap:Envelope>
   <soap:Header>
     ...
     <wsse:Security soap:mustUnderstand="1">
       ...
-      <saml2:Assertion ID="eid-assertion-id"
-        IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
-        <saml2:AttributeStatement>
-  	      <saml2:Attribute Name="urn:be:e-contract:sts:eid:identity">
-  	        <saml2:AttributeValue xsi:type="xs:base64Binary">
-  	          ...
-  	        </saml2:AttributeValue>
-  	      </saml2:Attribute>
-  	      <saml2:Attribute Name="urn:be:e-contract:sts:eid:identity-signature">
-  	        <saml2:AttributeValue xsi:type="xs:base64Binary">
-  	        ...
-  	        </saml2:AttributeValue>
-          </saml2:Attribute>
-  	      <saml2:Attribute Name="urn:be:e-contract:sts:eid:nr-cert">
-  	        <saml2:AttributeValue xsi:type="xs:base64Binary">
-  	          ...
-  	        </saml2:AttributeValue>
-  	      </saml2:Attribute>
-  	    </saml2:AttributeStatement>
-      </saml2:Assertion>
     </wsse:Security>
   </soap:Header>
   <soap:Body>
@@ -1778,6 +1878,28 @@
           <wsa:Address>urn:some-target-application</wsa:Address>
         </wsa:EndpointReference>
       </wsp:AppliesTo>
+      <wst14:ActAs>
+        <saml2:Assertion ID="assertion-id"
+          IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
+          <saml2:AttributeStatement>
+            <saml2:Attribute Name="urn:be:e-contract:sts:eid:identity">
+  	          <saml2:AttributeValue xsi:type="xs:base64Binary">
+  	            ...
+  	          </saml2:AttributeValue>
+  	        </saml2:Attribute>
+  	        <saml2:Attribute Name="urn:be:e-contract:sts:eid:identity-signature">
+  	          <saml2:AttributeValue xsi:type="xs:base64Binary">
+  	          ...
+  	          </saml2:AttributeValue>
+            </saml2:Attribute>
+  	        <saml2:Attribute Name="urn:be:e-contract:sts:eid:nr-cert">
+  	          <saml2:AttributeValue xsi:type="xs:base64Binary">
+  	            ...
+  	          </saml2:AttributeValue>
+  	        </saml2:Attribute>
+  	      </saml2:AttributeStatement>
+        </saml2:Assertion>
+      </wst14:ActAs>
     </wst:RequestSecurityToken>
   </soap:Body>
 </soap:Envelope>]]></programlisting>
@@ -1794,19 +1916,19 @@
 				The following
 				table
 				<xref linkend="table-mapping" />
-				summarizes which eID data should be provided per requested
+				summarizes which input attributes should be provided per requested
 				claim
 				type. Note that we omitted the prefixes for brevity.
 			</para>
 			<table id="table-mapping">
-				<title>eID Attribute mapping</title>
+				<title>Attribute mapping</title>
 				<tgroup cols="2">
 					<colspec colwidth="2*" />
 					<colspec colwidth="5*" />
 					<thead>
 						<row>
 							<entry>ClaimType Uri</entry>
-							<entry>eID data Uri</entry>
+							<entry>Attribute Name Uri</entry>
 						</row>
 					</thead>
 					<tbody>
@@ -1832,6 +1954,114 @@
 								<code>identity-signature</code>
 								,
 								<code>nr-cert</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>givenname</code>
+							</entry>
+							<entry>
+								<code>identity</code>
+								,
+								<code>identity-signature</code>
+								,
+								<code>nr-cert</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>x500distinguishedname</code>
+							</entry>
+							<entry>
+								<para>Nothing.</para>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>dateofbirth</code>
+							</entry>
+							<entry>
+								<code>identity</code>
+								,
+								<code>identity-signature</code>
+								,
+								<code>nr-cert</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>gender</code>
+							</entry>
+							<entry>
+								<code>identity</code>
+								,
+								<code>identity-signature</code>
+								,
+								<code>nr-cert</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>locality</code>
+							</entry>
+							<entry>
+								<code>identity</code>
+								,
+								<code>identity-signature</code>
+								,
+								<code>nr-cert</code>
+								,
+								<code>address</code>
+								,
+								<code>address-signature</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>postalcode</code>
+							</entry>
+							<entry>
+								<code>identity</code>
+								,
+								<code>identity-signature</code>
+								,
+								<code>nr-cert</code>
+								,
+								<code>address</code>
+								,
+								<code>address-signature</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>streetaddress</code>
+							</entry>
+							<entry>
+								<code>identity</code>
+								,
+								<code>identity-signature</code>
+								,
+								<code>nr-cert</code>
+								,
+								<code>address</code>
+								,
+								<code>address-signature</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>software-key</code>
+							</entry>
+							<entry>
+								<code>software-key</code>
+							</entry>
+						</row>
+						<row>
+							<entry>
+								<code>office-key</code>
+							</entry>
+							<entry>
+								<code>office-key</code>
 							</entry>
 						</row>
 					</tbody>

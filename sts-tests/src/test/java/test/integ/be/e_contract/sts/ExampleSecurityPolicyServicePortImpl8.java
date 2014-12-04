@@ -19,6 +19,7 @@
 package test.integ.be.e_contract.sts;
 
 import java.security.Principal;
+import java.util.List;
 
 import javax.annotation.Resource;
 import javax.jws.HandlerChain;
@@ -28,6 +29,9 @@ import javax.xml.ws.WebServiceContext;
 import org.apache.cxf.annotations.EndpointProperties;
 import org.apache.cxf.annotations.EndpointProperty;
 import org.apache.ws.security.SAMLTokenPrincipal;
+import org.opensaml.saml2.core.Attribute;
+import org.opensaml.xml.XMLObject;
+import org.opensaml.xml.schema.XSString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +56,13 @@ public class ExampleSecurityPolicyServicePortImpl8 implements
 		LOGGER.debug("username: {}", username);
 		LOGGER.debug("principal type: {}", userPrincipal.getClass().getName());
 		SAMLTokenPrincipal samlTokenPrincipal = (SAMLTokenPrincipal) userPrincipal;
-		samlTokenPrincipal.getToken().getSaml2().getAttributeStatements()
-				.get(0).getAttributes().get(0).getAttributeValues().get(0);
+		List<Attribute> attributes = samlTokenPrincipal.getToken().getSaml2()
+				.getAttributeStatements().get(0).getAttributes();
+		for (Attribute attribute : attributes) {
+			LOGGER.debug("SAML attribute: {}", attribute.getName());
+			XSString attributeValue = (XSString) attribute.getAttributeValues().get(0);
+			LOGGER.debug("SAML attribute value: {}", attributeValue.getValue());
+		}
 		return username + ":" + echoRequest;
 	}
 }

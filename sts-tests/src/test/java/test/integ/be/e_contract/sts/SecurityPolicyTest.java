@@ -621,7 +621,7 @@ public class SecurityPolicyTest {
 
 		// invoke the web service
 		String result = port.echo("hello world");
-		Assert.assertEquals("custom-CN=Test:hello world", result);
+		Assert.assertEquals("CN=Test:hello world", result);
 
 		bus.shutdown(true);
 	}

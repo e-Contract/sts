@@ -29,6 +29,8 @@ import org.apache.cxf.sts.claims.ClaimsHandler;
 import org.apache.cxf.sts.claims.ClaimsParameters;
 import org.apache.cxf.sts.claims.RequestClaim;
 import org.apache.cxf.sts.claims.RequestClaimCollection;
+import org.apache.cxf.sts.request.ReceivedToken;
+import org.apache.ws.security.CustomTokenPrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +57,10 @@ public class ExampleClaimsHandler implements ClaimsHandler {
 			ClaimsParameters paramClaimsParameters) {
 		LOGGER.debug("retrieveClaimValues");
 		ClaimCollection claimCollection = new ClaimCollection();
+		CustomTokenPrincipal customTokenPrincipal = (CustomTokenPrincipal) paramClaimsParameters.getPrincipal();
+		ReceivedToken receivedToken = (ReceivedToken) customTokenPrincipal.getTokenObject();
+		LOGGER.debug("received token type: {}", receivedToken.getClass().getName());
+		LOGGER.debug("token type: {}", receivedToken.getToken().getClass().getName());
 		for (RequestClaim requestClaim : paramRequestClaimCollection) {
 			if ("http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
 					.equals(requestClaim.getClaimType().toString())) {

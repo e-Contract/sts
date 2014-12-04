@@ -152,7 +152,10 @@
 								<wst:Claims Dialect="http://schemas.xmlsoap.org/ws/2005/05/identity">
 									<wsid:ClaimType
 										xmlns:wsid="http://schemas.xmlsoap.org/ws/2005/05/identity"
-										Uri="http://schemas.microsoft.com/ws/2008/06/identity/claims/role" />
+										Uri="urn:be:e-contract:iam:claims:self-claimed:office-key" />
+									<wsid:ClaimType
+										xmlns:wsid="http://schemas.xmlsoap.org/ws/2005/05/identity"
+										Uri="urn:be:e-contract:iam:claims:self-claimed:software-key" />
 								</wst:Claims>
 							</sp:RequestSecurityTokenTemplate>
 							<wsp:Policy>
