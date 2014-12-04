@@ -1,0 +1,46 @@
+eID Security Token Service CXF Client
+
+  This Java library provides an implementation of the client side of the eID STS protocol.
+  This library targets the {{{http://cxf.apache.org/}Apache CXF}} JAX-WS runtime.
+  
+  The Java client library is available within the e-contract.be Maven repository.
+  Configure this Maven repository within your pom.xml as follows:
+  
++---
+<repositories>
+	<repository>
+		<id>e-contract.be</id>
+		<url>https://www.e-contract.be/maven2/</url>
+	</repository>
+</repositories>
++---
+
+  Add the client library within your pom.xml dependencies element as follows:
+  
++---
+<dependency>
+	<groupId>be.e_contract.sts</groupId>
+	<artifactId>sts-client-cxf</artifactId>
+	<version>${project.version}</version>
+</dependency>
++---
+
+* Securing a JAX-WS client port for STS usage
+
+  After compiling the WSDL of a web service that has an STS WS-SecurityPolicy you can enable the security as follows:
+  
++---
+ExampleService exampleService = ExampleServiceFactory.newInstance();
+ExampleServicePortType port = exampleService.getExampleServicePort();
+
+SecurityDecorator securityDecorator = new SecurityDecorator(
+	"example-office-key", "example-software-key");
+securityDecorator.decorate((BindingProvider) port,
+	"https://www.e-contract.be/iam/example");
+
+String result = port.echoWithClaims("hello world");
++---
+
+* Javadoc API documentation
+    
+  {{{./apidocs/index.html}Javadoc API documentation}}

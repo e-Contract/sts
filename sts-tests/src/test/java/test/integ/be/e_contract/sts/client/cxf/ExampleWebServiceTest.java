@@ -53,7 +53,6 @@ public class ExampleWebServiceTest {
 		securityDecorator.decorate((BindingProvider) port,
 				"https://www.e-contract.be/iam/example");
 
-		// invoke the web service
 		String result = port.echoWithClaims("hello world");
 		LOGGER.debug("result: " + result);
 	}

@@ -1,0 +1,21 @@
+eID Security Token Service Project
+
+  This project hosts the specifications and client libraries for the eID Security Token Service Protocol.
+  
+  eID authentication in a web context can be easily achieved using for example the eID Identity Provider.
+  Different protocols can be used for web based authentication: SAML 2.0 Browser POST profile, WS-Federation web passive profile, OpenID 2.0, OAuth 2.0 or OpenID Connect.
+  When a relying party (a web application) authenticates an end-user, based on the eID, it can trust the received claims.
+
+  In the context of native (desktop/fat-client) applications however, achieving a trust relationship towards a remote relying party can be a challenge.
+  This project delivers a secure solution to authenticate native applications towards web services using the eID card.
+  Via a WS-Trust Security Token Service (STS) we offer a server-side security verification of the eID authenticated data.
+  
+  Check out the specification document and the different client libraries for more information.
+
+  {{{./sts-specs}Protocol specifications}}
+
+  {{{./sts-client-cxf}CXF Client Library}}
+  
+  An implementation of the eID IP-STS is available at {{{https://www.e-contract.be/iam/sts?wsdl}e-Contract.be IAM STS}}.
+  
+  An example web service that has been secured using the eID IP-STS is available at {{{https://www.e-contract.be/iam/example?wsdl}e-Contract.be IAM Example}}.
