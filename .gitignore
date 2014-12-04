@@ -2,3 +2,4 @@ target/
 .project
 .classpath
 .settings
+sts-specs/src/site/resources/sts-specs-*.pdf
