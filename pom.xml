@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<name>eID Security Token Service Project</name>
 	<groupId>be.e_contract</groupId>
 	<artifactId>sts</artifactId>
-	<version>0.1.6-SNAPSHOT</version>
+	<version>0.1.6</version>
 	<packaging>pom</packaging>
 	<inceptionYear>2014</inceptionYear>
 	<organization>
@@ -152,7 +151,7 @@
 	</properties>
 	<scm>
 		<connection>scm:git:ssh://e-contract.be/home/fcorneli/git/sts.git</connection>
-		<tag>HEAD</tag>
+		<tag>sts-0.1.6</tag>
 	</scm>
 	<distributionManagement>
 		<repository>
