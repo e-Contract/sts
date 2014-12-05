@@ -78,7 +78,8 @@
 	</wsdl:portType>
 
 	<wsdl:binding name="SecurityTokenServiceBinding" type="tns:SecurityTokenServicePort">
-		<wsoap12:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+		<wsoap12:binding transport="http://schemas.xmlsoap.org/soap/http"
+			style="document" />
 		<wsp:PolicyReference URI="#SecurityTokenServicePolicy" />
 		<wsdl:operation name="Issue">
 			<wsoap12:operation
@@ -125,9 +126,14 @@
 						</sp:TransportToken>
 						<sp:AlgorithmSuite>
 							<wsp:Policy>
-								<sp:Basic128 />
+								<sp:Basic256 />
 							</wsp:Policy>
 						</sp:AlgorithmSuite>
+						<sp:Layout>
+							<wsp:Policy>
+								<sp:Lax />
+							</wsp:Policy>
+						</sp:Layout>
 						<sp:IncludeTimestamp />
 					</wsp:Policy>
 				</sp:TransportBinding>
@@ -152,6 +158,9 @@
 						</sp:SignedParts>
 					</wsp:Policy>
 				</sp:EndorsingSupportingTokens>
+				<sp:Wss11>
+					<wsp:Policy />
+				</sp:Wss11>
 				<sp:Trust13>
 					<wsp:Policy>
 						<sp:RequireAppliesTo />
