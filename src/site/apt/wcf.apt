@@ -3,10 +3,37 @@ Windows Communication Foundation
   The eID IP-STS has been designed with interoperability in mind.
   The eID IP-STS can easily be used in combination with Windows Communication Foundation (WCF) and Windows Identity Foundation (WIF).
   
+  Most of the example are constructed as unit tests that are part of our internal Quality Assurance.
+  These examples have been tested out using Visual Studio Community 2013 Update 4.
+  Depending on your version of Windows, the following unit tests might require special permissions. 
+  If you receive a "permission denied" error, try out the next configuration.
+  First determine the current user via command prompt:
+  
++---
+whoami
++---
+  
+  Next execute <<as administrator>> the following command on the <<<cmd>>> command prompt:
+  
++---
+netsh http add urlacl url=https://+:8443/ user="econtract\frank cornelis"
++---
+  
+  where the <user> parameter value is of course the result of the <<<whoami>>> command.
+  
+  You also need to find the hash of the localhost IIS certificate.
+  Again, <<as administrator>> execute the following command on the <<<cmd>>> command prompt:
+  
++---
+netsh http add sslcert ipport=0.0.0.0:8443 certhash=....the hash of your localhost IIS cert... appid={00112233-4455-6677-8899-AABBCCDDEEFF}
++---
+  
 * STS secured WCF 3.5 web service  
   
   The following example demonstrates the creation of a WCF web service that has been secured using the eID IP-STS.
   The example is compatible with .NET 3.5 WIF.
+  The example also demonstrates the usage of the self-claimed attribute <<<software-key>>>.
+  Translating this <code-based> configuration to a <<<web.config>>> configuration should be straightforward.
   
 +---
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -173,6 +200,324 @@ namespace WcfService35
             {
                 serviceHost.Close();
             }
+        }
+    }
+}
++---
+
+* STS secured WCF 4.5 web service  
+  
+  The following example demonstrates the creation of a WCF web service that has been secured using the eID IP-STS.
+  The example is compatible with .NET 4.5 WCF, which includes WIF.
+  The example also demonstrates the usage of the self-claimed attribute <<<software-key>>>.
+  Translating this <code-based> configuration to a <<<web.config>>> configuration should be straightforward.
+  
++---
+using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.ServiceModel;
+using System.ServiceModel.Description;
+using System.IdentityModel.Selectors;
+using System.Security.Cryptography.X509Certificates;
+using System.ServiceModel.Security;
+using System.ServiceModel.Channels;
+using System.IdentityModel.Tokens;
+using System.Text;
+using System.Security.Claims;
+using System.ServiceModel.Security.Tokens;
+using System.Xml;
+
+namespace WcfService2
+{
+
+    [TestClass]
+    public class ExampleTest
+    {
+        [ServiceContract]
+        public interface IExample
+        {
+            [OperationContract]
+            int add(int value1, int value2);
+
+            [OperationContract]
+            string getUserIdentifier();
+
+            [OperationContract]
+            string getSoftwareKey();
+        }
+
+        public class Example : IExample
+        {
+            public int add(int value1, int value2)
+            {
+                return value1 + value2;
+            }
+
+            public string getUserIdentifier()
+            {
+                ClaimsPrincipal principal = OperationContext.Current.ClaimsPrincipal;
+                string username = null;
+                foreach (Claim claim in principal.Claims)
+                {
+                    if (claim.Type == ClaimTypes.NameIdentifier)
+                    {
+                        username = claim.Value;
+                    }
+                }
+                return username;
+            }
+
+            public string getSoftwareKey()
+            {
+                ClaimsPrincipal principal = OperationContext.Current.ClaimsPrincipal;
+                string softwareKey = null;
+                foreach (Claim claim in principal.Claims)
+                {
+                    if (claim.Type == "urn:be:e-contract:iam:claims:self-claimed:software-key")
+                    {
+                        softwareKey = claim.Value;
+                    }
+                }
+                return softwareKey;
+            }
+        }
+
+        [TestMethod]
+        public void TestWCFWithSTS()
+        {
+            ServiceHost serviceHost = new ServiceHost(typeof(Example), new Uri[] { new Uri("https://localhost:8443") });
+
+            serviceHost.Credentials.ServiceCertificate.SetCertificate(StoreLocation.LocalMachine, StoreName.My,
+                X509FindType.FindBySubjectName, "localhost");
+
+            serviceHost.Credentials.UseIdentityConfiguration = true; // WIF
+            serviceHost.Credentials.IdentityConfiguration.AudienceRestriction.AudienceMode = AudienceUriMode.Always;
+            serviceHost.Credentials.IdentityConfiguration.AudienceRestriction.AllowedAudienceUris.Add(new Uri("https://localhost:8443/Example"));
+            ConfigurationBasedIssuerNameRegistry issuerNameRegistry = new ConfigurationBasedIssuerNameRegistry();
+            serviceHost.Credentials.IdentityConfiguration.IssuerNameRegistry = issuerNameRegistry;
+            issuerNameRegistry.AddTrustedIssuer("d43408129f076a329c05143fdfd39bb394990e52", "econtract");
+            serviceHost.Credentials.IdentityConfiguration.CertificateValidationMode = X509CertificateValidationMode.None;
+
+            ServiceBehaviorAttribute serviceBehaviorAttribute = serviceHost.Description.Behaviors.Find<ServiceBehaviorAttribute>();
+            serviceBehaviorAttribute.IncludeExceptionDetailInFaults = true;
+            ServiceMetadataBehavior serviceMetadataBehavior = serviceHost.Description.Behaviors.Find<ServiceMetadataBehavior>();
+            serviceMetadataBehavior.HttpsGetEnabled = true;
+
+            WS2007FederationHttpBinding binding = new WS2007FederationHttpBinding();
+            binding.Security.Mode = WSFederationHttpSecurityMode.TransportWithMessageCredential;
+            binding.Security.Message.IssuedKeyType = SecurityKeyType.BearerKey;
+            binding.Security.Message.NegotiateServiceCredential = false;
+            binding.Security.Message.EstablishSecurityContext = false;
+            binding.Security.Message.IssuedTokenType = "http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0";
+            binding.Security.Message.IssuerAddress = new EndpointAddress("https://www.e-contract.be/iam/sts");
+
+            serviceHost.AddServiceEndpoint(typeof(IExample), binding, "Example");
+            serviceHost.AddServiceEndpoint(ServiceMetadataBehavior.MexContractName,
+                MetadataExchangeBindings.CreateMexHttpsBinding(), "mex");
+
+            serviceHost.Open();
+
+            try
+            {
+                WS2007HttpBinding stsBinding = new WS2007HttpBinding();
+                stsBinding.Security.Mode = SecurityMode.TransportWithMessageCredential;
+                stsBinding.Security.Message.ClientCredentialType = MessageCredentialType.Certificate;
+                stsBinding.Security.Message.EstablishSecurityContext = false;
+
+                WS2007FederationHttpBinding clientBinding = new WS2007FederationHttpBinding();
+                clientBinding.Security.Mode = WSFederationHttpSecurityMode.TransportWithMessageCredential;
+                clientBinding.Security.Message.IssuedKeyType = SecurityKeyType.BearerKey;
+                clientBinding.Security.Message.IssuedTokenType = "http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0";
+                clientBinding.Security.Message.IssuerAddress = new EndpointAddress("https://www.e-contract.be/iam/sts");
+                clientBinding.Security.Message.IssuerMetadataAddress = new EndpointAddress("https://www.e-contract.be/iam/sts/mex");
+                clientBinding.Security.Message.EstablishSecurityContext = false;
+                clientBinding.Security.Message.IssuerBinding = stsBinding;
+                clientBinding.Security.Message.NegotiateServiceCredential = false;
+
+                ClaimTypeRequirement claimTypeRequirement = new ClaimTypeRequirement("urn:be:e-contract:iam:claims:self-claimed:software-key");
+                clientBinding.Security.Message.ClaimTypeRequirements.Add(claimTypeRequirement);
+
+                XmlDocument xmlDocument = new XmlDocument();
+                xmlDocument.LoadXml(
+                    "<wst14:ActAs xmlns:wst14=\"http://docs.oasis-open.org/ws-sx/ws-trust/200802\">" +
+                        "<saml2:Assertion xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\" ID=\"assertion\">" +
+                            "<saml2:AttributeStatement>" +
+                                "<saml2:Attribute Name=\"urn:be:e-contract:iam:claims:self-claimed:software-key\">" +
+                                    "<saml2:AttributeValue xsi:type=\"xs:string\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">example-software-key</saml2:AttributeValue> " +
+                                "</saml2:Attribute>" +
+                            "</saml2:AttributeStatement>" +
+                        "</saml2:Assertion>" +
+                    "</wst14:ActAs>");
+                clientBinding.Security.Message.TokenRequestParameters.Add(xmlDocument.DocumentElement);
+
+                ChannelFactory<IExample> channelFactory = new ChannelFactory<IExample>(clientBinding,
+                    new EndpointAddress("https://localhost:8443/Example"));
+
+                X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                store.Open(OpenFlags.OpenExistingOnly);
+                X509Certificate2Collection certs = X509Certificate2UI.SelectFromCollection
+                    (store.Certificates, "Selection", "Select a certificate", X509SelectionFlag.SingleSelection);
+                X509Certificate2 cert = certs[0];
+                channelFactory.Credentials.ClientCertificate.Certificate = cert;
+
+                IExample example = channelFactory.CreateChannel();
+                Assert.AreEqual(3, example.add(1, 2));
+                Console.WriteLine(example.getUserIdentifier());
+                Assert.AreEqual("example-software-key", example.getSoftwareKey());
+            }
+            finally
+            {
+                serviceHost.Close();
+            }
+        }
+    }
+}
++---
+
+* Consuming the example web service
+
+  As part of the IAM platform we offer an example web service that has been secured using the eID IP-STS.
+  If you inspect the {{{https://www.e-contract.be/iam/example?wsdl}WSDL}} of the example web service, you will notice the usage of two WS-SecurityPolicy configurations.
+  The example web service demonstrates both plain STS authentication and STS authentication with self-claimed attributes.
+  
+  First of all you need to generate the WCF stubs to be able to consume the example web service.
+  Create a new project in Visual Studio and add a service reference via <<Add>> and then <<Service Reference>>.
+  
+  Now you can run the following unit test.
+  
++---
+using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.ServiceModel;
+using System.ServiceModel.Description;
+using System.IdentityModel.Selectors;
+using Example;
+using System.Security.Cryptography.X509Certificates;
+using System.ServiceModel.Security;
+using System.ServiceModel.Channels;
+using System.ServiceModel.Security.Tokens;
+using System.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Protocols.WSTrust;
+
+namespace WcfService2
+{
+
+    [TestClass]
+    public class Example2Test
+    {
+
+        [TestMethod]
+        public void TestMethod2()
+        {
+            WS2007HttpBinding stsBinding = new WS2007HttpBinding();
+            stsBinding.Security.Mode = SecurityMode.TransportWithMessageCredential;
+            stsBinding.Security.Message.ClientCredentialType = MessageCredentialType.Certificate;
+            stsBinding.Security.Message.EstablishSecurityContext = false;
+            stsBinding.Security.Message.NegotiateServiceCredential = false;
+
+            WS2007FederationHttpBinding binding = new WS2007FederationHttpBinding();
+            binding.Security.Mode = WSFederationHttpSecurityMode.TransportWithMessageCredential;
+            binding.Security.Message.IssuedKeyType = SecurityKeyType.BearerKey;
+            binding.Security.Message.IssuedTokenType = "http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0";
+            binding.Security.Message.IssuerAddress = new EndpointAddress("https://www.e-contract.be/iam/sts");
+            //binding.Security.Message.IssuerMetadataAddress = new EndpointAddress("https://www.e-contract.be/iam/sts/mex");
+            binding.Security.Message.EstablishSecurityContext = false;
+            binding.Security.Message.IssuerBinding = stsBinding;
+
+            EndpointAddress endpointAddress = new EndpointAddress("https://www.e-contract.be/iam/example");
+            ExampleServicePortTypeClient client = new ExampleServicePortTypeClient(binding, endpointAddress);
+
+            X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+            store.Open(OpenFlags.OpenExistingOnly);
+            X509Certificate2Collection certs = X509Certificate2UI.SelectFromCollection
+                (store.Certificates, "Selection", "Select a certificate", X509SelectionFlag.SingleSelection);
+            X509Certificate2 cert = certs[0];
+            client.ClientCredentials.ClientCertificate.Certificate = cert;
+
+            string result = client.echo(new echoRequest("hello world")).EchoResponse1;
+            Console.WriteLine("result: " + result);
+        }
+    }
+}
++---
+
+  The example web service with self-claimed attributes can be invoked as shown in the following unit test.
+  
++---
+using System;
+using System.Text;
+using System.Collections.Generic;
+using Microsoft.IdentityModel.Protocols.WSTrust;
+using System.IdentityModel.Tokens;
+using System.ServiceModel.Security.Tokens;
+using System.ServiceModel;
+using System.ServiceModel.Channels;
+using System.ServiceModel.Description;
+using System.ServiceModel.Dispatcher;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using UnitTestProject2.ServiceReference1;
+using System.Xml;
+
+namespace UnitTestProject2
+{
+    [TestClass]
+    public class UnitTest1
+    {
+        [TestMethod]
+        public void TestMethod1()
+        {
+            WS2007HttpBinding stsBinding = new WS2007HttpBinding();
+            stsBinding.Security.Mode = SecurityMode.TransportWithMessageCredential;
+            stsBinding.Security.Message.ClientCredentialType = MessageCredentialType.Certificate;
+            stsBinding.Security.Message.EstablishSecurityContext = false;
+
+            WS2007FederationHttpBinding clientBinding = new WS2007FederationHttpBinding();
+            clientBinding.Security.Mode = WSFederationHttpSecurityMode.TransportWithMessageCredential;
+            clientBinding.Security.Message.IssuedKeyType = SecurityKeyType.BearerKey;
+            clientBinding.Security.Message.IssuedTokenType = "http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0";
+            clientBinding.Security.Message.IssuerAddress = new EndpointAddress("https://www.e-contract.be/iam/sts");
+            clientBinding.Security.Message.IssuerMetadataAddress = new EndpointAddress("https://www.e-contract.be/iam/sts/mex");
+            clientBinding.Security.Message.EstablishSecurityContext = false;
+            clientBinding.Security.Message.IssuerBinding = stsBinding;
+            clientBinding.Security.Message.NegotiateServiceCredential = false;
+
+            ClaimTypeRequirement softwareKeyClaimTypeRequirement = new ClaimTypeRequirement("urn:be:e-contract:iam:claims:self-claimed:software-key");
+            clientBinding.Security.Message.ClaimTypeRequirements.Add(softwareKeyClaimTypeRequirement);
+            ClaimTypeRequirement officeKeyClaimTypeRequirement = new ClaimTypeRequirement("urn:be:e-contract:iam:claims:self-claimed:office-key");
+            clientBinding.Security.Message.ClaimTypeRequirements.Add(officeKeyClaimTypeRequirement);
+
+            XmlDocument xmlDocument = new XmlDocument();
+            xmlDocument.LoadXml(
+                "<wst14:ActAs xmlns:wst14=\"http://docs.oasis-open.org/ws-sx/ws-trust/200802\">" +
+                    "<saml2:Assertion xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\" ID=\"assertion\">" +
+                        "<saml2:AttributeStatement>" +
+                            "<saml2:Attribute Name=\"urn:be:e-contract:iam:claims:self-claimed:software-key\">" +
+                                "<saml2:AttributeValue xsi:type=\"xs:string\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">example-software-key</saml2:AttributeValue> " +
+                            "</saml2:Attribute>" +
+                            "<saml2:Attribute Name=\"urn:be:e-contract:iam:claims:self-claimed:office-key\">" +
+                                "<saml2:AttributeValue xsi:type=\"xs:string\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">example-office-key</saml2:AttributeValue> " +
+                            "</saml2:Attribute>" +
+                        "</saml2:AttributeStatement>" +
+                    "</saml2:Assertion>" +
+                "</wst14:ActAs>");
+            clientBinding.Security.Message.TokenRequestParameters.Add(xmlDocument.DocumentElement);
+
+            EndpointAddress endpointAddress = new EndpointAddress("https://www.e-contract.be/iam/example");
+            ExampleServicePortTypeClient client = new ExampleServicePortTypeClient(clientBinding, endpointAddress);
+
+            X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+            store.Open(OpenFlags.OpenExistingOnly);
+            X509Certificate2Collection certs = X509Certificate2UI.SelectFromCollection
+                (store.Certificates, "Selection", "Select a certificate", X509SelectionFlag.SingleSelection);
+            X509Certificate2 cert = certs[0];
+            client.ClientCredentials.ClientCertificate.Certificate = cert;
+
+            string result = client.echoWithClaims("hello world");
+            Console.WriteLine("result: " + result);
         }
     }
 }
