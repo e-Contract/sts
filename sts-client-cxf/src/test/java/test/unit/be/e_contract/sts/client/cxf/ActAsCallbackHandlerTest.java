@@ -16,6 +16,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import be.e_contract.sts.client.cxf.ActAsCallbackHandler;
+import be.e_contract.sts.client.cxf.SecurityDecorator;
 
 public class ActAsCallbackHandlerTest {
 
@@ -27,8 +28,14 @@ public class ActAsCallbackHandlerTest {
 		// setup
 		String officeKey = "example-office-key";
 		String softwareKey = "example-software-key";
+		byte[] identity = "identity".getBytes();
+		SecurityDecorator securityDecorator = new SecurityDecorator();
+		securityDecorator.setOfficeKey(officeKey);
+		securityDecorator.setSoftwareKey(softwareKey);
+		securityDecorator.setIdentity(identity);
 		ActAsCallbackHandler callbackHandler = new ActAsCallbackHandler(
-				officeKey, softwareKey);
+				securityDecorator);
+
 		DelegationCallback callback = new DelegationCallback();
 
 		// operate

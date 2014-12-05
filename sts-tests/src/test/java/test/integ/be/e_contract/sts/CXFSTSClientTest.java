@@ -91,8 +91,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import be.e_contract.sts.client.cxf.SecurityDecorator;
 import be.e_contract.sts.example.ws.jaxws.ExampleService;
 import be.e_contract.sts.example.ws.jaxws.ExampleServicePortType;
+import be.fedict.commons.eid.client.BeIDCard;
+import be.fedict.commons.eid.client.BeIDCards;
+import be.fedict.commons.eid.client.FileType;
 import be.fedict.commons.eid.jca.BeIDProvider;
 
 public class CXFSTSClientTest {
@@ -181,7 +185,7 @@ public class CXFSTSClientTest {
 
 		bus.shutdown(true);
 	}
-	
+
 	@Test
 	public void testExampleWebServiceWithClaims() throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
@@ -218,7 +222,7 @@ public class CXFSTSClientTest {
 
 		bus.shutdown(true);
 	}
-	
+
 	@Test
 	public void testExampleWebServiceWithClaimsAndActAsToken() throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
@@ -231,28 +235,49 @@ public class CXFSTSClientTest {
 				new QName("urn:be:e-contract:sts:example", "ExampleService"));
 		ExampleServicePortType port = exampleService.getExampleServicePort();
 
-		// set the web service address on the client stub
-		BindingProvider bindingProvider = (BindingProvider) port;
-		Map<String, Object> requestContext = bindingProvider
-				.getRequestContext();
-		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY,
+		SecurityDecorator securityDecorator = new SecurityDecorator();
+		securityDecorator.setOfficeKey("example-office-key");
+		securityDecorator.setSoftwareKey("example-software-key");
+		securityDecorator.decorate((BindingProvider) port,
 				"https://localhost/iam/example");
-
-		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
-		requestContext
-				.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
-		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO,
-				"true");
-		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "username");
-		requestContext.put(SecurityConstants.CALLBACK_HANDLER,
-				new ExampleSecurityPolicyCallbackHandler());
-		requestContext.put(
-				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
-		requestContext.put(SecurityConstants.STS_TOKEN_ACT_AS,
-				new ActAsSamlCallbackHandler("example-office-key", "example-software-key"));
 
 		// invoke the web service
 		String result = port.echoWithClaims("hello world");
+		LOGGER.debug("result: " + result);
+
+		bus.shutdown(true);
+	}
+
+	@Test
+	public void testExampleWebServiceWithIdentityClaims() throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
+		BusFactory.setDefaultBus(bus);
+		// get the JAX-WS client
+		URL wsdlLocation = CXFSTSClientTest.class
+				.getResource("/example-localhost-sts.wsdl");
+		ExampleService exampleService = new ExampleService(wsdlLocation,
+				new QName("urn:be:e-contract:sts:example", "ExampleService"));
+		ExampleServicePortType port = exampleService.getExampleServicePort();
+
+		BeIDCards beIDCards = new BeIDCards();
+		BeIDCard beIDCard = beIDCards.getOneBeIDCard();
+		byte[] identity = beIDCard.readFile(FileType.Identity);
+		byte[] identitySignature = beIDCard
+				.readFile(FileType.IdentitySignature);
+		byte[] nrCert = beIDCard.readFile(FileType.RRNCertificate);
+
+		SecurityDecorator securityDecorator = new SecurityDecorator();
+		securityDecorator.setOfficeKey("example-office-key");
+		securityDecorator.setSoftwareKey("example-software-key");
+		securityDecorator.setIdentity(identity);
+		securityDecorator.setIdentitySignature(identitySignature);
+		securityDecorator.setNationalRegistrationCertificate(nrCert);
+		securityDecorator.decorate((BindingProvider) port,
+				"https://localhost/iam/example");
+
+		// invoke the web service
+		String result = port.echoWithIdentityClaims("hello world");
 		LOGGER.debug("result: " + result);
 
 		bus.shutdown(true);
@@ -367,7 +392,7 @@ public class CXFSTSClientTest {
 				"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
 				resultSecurityToken.getTokenType());
 	}
-	
+
 	@Test
 	public void testCXFSTSWithClaimsAndActAsAssertion() throws Exception {
 		// SpringBusFactory bf = new SpringBusFactory();

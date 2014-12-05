@@ -28,6 +28,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.xml.namespace.QName;
 
 import org.apache.cxf.ws.security.trust.delegation.DelegationCallback;
+import org.apache.ws.security.util.Base64;
 import org.joda.time.DateTime;
 import org.opensaml.Configuration;
 import org.opensaml.DefaultBootstrap;
@@ -40,10 +41,13 @@ import org.opensaml.saml2.core.Issuer;
 import org.opensaml.xml.ConfigurationException;
 import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.XMLObjectBuilder;
+import org.opensaml.xml.schema.XSBase64Binary;
 import org.opensaml.xml.schema.XSString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
+
+import be.e_contract.sts.ws.Attributes;
 
 /**
  * JAAS callback for Apache CXF ActAs token construction.
@@ -56,13 +60,10 @@ public class ActAsCallbackHandler implements CallbackHandler {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(ActAsCallbackHandler.class);
 
-	private final String officeKey;
+	private final SecurityDecorator securityDecorator;
 
-	private final String softwareKey;
-
-	public ActAsCallbackHandler(String officeKey, String softwareKey) {
-		this.officeKey = officeKey;
-		this.softwareKey = softwareKey;
+	public ActAsCallbackHandler(SecurityDecorator securityDecorator) {
+		this.securityDecorator = securityDecorator;
 	}
 
 	static {
@@ -112,33 +113,61 @@ public class ActAsCallbackHandler implements CallbackHandler {
 				AttributeStatement.DEFAULT_ELEMENT_NAME);
 		attributeStatements.add(attributeStatement);
 
-		XMLObjectBuilder<XSString> builder = Configuration.getBuilderFactory()
-				.getBuilder(XSString.TYPE_NAME);
-
-		Attribute softwareKeyAttribute = buildXMLObject(Attribute.class,
-				Attribute.DEFAULT_ELEMENT_NAME);
-		softwareKeyAttribute
-				.setName("urn:be:e-contract:iam:claims:self-claimed:software-key");
-		XSString softwareKeyAttributeValue = builder.buildObject(
-				AttributeValue.DEFAULT_ELEMENT_NAME, XSString.TYPE_NAME);
-		softwareKeyAttributeValue.setValue(this.softwareKey);
-		softwareKeyAttribute.getAttributeValues()
-				.add(softwareKeyAttributeValue);
-		attributeStatement.getAttributes().add(softwareKeyAttribute);
-
-		Attribute officeKeyAttribute = buildXMLObject(Attribute.class,
-				Attribute.DEFAULT_ELEMENT_NAME);
-		officeKeyAttribute
-				.setName("urn:be:e-contract:iam:claims:self-claimed:office-key");
-		XSString officeKeyAttributeValue = builder.buildObject(
-				AttributeValue.DEFAULT_ELEMENT_NAME, XSString.TYPE_NAME);
-		officeKeyAttributeValue.setValue(this.officeKey);
-		officeKeyAttribute.getAttributeValues().add(officeKeyAttributeValue);
-		attributeStatement.getAttributes().add(officeKeyAttribute);
+		addAttribute(attributeStatement, Attributes.SOFTWARE_KEY,
+				this.securityDecorator.getSoftwareKey());
+		addAttribute(attributeStatement, Attributes.OFFICE_KEY,
+				this.securityDecorator.getOfficeKey());
+		addAttribute(attributeStatement, Attributes.IDENTITY,
+				this.securityDecorator.getIdentity());
+		addAttribute(attributeStatement, Attributes.IDENTITY_SIGNATURE,
+				this.securityDecorator.getIdentitySignature());
+		addAttribute(attributeStatement, Attributes.ADDRESS,
+				this.securityDecorator.getAddress());
+		addAttribute(attributeStatement, Attributes.ADDRESS_SIGNATURE,
+				this.securityDecorator.getAddressSignature());
+		addAttribute(attributeStatement,
+				Attributes.NATIONAL_REGISTRATION_CERTIFICATE,
+				this.securityDecorator.getNationalRegistrationCertificate());
+		addAttribute(attributeStatement, Attributes.PHOTO,
+				this.securityDecorator.getPhoto());
 
 		Element element = Configuration.getMarshallerFactory()
 				.getMarshaller(assertion).marshall(assertion);
 		return element;
+	}
+
+	private void addAttribute(AttributeStatement attributeStatement,
+			Attributes attribute, String value) {
+		if (null == value) {
+			return;
+		}
+		XMLObjectBuilder<XSString> builder = Configuration.getBuilderFactory()
+				.getBuilder(XSString.TYPE_NAME);
+		Attribute samlAttribute = buildXMLObject(Attribute.class,
+				Attribute.DEFAULT_ELEMENT_NAME);
+		samlAttribute.setName(attribute.getName());
+		XSString attributeValue = builder.buildObject(
+				AttributeValue.DEFAULT_ELEMENT_NAME, XSString.TYPE_NAME);
+		attributeValue.setValue(value);
+		samlAttribute.getAttributeValues().add(attributeValue);
+		attributeStatement.getAttributes().add(samlAttribute);
+	}
+
+	private void addAttribute(AttributeStatement attributeStatement,
+			Attributes attribute, byte[] value) {
+		if (null == value) {
+			return;
+		}
+		XMLObjectBuilder<XSBase64Binary> builder = Configuration
+				.getBuilderFactory().getBuilder(XSBase64Binary.TYPE_NAME);
+		Attribute samlAttribute = buildXMLObject(Attribute.class,
+				Attribute.DEFAULT_ELEMENT_NAME);
+		samlAttribute.setName(attribute.getName());
+		XSBase64Binary attributeValue = builder.buildObject(
+				AttributeValue.DEFAULT_ELEMENT_NAME, XSBase64Binary.TYPE_NAME);
+		attributeValue.setValue(Base64.encode(value));
+		samlAttribute.getAttributeValues().add(attributeValue);
+		attributeStatement.getAttributes().add(samlAttribute);
 	}
 
 	private <T extends XMLObject> T buildXMLObject(Class<T> clazz,

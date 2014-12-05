@@ -48,8 +48,9 @@ public class ExampleWebServiceTest {
 		ExampleService exampleService = ExampleServiceFactory.newInstance();
 		ExampleServicePortType port = exampleService.getExampleServicePort();
 
-		SecurityDecorator securityDecorator = new SecurityDecorator(
-				"example-office-key", "example-software-key");
+		SecurityDecorator securityDecorator = new SecurityDecorator();
+		securityDecorator.setOfficeKey("example-office-key");
+		securityDecorator.setSoftwareKey("example-software-key");
 		securityDecorator.decorate((BindingProvider) port,
 				"https://www.e-contract.be/iam/example");
 

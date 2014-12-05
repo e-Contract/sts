@@ -33,13 +33,93 @@ import org.apache.cxf.ws.security.SecurityConstants;
  */
 public class SecurityDecorator {
 
-	private final String officeKey;
+	private String officeKey;
 
-	private final String softwareKey;
+	private String softwareKey;
 
-	public SecurityDecorator(String officeKey, String softwareKey) {
+	private byte[] identity;
+
+	private byte[] identitySignature;
+
+	private byte[] nationalRegistrationCertificate;
+
+	private byte[] address;
+
+	private byte[] addressSignature;
+
+	private byte[] photo;
+
+	private boolean useActAsToken() {
+		return this.officeKey != null || this.softwareKey != null
+				|| this.identity != null || this.identitySignature != null
+				|| this.address != null || this.addressSignature != null
+				|| this.photo != null
+				|| this.nationalRegistrationCertificate != null;
+	}
+
+	public String getOfficeKey() {
+		return this.officeKey;
+	}
+
+	public void setOfficeKey(String officeKey) {
 		this.officeKey = officeKey;
+	}
+
+	public String getSoftwareKey() {
+		return this.softwareKey;
+	}
+
+	public void setSoftwareKey(String softwareKey) {
 		this.softwareKey = softwareKey;
+	}
+
+	public byte[] getIdentity() {
+		return this.identity;
+	}
+
+	public void setIdentity(byte[] identity) {
+		this.identity = identity;
+	}
+
+	public byte[] getIdentitySignature() {
+		return this.identitySignature;
+	}
+
+	public void setIdentitySignature(byte[] identitySignature) {
+		this.identitySignature = identitySignature;
+	}
+
+	public byte[] getNationalRegistrationCertificate() {
+		return this.nationalRegistrationCertificate;
+	}
+
+	public void setNationalRegistrationCertificate(
+			byte[] nationalRegistrationCertificate) {
+		this.nationalRegistrationCertificate = nationalRegistrationCertificate;
+	}
+
+	public byte[] getAddress() {
+		return this.address;
+	}
+
+	public void setAddress(byte[] address) {
+		this.address = address;
+	}
+
+	public byte[] getAddressSignature() {
+		return this.addressSignature;
+	}
+
+	public void setAddressSignature(byte[] addressSignature) {
+		this.addressSignature = addressSignature;
+	}
+
+	public byte[] getPhoto() {
+		return this.photo;
+	}
+
+	public void setPhoto(byte[] photo) {
+		this.photo = photo;
 	}
 
 	/**
@@ -70,7 +150,10 @@ public class SecurityDecorator {
 
 		requestContext.put(
 				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
-		requestContext.put(SecurityConstants.STS_TOKEN_ACT_AS,
-				new ActAsCallbackHandler(this.officeKey, this.softwareKey));
+		if (useActAsToken()) {
+			// only when an attribute has been set
+			requestContext.put(SecurityConstants.STS_TOKEN_ACT_AS,
+					new ActAsCallbackHandler(this));
+		}
 	}
 }
