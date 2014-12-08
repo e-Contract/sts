@@ -34,6 +34,12 @@
 	<message name="GetIdentityClaimsResponse">
 		<part name="GetIdentityClaimsResponse" element="tns:GetIdentityClaimsResponse" />
 	</message>
+	<message name="GetAddressClaimsRequest">
+		<part name="GetAddressClaimsRequest" element="tns:GetAddressClaimsRequest" />
+	</message>
+	<message name="GetAddressClaimsResponse">
+		<part name="GetAddressClaimsResponse" element="tns:GetAddressClaimsResponse" />
+	</message>
 
 	<portType name="ExampleServicePortType">
 		<operation name="echo">
@@ -47,6 +53,10 @@
 		<operation name="getIdentityClaims">
 			<input message="tns:GetIdentityClaimsRequest" />
 			<output message="tns:GetIdentityClaimsResponse" />
+		</operation>
+		<operation name="getAddressClaims">
+			<input message="tns:GetAddressClaimsRequest" />
+			<output message="tns:GetAddressClaimsResponse" />
 		</operation>
 	</portType>
 

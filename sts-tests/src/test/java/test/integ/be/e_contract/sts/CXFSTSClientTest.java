@@ -94,6 +94,7 @@ import org.slf4j.LoggerFactory;
 import be.e_contract.sts.client.cxf.SecurityDecorator;
 import be.e_contract.sts.example.ws.jaxb.ClaimType;
 import be.e_contract.sts.example.ws.jaxb.ClaimsResponseType;
+import be.e_contract.sts.example.ws.jaxb.GetAddressClaimsRequest;
 import be.e_contract.sts.example.ws.jaxb.GetIdentityClaimsRequest;
 import be.e_contract.sts.example.ws.jaxb.GetSelfClaimsRequest;
 import be.e_contract.sts.example.ws.jaxws.ExampleService;
@@ -320,6 +321,58 @@ public class CXFSTSClientTest {
 				"example-software-key"));
 		assertTrue(hasClaim(claimsResponse.getClaim(),
 				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"));
+
+		bus.shutdown(true);
+	}
+
+	@Test
+	public void testExampleWebServiceWithAddressClaims() throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
+		BusFactory.setDefaultBus(bus);
+		// get the JAX-WS client
+		URL wsdlLocation = CXFSTSClientTest.class
+				.getResource("/example-localhost-sts.wsdl");
+		ExampleService exampleService = new ExampleService(wsdlLocation,
+				new QName("urn:be:e-contract:sts:example", "ExampleService"));
+		ExampleServicePortType port = exampleService.getExampleServicePort();
+
+		BeIDCards beIDCards = new BeIDCards();
+		BeIDCard beIDCard = beIDCards.getOneBeIDCard();
+		byte[] identity = beIDCard.readFile(FileType.Identity);
+		byte[] identitySignature = beIDCard
+				.readFile(FileType.IdentitySignature);
+		byte[] nrCert = beIDCard.readFile(FileType.RRNCertificate);
+		byte[] address = beIDCard.readFile(FileType.Address);
+		byte[] addressSignature = beIDCard.readFile(FileType.AddressSignature);
+
+		SecurityDecorator securityDecorator = new SecurityDecorator();
+		securityDecorator.setOfficeKey("example-office-key");
+		securityDecorator.setSoftwareKey("example-software-key");
+		securityDecorator.setIdentity(identity);
+		securityDecorator.setIdentitySignature(identitySignature);
+		securityDecorator.setNationalRegistrationCertificate(nrCert);
+		securityDecorator.setAddress(address);
+		securityDecorator.setAddressSignature(addressSignature);
+		securityDecorator.decorate((BindingProvider) port,
+				"https://localhost/iam/example");
+
+		// invoke the web service
+		GetAddressClaimsRequest getAddressClaimsRequest = new GetAddressClaimsRequest();
+		ClaimsResponseType claimsResponse = port
+				.getAddressClaims(getAddressClaimsRequest);
+		LOGGER.debug("subject: {}", claimsResponse.getSubject());
+		for (ClaimType claim : claimsResponse.getClaim()) {
+			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
+		}
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"urn:be:e-contract:iam:claims:self-claimed:office-key",
+				"example-office-key"));
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"urn:be:e-contract:iam:claims:self-claimed:software-key",
+				"example-software-key"));
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/streetaddress"));
 
 		bus.shutdown(true);
 	}
