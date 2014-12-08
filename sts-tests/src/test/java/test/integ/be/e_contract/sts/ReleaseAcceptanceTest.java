@@ -62,11 +62,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import be.e_contract.sts.client.cxf.SecurityDecorator;
 import be.e_contract.sts.example.ws.jaxb.ClaimType;
 import be.e_contract.sts.example.ws.jaxb.ClaimsResponseType;
+import be.e_contract.sts.example.ws.jaxb.GetAddressClaimsRequest;
+import be.e_contract.sts.example.ws.jaxb.GetIdentityClaimsRequest;
 import be.e_contract.sts.example.ws.jaxb.GetSelfClaimsRequest;
 import be.e_contract.sts.example.ws.jaxws.ExampleService;
 import be.e_contract.sts.example.ws.jaxws.ExampleServicePortType;
+import be.fedict.commons.eid.client.BeIDCard;
+import be.fedict.commons.eid.client.BeIDCards;
+import be.fedict.commons.eid.client.FileType;
 import be.fedict.commons.eid.jca.BeIDProvider;
 
 /**
@@ -203,6 +209,114 @@ public class ReleaseAcceptanceTest {
 		for (ClaimType claim : claimsResponse.getClaim()) {
 			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
 		}
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"urn:be:e-contract:iam:claims:self-claimed:office-key",
+				"example-office-key"));
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"urn:be:e-contract:iam:claims:self-claimed:software-key",
+				"example-software-key"));
+	}
+
+	@Test
+	public void testExampleWebServiceWithIdentityClaims() throws Exception {
+		ExampleService exampleService = new ExampleService();
+		ExampleServicePortType port = exampleService.getExampleServicePort();
+
+		BeIDCards beIDCards = new BeIDCards();
+		BeIDCard beIDCard = beIDCards.getOneBeIDCard();
+		byte[] identity = beIDCard.readFile(FileType.Identity);
+		byte[] identitySignature = beIDCard
+				.readFile(FileType.IdentitySignature);
+		byte[] nrCert = beIDCard.readFile(FileType.RRNCertificate);
+
+		SecurityDecorator securityDecorator = new SecurityDecorator();
+		securityDecorator.setOfficeKey("example-office-key");
+		securityDecorator.setSoftwareKey("example-software-key");
+		securityDecorator.setIdentity(identity);
+		securityDecorator.setIdentitySignature(identitySignature);
+		securityDecorator.setNationalRegistrationCertificate(nrCert);
+		securityDecorator.decorate((BindingProvider) port,
+				"https://www.e-contract.be/iam/example");
+
+		// invoke the web service
+		GetIdentityClaimsRequest getIdentityClaimsRequest = new GetIdentityClaimsRequest();
+		ClaimsResponseType claimsResponse = port
+				.getIdentityClaims(getIdentityClaimsRequest);
+		LOGGER.debug("subject: {}", claimsResponse.getSubject());
+		for (ClaimType claim : claimsResponse.getClaim()) {
+			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
+		}
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"urn:be:e-contract:iam:claims:self-claimed:office-key",
+				"example-office-key"));
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"urn:be:e-contract:iam:claims:self-claimed:software-key",
+				"example-software-key"));
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"));
+	}
+
+	@Test
+	public void testExampleWebServiceWithAddressClaims() throws Exception {
+		ExampleService exampleService = new ExampleService();
+		ExampleServicePortType port = exampleService.getExampleServicePort();
+
+		BeIDCards beIDCards = new BeIDCards();
+		BeIDCard beIDCard = beIDCards.getOneBeIDCard();
+		byte[] identity = beIDCard.readFile(FileType.Identity);
+		byte[] identitySignature = beIDCard
+				.readFile(FileType.IdentitySignature);
+		byte[] nrCert = beIDCard.readFile(FileType.RRNCertificate);
+		byte[] address = beIDCard.readFile(FileType.Address);
+		byte[] addressSignature = beIDCard.readFile(FileType.AddressSignature);
+
+		SecurityDecorator securityDecorator = new SecurityDecorator();
+		securityDecorator.setOfficeKey("example-office-key");
+		securityDecorator.setSoftwareKey("example-software-key");
+		securityDecorator.setIdentity(identity);
+		securityDecorator.setIdentitySignature(identitySignature);
+		securityDecorator.setNationalRegistrationCertificate(nrCert);
+		securityDecorator.setAddress(address);
+		securityDecorator.setAddressSignature(addressSignature);
+		securityDecorator.decorate((BindingProvider) port,
+				"https://www.e-contract.be/iam/example");
+
+		// invoke the web service
+		GetAddressClaimsRequest getAddressClaimsRequest = new GetAddressClaimsRequest();
+		ClaimsResponseType claimsResponse = port
+				.getAddressClaims(getAddressClaimsRequest);
+		LOGGER.debug("subject: {}", claimsResponse.getSubject());
+		for (ClaimType claim : claimsResponse.getClaim()) {
+			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
+		}
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"urn:be:e-contract:iam:claims:self-claimed:office-key",
+				"example-office-key"));
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"urn:be:e-contract:iam:claims:self-claimed:software-key",
+				"example-software-key"));
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/streetaddress"));
+	}
+
+	private boolean hasClaim(List<ClaimType> claims, String name, String value) {
+		for (ClaimType claim : claims) {
+			if (claim.getName().equals(name)) {
+				if (claim.getValue().equals(value)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean hasClaim(List<ClaimType> claims, String name) {
+		for (ClaimType claim : claims) {
+			if (claim.getName().equals(name)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Test
