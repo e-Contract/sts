@@ -22,19 +22,31 @@
 	<message name="EchoResponse">
 		<part name="EchoResponse" element="tns:EchoResponse" />
 	</message>
+	<message name="GetSelfClaimsRequest">
+		<part name="GetSelfClaimsRequest" element="tns:GetSelfClaimsRequest" />
+	</message>
+	<message name="GetSelfClaimsResponse">
+		<part name="GetSelfClaimsResponse" element="tns:GetSelfClaimsResponse" />
+	</message>
+	<message name="GetIdentityClaimsRequest">
+		<part name="GetIdentityClaimsRequest" element="tns:GetIdentityClaimsRequest" />
+	</message>
+	<message name="GetIdentityClaimsResponse">
+		<part name="GetIdentityClaimsResponse" element="tns:GetIdentityClaimsResponse" />
+	</message>
 
 	<portType name="ExampleServicePortType">
 		<operation name="echo">
 			<input message="tns:EchoRequest" />
 			<output message="tns:EchoResponse" />
 		</operation>
-		<operation name="echoWithClaims">
-			<input message="tns:EchoRequest" />
-			<output message="tns:EchoResponse" />
+		<operation name="getSelfClaims">
+			<input message="tns:GetSelfClaimsRequest" />
+			<output message="tns:GetSelfClaimsResponse" />
 		</operation>
-		<operation name="echoWithIdentityClaims">
-			<input message="tns:EchoRequest" />
-			<output message="tns:EchoResponse" />
+		<operation name="getIdentityClaims">
+			<input message="tns:GetIdentityClaimsRequest" />
+			<output message="tns:GetIdentityClaimsResponse" />
 		</operation>
 	</portType>
 

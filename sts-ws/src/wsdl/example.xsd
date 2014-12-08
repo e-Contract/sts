@@ -6,4 +6,26 @@
 	<element name="EchoRequest" type="xs:string" />
 	<element name="EchoResponse" type="xs:string" />
 
+	<element name="GetSelfClaimsRequest">
+		<complexType />
+	</element>
+	<element name="GetSelfClaimsResponse" type="tns:ClaimsResponseType" />
+	<complexType name="ClaimsResponseType">
+		<sequence>
+			<element name="Subject" type="xs:string" />
+			<element name="Claim" type="tns:ClaimType" maxOccurs="unbounded" />
+		</sequence>
+	</complexType>
+	<complexType name="ClaimType">
+		<sequence>
+			<element name="Name" type="xs:string" />
+			<element name="Value" type="xs:string" />
+		</sequence>
+	</complexType>
+
+	<element name="GetIdentityClaimsRequest">
+		<complexType />
+	</element>
+	<element name="GetIdentityClaimsResponse" type="tns:ClaimsResponseType" />
+
 </schema>

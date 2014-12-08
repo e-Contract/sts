@@ -29,6 +29,9 @@ import org.slf4j.LoggerFactory;
 
 import be.e_contract.sts.client.cxf.SecurityDecorator;
 import be.e_contract.sts.example.ws.ExampleServiceFactory;
+import be.e_contract.sts.example.ws.jaxb.ClaimType;
+import be.e_contract.sts.example.ws.jaxb.ClaimsResponseType;
+import be.e_contract.sts.example.ws.jaxb.GetSelfClaimsRequest;
 import be.e_contract.sts.example.ws.jaxws.ExampleService;
 import be.e_contract.sts.example.ws.jaxws.ExampleServicePortType;
 import be.fedict.commons.eid.jca.BeIDProvider;
@@ -54,7 +57,12 @@ public class ExampleWebServiceTest {
 		securityDecorator.decorate((BindingProvider) port,
 				"https://www.e-contract.be/iam/example");
 
-		String result = port.echoWithClaims("hello world");
-		LOGGER.debug("result: " + result);
+		GetSelfClaimsRequest getSelfClaimsRequest = new GetSelfClaimsRequest();
+		ClaimsResponseType claimsResponse = port
+				.getSelfClaims(getSelfClaimsRequest);
+		LOGGER.debug("subject: {}", claimsResponse.getSubject());
+		for (ClaimType claim : claimsResponse.getClaim()) {
+			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
+		}
 	}
 }

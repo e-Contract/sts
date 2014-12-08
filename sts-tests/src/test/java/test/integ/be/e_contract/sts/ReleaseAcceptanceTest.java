@@ -62,6 +62,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import be.e_contract.sts.example.ws.jaxb.ClaimType;
+import be.e_contract.sts.example.ws.jaxb.ClaimsResponseType;
+import be.e_contract.sts.example.ws.jaxb.GetSelfClaimsRequest;
 import be.e_contract.sts.example.ws.jaxws.ExampleService;
 import be.e_contract.sts.example.ws.jaxws.ExampleServicePortType;
 import be.fedict.commons.eid.jca.BeIDProvider;
@@ -193,8 +196,13 @@ public class ReleaseAcceptanceTest {
 						"example-software-key"));
 
 		// invoke the web service
-		String result = port.echoWithClaims("hello world");
-		LOGGER.debug("result: " + result);
+		GetSelfClaimsRequest getSelfClaimsRequest = new GetSelfClaimsRequest();
+		ClaimsResponseType claimsResponse = port
+				.getSelfClaims(getSelfClaimsRequest);
+		LOGGER.debug("subject: {}", claimsResponse.getSubject());
+		for (ClaimType claim : claimsResponse.getClaim()) {
+			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
+		}
 	}
 
 	@Test

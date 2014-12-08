@@ -92,6 +92,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import be.e_contract.sts.client.cxf.SecurityDecorator;
+import be.e_contract.sts.example.ws.jaxb.ClaimType;
+import be.e_contract.sts.example.ws.jaxb.ClaimsResponseType;
+import be.e_contract.sts.example.ws.jaxb.GetIdentityClaimsRequest;
+import be.e_contract.sts.example.ws.jaxb.GetSelfClaimsRequest;
 import be.e_contract.sts.example.ws.jaxws.ExampleService;
 import be.e_contract.sts.example.ws.jaxws.ExampleServicePortType;
 import be.fedict.commons.eid.client.BeIDCard;
@@ -198,29 +202,48 @@ public class CXFSTSClientTest {
 				new QName("urn:be:e-contract:sts:example", "ExampleService"));
 		ExampleServicePortType port = exampleService.getExampleServicePort();
 
-		// set the web service address on the client stub
-		BindingProvider bindingProvider = (BindingProvider) port;
-		Map<String, Object> requestContext = bindingProvider
-				.getRequestContext();
-		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY,
+		SecurityDecorator securityDecorator = new SecurityDecorator();
+		securityDecorator.setOfficeKey("example-office-key");
+		securityDecorator.setSoftwareKey("example-software-key");
+		securityDecorator.decorate((BindingProvider) port,
 				"https://localhost/iam/example");
 
-		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
-		requestContext
-				.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
-		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO,
-				"true");
-		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "username");
-		requestContext.put(SecurityConstants.CALLBACK_HANDLER,
-				new ExampleSecurityPolicyCallbackHandler());
-		requestContext.put(
-				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
-
 		// invoke the web service
-		String result = port.echoWithClaims("hello world");
-		LOGGER.debug("result: " + result);
+		GetSelfClaimsRequest getSelfClaimsRequest = new GetSelfClaimsRequest();
+		ClaimsResponseType claimsResponse = port
+				.getSelfClaims(getSelfClaimsRequest);
+		LOGGER.debug("subject: {}", claimsResponse.getSubject());
+		for (ClaimType claim : claimsResponse.getClaim()) {
+			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
+		}
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"urn:be:e-contract:iam:claims:self-claimed:office-key",
+				"example-office-key"));
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"urn:be:e-contract:iam:claims:self-claimed:software-key",
+				"example-software-key"));
 
 		bus.shutdown(true);
+	}
+
+	private boolean hasClaim(List<ClaimType> claims, String name, String value) {
+		for (ClaimType claim : claims) {
+			if (claim.getName().equals(name)) {
+				if (claim.getValue().equals(value)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean hasClaim(List<ClaimType> claims, String name) {
+		for (ClaimType claim : claims) {
+			if (claim.getName().equals(name)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Test
@@ -242,8 +265,13 @@ public class CXFSTSClientTest {
 				"https://localhost/iam/example");
 
 		// invoke the web service
-		String result = port.echoWithClaims("hello world");
-		LOGGER.debug("result: " + result);
+		GetSelfClaimsRequest getSelfClaimsRequest = new GetSelfClaimsRequest();
+		ClaimsResponseType claimsResponse = port
+				.getSelfClaims(getSelfClaimsRequest);
+		LOGGER.debug("subject: {}", claimsResponse.getSubject());
+		for (ClaimType claim : claimsResponse.getClaim()) {
+			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
+		}
 
 		bus.shutdown(true);
 	}
@@ -277,8 +305,21 @@ public class CXFSTSClientTest {
 				"https://localhost/iam/example");
 
 		// invoke the web service
-		String result = port.echoWithIdentityClaims("hello world");
-		LOGGER.debug("result: " + result);
+		GetIdentityClaimsRequest getIdentityClaimsRequest = new GetIdentityClaimsRequest();
+		ClaimsResponseType claimsResponse = port
+				.getIdentityClaims(getIdentityClaimsRequest);
+		LOGGER.debug("subject: {}", claimsResponse.getSubject());
+		for (ClaimType claim : claimsResponse.getClaim()) {
+			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
+		}
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"urn:be:e-contract:iam:claims:self-claimed:office-key",
+				"example-office-key"));
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"urn:be:e-contract:iam:claims:self-claimed:software-key",
+				"example-software-key"));
+		assertTrue(hasClaim(claimsResponse.getClaim(),
+				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"));
 
 		bus.shutdown(true);
 	}
