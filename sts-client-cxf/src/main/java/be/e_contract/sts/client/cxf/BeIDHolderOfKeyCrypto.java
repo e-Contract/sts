@@ -16,15 +16,13 @@
  * http://www.gnu.org/licenses/.
  */
 
-package test.integ.be.e_contract.sts;
+package be.e_contract.sts.client.cxf;
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.List;
 
 import javax.security.auth.callback.CallbackHandler;
 
@@ -34,35 +32,32 @@ import org.apache.ws.security.components.crypto.CryptoType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ClientCrypto implements Crypto {
+/**
+ * WSS4J crypto implementation for UseKey holder-of-key constructs.
+ * 
+ * @author Frank Cornelis
+ *
+ */
+public class BeIDHolderOfKeyCrypto implements Crypto {
 
 	private static final Logger LOGGER = LoggerFactory
-			.getLogger(ClientCrypto.class);
+			.getLogger(BeIDHolderOfKeyCrypto.class);
 
-	private final PrivateKey privateKey;
+	private final X509Certificate holderOfKeyCertificate;
 
-	private final List<X509Certificate> certificates;
+	private final PrivateKey holderOfKeyPrivateKey;
 
-	public ClientCrypto(PrivateKey privateKey,
-			List<X509Certificate> certificates) {
-		this.privateKey = privateKey;
-		this.certificates = certificates;
-		LOGGER.debug("constructor");
+	public BeIDHolderOfKeyCrypto(X509Certificate holderOfKeyCertificate,
+			PrivateKey holderOfKeyPrivateKey) {
+		this.holderOfKeyCertificate = holderOfKeyCertificate;
+		this.holderOfKeyPrivateKey = holderOfKeyPrivateKey;
 	}
 
 	@Override
 	public byte[] getBytesFromCertificates(X509Certificate[] certs)
 			throws WSSecurityException {
 		LOGGER.debug("getBytesFromCertificates");
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		for (X509Certificate cert : certs) {
-			try {
-				output.write(cert.getEncoded());
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
-		return output.toByteArray();
+		return null;
 	}
 
 	@Override
@@ -88,21 +83,21 @@ public class ClientCrypto implements Crypto {
 	@Override
 	public String getDefaultX509Identifier() throws WSSecurityException {
 		LOGGER.debug("getDefaultX509Identifier");
-		return "client";
+		return "holder-of-key-alias";
 	}
 
 	@Override
 	public PrivateKey getPrivateKey(X509Certificate certificate,
 			CallbackHandler callbackHandler) throws WSSecurityException {
-		LOGGER.debug("getPrivateKey");
+		LOGGER.debug("getPrivateKey(cert, callbackHandler)");
 		return null;
 	}
 
 	@Override
 	public PrivateKey getPrivateKey(String identifier, String password)
 			throws WSSecurityException {
-		LOGGER.debug("getPrivateKey");
-		return this.privateKey;
+		LOGGER.debug("getPrivateKey(id, password)");
+		return this.holderOfKeyPrivateKey;
 	}
 
 	@Override
@@ -116,8 +111,7 @@ public class ClientCrypto implements Crypto {
 	public X509Certificate[] getX509Certificates(CryptoType cryptoType)
 			throws WSSecurityException {
 		LOGGER.debug("getX509Certificates");
-		return this.certificates.toArray(new X509Certificate[this.certificates
-				.size()]);
+		return new X509Certificate[] { this.holderOfKeyCertificate };
 	}
 
 	@Override

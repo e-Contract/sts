@@ -27,10 +27,13 @@
 		<complexType />
 	</element>
 	<element name="GetIdentityClaimsResponse" type="tns:ClaimsResponseType" />
-	
+
 	<element name="GetAddressClaimsRequest">
 		<complexType />
 	</element>
 	<element name="GetAddressClaimsResponse" type="tns:ClaimsResponseType" />
+
+	<element name="HolderOfKeyEchoRequest" type="xs:string" />
+	<element name="HolderOfKeyEchoResponse" type="xs:string" />
 
 </schema>

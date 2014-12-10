@@ -339,6 +339,124 @@ public class SecurityPolicyTest {
 	}
 
 	@Test
+	public void testPublicKeyToken() throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf_https.xml");
+		STSClient stsClient = new STSClient(bus);
+		stsClient.setSoap12();
+		stsClient.setWsdlLocation(this.sts2Url + "?wsdl");
+		stsClient.setLocation(this.sts2Url);
+		stsClient
+				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient
+				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient
+				.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/PublicKey");
+		stsClient
+				.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
+		stsClient.setAllowRenewing(false);
+
+		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+		PrivateKey privateKey = keyPair.getPrivate();
+		PublicKey publicKey = keyPair.getPublic();
+		X509Certificate certificate = getCertificate(privateKey, publicKey);
+		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		certificates.add(certificate);
+		certificates.add(certificate);
+
+		// Apache CXF specific configuration
+		Map<String, Object> properties = stsClient.getProperties();
+		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		properties.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new ClientCrypto(
+				privateKey, certificates));
+		// next is for holder of key
+		properties.put(SecurityConstants.STS_TOKEN_CRYPTO, new ClientCrypto(
+				privateKey, certificates));
+		stsClient.setProperties(properties);
+
+		SecurityToken securityToken = stsClient
+				.requestSecurityToken("https://demo.app.applies.to");
+		Principal principal = securityToken.getPrincipal();
+		LOGGER.debug("principal: {}", principal);
+		LOGGER.debug("token type: {}", securityToken.getTokenType());
+		assertEquals(
+				"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
+				securityToken.getTokenType());
+		LOGGER.debug("security token expires: {}", securityToken.getExpires());
+
+		LOGGER.debug("---------------------------------------------------------------");
+		stsClient.setEnableAppliesTo(true);
+		stsClient
+				.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
+		stsClient.validateSecurityToken(securityToken);
+	}
+	
+	@Test
+	public void testPublicKeyTokenOtherKey() throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf_https.xml");
+		STSClient stsClient = new STSClient(bus);
+		stsClient.setSoap12();
+		stsClient.setWsdlLocation(this.sts2Url + "?wsdl");
+		stsClient.setLocation(this.sts2Url);
+		stsClient
+				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient
+				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient
+				.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/PublicKey");
+		stsClient
+				.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
+		stsClient.setAllowRenewing(false);
+
+		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+		PrivateKey privateKey = keyPair.getPrivate();
+		PublicKey publicKey = keyPair.getPublic();
+		X509Certificate certificate = getCertificate(privateKey, publicKey);
+		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		certificates.add(certificate);
+		
+		KeyPair hokKeyPair = keyPairGenerator.generateKeyPair();
+		PrivateKey hokPrivateKey = hokKeyPair.getPrivate();
+		PublicKey hokPublicKey = hokKeyPair.getPublic();
+		X509Certificate hokCertificate = getCertificate(hokPrivateKey, hokPublicKey);
+		List<X509Certificate> hokCertificates = new LinkedList<X509Certificate>();
+		hokCertificates.add(hokCertificate);
+
+		// Apache CXF specific configuration
+		Map<String, Object> properties = stsClient.getProperties();
+		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		properties.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new ClientCrypto(
+				privateKey, certificates));
+		// next is for holder of key
+		properties.put(SecurityConstants.STS_TOKEN_CRYPTO, new ClientCrypto(
+				hokPrivateKey, hokCertificates));
+		stsClient.setProperties(properties);
+
+		SecurityToken securityToken = stsClient
+				.requestSecurityToken("https://demo.app.applies.to");
+		Principal principal = securityToken.getPrincipal();
+		LOGGER.debug("principal: {}", principal);
+		LOGGER.debug("token type: {}", securityToken.getTokenType());
+		assertEquals(
+				"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
+				securityToken.getTokenType());
+		LOGGER.debug("security token expires: {}", securityToken.getExpires());
+
+		LOGGER.debug("---------------------------------------------------------------");
+		stsClient.setEnableAppliesTo(true);
+		stsClient
+				.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
+		stsClient.validateSecurityToken(securityToken);
+	}
+
+	@Test
 	public void testSupportingTokensUsernameToken() throws Exception {
 		// get the JAX-WS client
 		ExampleService exampleService = new ExampleService();

@@ -40,6 +40,12 @@
 	<message name="GetAddressClaimsResponse">
 		<part name="GetAddressClaimsResponse" element="tns:GetAddressClaimsResponse" />
 	</message>
+	<message name="HolderOfKeyEchoRequest">
+		<part name="HolderOfKeyEchoRequest" element="tns:HolderOfKeyEchoRequest" />
+	</message>
+	<message name="HolderOfKeyEchoResponse">
+		<part name="HolderOfKeyEchoResponse" element="tns:HolderOfKeyEchoResponse" />
+	</message>
 
 	<portType name="ExampleServicePortType">
 		<operation name="echo">
@@ -57,6 +63,10 @@
 		<operation name="getAddressClaims">
 			<input message="tns:GetAddressClaimsRequest" />
 			<output message="tns:GetAddressClaimsResponse" />
+		</operation>
+		<operation name="holderOfKeyEcho">
+			<input message="tns:HolderOfKeyEchoRequest" />
+			<output message="tns:HolderOfKeyEchoResponse" />
 		</operation>
 	</portType>
 

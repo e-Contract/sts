@@ -18,6 +18,12 @@
 
 package be.e_contract.sts.client.cxf;
 
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.ws.BindingProvider;
@@ -26,7 +32,8 @@ import org.apache.cxf.ws.security.SecurityConstants;
 
 /**
  * This decorator helps to enable the STS security model on JAX-WS clients using
- * Apache CXF.
+ * Apache CXF. The Commons eID JCA security provider should be registered before
+ * usage.
  * 
  * @author Frank Cornelis
  *
@@ -137,11 +144,26 @@ public class SecurityDecorator {
 		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY,
 				endpointLocation);
 
+		PrivateKey privateKey;
+		List<X509Certificate> certificates;
+		try {
+			KeyStore keyStore = KeyStore.getInstance("BeID");
+			keyStore.load(null);
+			privateKey = (PrivateKey) keyStore.getKey("Authentication", null);
+			Certificate[] certificateChain = keyStore
+					.getCertificateChain("Authentication");
+			certificates = new LinkedList<X509Certificate>();
+			for (Certificate certificate : certificateChain) {
+				certificates.add((X509Certificate) certificate);
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("Error loading eID: " + e.getMessage(),
+					e);
+		}
+
 		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
-		requestContext
-				.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
-		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO,
-				"true");
+		requestContext.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto(
+				privateKey, certificates));
 
 		// next are not really used in the context of eID
 		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "whatever");
@@ -155,5 +177,8 @@ public class SecurityDecorator {
 			requestContext.put(SecurityConstants.STS_TOKEN_ACT_AS,
 					new ActAsCallbackHandler(this));
 		}
+
+		requestContext.put(SecurityConstants.STS_TOKEN_CRYPTO,
+				new BeIDHolderOfKeyCrypto(certificates.get(0), privateKey));
 	}
 }

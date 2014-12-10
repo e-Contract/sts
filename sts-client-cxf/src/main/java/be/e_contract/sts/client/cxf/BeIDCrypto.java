@@ -20,13 +20,10 @@ package be.e_contract.sts.client.cxf;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.LinkedList;
 import java.util.List;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -38,8 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * WSS4J crypto implementation based on the Commons eID. The Commons eID JCA
- * security provider should be registered before usage.
+ * WSS4J crypto implementation for WS-Security based authentication.
  * 
  * @author Frank Cornelis
  *
@@ -53,22 +49,9 @@ public class BeIDCrypto implements Crypto {
 
 	private final List<X509Certificate> certificates;
 
-	public BeIDCrypto() {
-		try {
-			KeyStore keyStore = KeyStore.getInstance("BeID");
-			keyStore.load(null);
-			this.privateKey = (PrivateKey) keyStore.getKey("Authentication",
-					null);
-			Certificate[] certificateChain = keyStore
-					.getCertificateChain("Authentication");
-			this.certificates = new LinkedList<X509Certificate>();
-			for (Certificate certificate : certificateChain) {
-				certificates.add((X509Certificate) certificate);
-			}
-		} catch (Exception e) {
-			throw new RuntimeException("Error loading eID: " + e.getMessage(),
-					e);
-		}
+	public BeIDCrypto(PrivateKey privateKey, List<X509Certificate> certificates) {
+		this.privateKey = privateKey;
+		this.certificates = certificates;
 	}
 
 	@Override

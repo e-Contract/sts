@@ -226,6 +226,28 @@ public class CXFSTSClientTest {
 
 		bus.shutdown(true);
 	}
+	
+	@Test
+	public void testExampleWebServiceHolderOfKey() throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
+		BusFactory.setDefaultBus(bus);
+		// get the JAX-WS client
+		URL wsdlLocation = CXFSTSClientTest.class
+				.getResource("/example-localhost-sts.wsdl");
+		ExampleService exampleService = new ExampleService(wsdlLocation,
+				new QName("urn:be:e-contract:sts:example", "ExampleService"));
+		ExampleServicePortType port = exampleService.getExampleServicePort();
+
+		SecurityDecorator securityDecorator = new SecurityDecorator();
+		securityDecorator.decorate((BindingProvider) port,
+				"https://localhost/iam/example");
+
+		// invoke the web service
+		port.holderOfKeyEcho("hello world");
+		
+		bus.shutdown(true);
+	}
 
 	private boolean hasClaim(List<ClaimType> claims, String name, String value) {
 		for (ClaimType claim : claims) {

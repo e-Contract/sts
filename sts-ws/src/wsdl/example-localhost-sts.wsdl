@@ -54,6 +54,16 @@
 				<wsoap12:body use="literal" />
 			</output>
 		</operation>
+		<operation name="holderOfKeyEcho">
+			<wsp:PolicyReference URI="#HolderOfKeyPolicy" />
+			<wsoap12:operation soapAction="holderOfKeyEcho" />
+			<input>
+				<wsoap12:body use="literal" />
+			</input>
+			<output>
+				<wsoap12:body use="literal" />
+			</output>
+		</operation>
 	</binding>
 
 	<service name="ExampleService">
@@ -307,6 +317,62 @@
 						</sp:IssuedToken>
 					</wsp:Policy>
 				</sp:SignedSupportingTokens>
+				<wsam:Addressing wsp:Optional="false">
+					<wsp:Policy />
+				</wsam:Addressing>
+			</wsp:All>
+		</wsp:ExactlyOne>
+	</wsp:Policy>
+	
+	<wsp:Policy wsu:Id="HolderOfKeyPolicy">
+		<wsp:ExactlyOne>
+			<wsp:All>
+				<sp:TransportBinding>
+					<wsp:Policy>
+						<sp:TransportToken>
+							<wsp:Policy>
+								<sp:HttpsToken>
+									<wsp:Policy />
+								</sp:HttpsToken>
+							</wsp:Policy>
+						</sp:TransportToken>
+						<sp:AlgorithmSuite>
+							<wsp:Policy>
+								<sp:Basic128 />
+							</wsp:Policy>
+						</sp:AlgorithmSuite>
+						<sp:IncludeTimestamp />
+					</wsp:Policy>
+				</sp:TransportBinding>
+				<sp:SignedEndorsingSupportingTokens>
+					<wsp:Policy>
+						<sp:IssuedToken
+							sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
+							<sp:RequestSecurityTokenTemplate>
+								<wst:TokenType>http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0
+								</wst:TokenType>
+								<wst:KeyType>http://docs.oasis-open.org/ws-sx/ws-trust/200512/PublicKey
+								</wst:KeyType>
+							</sp:RequestSecurityTokenTemplate>
+							<wsp:Policy>
+								<sp:RequireInternalReference />
+							</wsp:Policy>
+							<sp:Issuer>
+								<wsa:Address>http://www.w3.org/2005/08/addressing/anonymous</wsa:Address>
+								<wsa:Metadata>
+									<wsx:Metadata>
+										<wsx:MetadataSection>
+											<wsx:MetadataReference>
+												<wsa:Address>https://localhost/iam/sts/mex
+												</wsa:Address>
+											</wsx:MetadataReference>
+										</wsx:MetadataSection>
+									</wsx:Metadata>
+								</wsa:Metadata>
+							</sp:Issuer>
+						</sp:IssuedToken>
+					</wsp:Policy>
+				</sp:SignedEndorsingSupportingTokens>
 				<wsam:Addressing wsp:Optional="false">
 					<wsp:Policy />
 				</wsam:Addressing>
