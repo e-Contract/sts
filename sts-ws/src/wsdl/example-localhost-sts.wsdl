@@ -371,6 +371,9 @@
 								</wsa:Metadata>
 							</sp:Issuer>
 						</sp:IssuedToken>
+						<sp:SignedParts>
+							<sp:Header Name="To" Namespace="http://www.w3.org/2005/08/addressing" />
+						</sp:SignedParts>
 					</wsp:Policy>
 				</sp:SignedEndorsingSupportingTokens>
 				<wsam:Addressing wsp:Optional="false">

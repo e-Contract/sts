@@ -2374,6 +2374,7 @@
 			<programlisting language="xml"><![CDATA[<soap:Envelope>
   <soap:Header>
     ...
+    <wsa:To wsu:Id="To">https://www.e-contract.be/iam/example</To>
     <wsse:Security soap:mustUnderstand="true">
       <wsu:Timestamp wsu:Id="TS">
         <wsu:Created>2014-12-10T15:39:35.779Z</wsu:Created>
@@ -2403,6 +2404,17 @@
               Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
             <ds:DigestValue>...</ds:DigestValue>
           </ds:Reference>
+          <ds:Reference URI="#To">
+            <ds:Transforms>
+              <ds:Transform
+                Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#">
+                <ec:InclusiveNamespaces PrefixList="soap"/>
+              </ds:Transform>
+            </ds:Transforms>
+            <ds:DigestMethod
+              Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+            <ds:DigestValue>...</ds:DigestValue>
+          </ds:Reference>
         </ds:SignedInfo>
         <ds:SignatureValue>...</ds:SignatureValue>
         <ds:KeyInfo>
@@ -2421,6 +2433,14 @@
     ...
   </soap:Body>
 </soap:Envelope>]]></programlisting>
+			<para>
+				To prevent certain attacks, the holder-of-key token should sign both
+				the
+				<code>&lt;wsu:Timestamp&gt;</code>
+				element and the
+				<code>&lt;wsa:To&gt;</code>
+				element.
+			</para>
 		</section>
 		<section>
 			<title>Security Policy</title>
@@ -2480,6 +2500,10 @@
               </wsa:Metadata>
             </sp:Issuer>
           </sp:IssuedToken>
+          <sp:SignedParts>
+            <sp:Header Name="To"
+              Namespace="http://www.w3.org/2005/08/addressing" />
+          </sp:SignedParts>
         </wsp:Policy>
       </sp:SignedEndorsingSupportingTokens>
       <wsam:Addressing wsp:Optional="false">
