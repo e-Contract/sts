@@ -393,4 +393,17 @@ public class ReleaseAcceptanceTest {
 						encodedCertificate));
 		return certificate;
 	}
+
+	@Test
+	public void testExampleWebServiceHolderOfKey() throws Exception {
+		ExampleService exampleService = new ExampleService();
+		ExampleServicePortType port = exampleService.getExampleServicePort();
+
+		SecurityDecorator securityDecorator = new SecurityDecorator();
+		securityDecorator.decorate((BindingProvider) port,
+				"https://www.e-contract.be/iam/example");
+
+		// invoke the web service
+		port.holderOfKeyEcho("hello world");
+	}
 }
