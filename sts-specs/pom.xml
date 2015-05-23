@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>be.e_contract</groupId>
 		<artifactId>sts</artifactId>
-		<version>0.1.9</version>
+		<version>0.1.10-SNAPSHOT</version>
 	</parent>
 	<name>eID Security Token Service Specifications</name>
 	<groupId>be.e_contract.sts</groupId>
