@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * Just to visualize the exceptions thrown.
  * 
  * @author fcorneli
- *
+ * 
  */
 public class SAMLTokenValidatorWrapper implements TokenValidator {
 

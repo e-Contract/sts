@@ -22,7 +22,7 @@ package be.e_contract.sts.ws;
  * Enumeration holding the eID IP-STS supported claim types.
  * 
  * @author Frank Cornelis
- *
+ * 
  */
 public enum ClaimTypes {
 

@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * WSS4J crypto implementation for UseKey holder-of-key constructs.
  * 
  * @author Frank Cornelis
- *
+ * 
  */
 public class BeIDHolderOfKeyCrypto implements Crypto {
 
@@ -111,7 +111,7 @@ public class BeIDHolderOfKeyCrypto implements Crypto {
 	public X509Certificate[] getX509Certificates(CryptoType cryptoType)
 			throws WSSecurityException {
 		LOGGER.debug("getX509Certificates");
-		return new X509Certificate[] { this.holderOfKeyCertificate };
+		return new X509Certificate[]{this.holderOfKeyCertificate};
 	}
 
 	@Override

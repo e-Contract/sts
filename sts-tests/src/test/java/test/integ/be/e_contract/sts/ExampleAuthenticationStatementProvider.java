@@ -23,8 +23,9 @@ import org.apache.cxf.sts.token.provider.TokenProviderParameters;
 import org.apache.ws.security.saml.ext.bean.AuthenticationStatementBean;
 import org.apache.ws.security.saml.ext.builder.SAML2Constants;
 
-public class ExampleAuthenticationStatementProvider implements
-		AuthenticationStatementProvider {
+public class ExampleAuthenticationStatementProvider
+		implements
+			AuthenticationStatementProvider {
 
 	@Override
 	public AuthenticationStatementBean getStatement(

@@ -28,7 +28,7 @@ import be.e_contract.sts.ws.jaxws.SecurityTokenService;
  * Factory for the eID IP-STS JAX-WS web service client.
  * 
  * @author Frank Cornelis
- *
+ * 
  */
 public class SecurityTokenServiceFactory {
 

@@ -31,10 +31,11 @@ import org.apache.cxf.annotations.EndpointProperty;
 import be.e_contract.sts.example.ExampleServicePortType;
 
 @WebService(endpointInterface = "be.e_contract.sts.example.ExampleServicePortType", targetNamespace = "urn:be:e-contract:sts:example", serviceName = "ExampleService", wsdlLocation = "example-security-policy.wsdl", portName = "ExampleServicePort6")
-@EndpointProperties({ @EndpointProperty(key = "ws-security.callback-handler.sct", value = "test.integ.be.e_contract.sts.ExampleSecurityPolicyCallbackHandler") })
+@EndpointProperties({@EndpointProperty(key = "ws-security.callback-handler.sct", value = "test.integ.be.e_contract.sts.ExampleSecurityPolicyCallbackHandler")})
 @HandlerChain(file = "/example-ws-handlers.xml")
-public class ExampleSecurityPolicyServicePortImpl6 implements
-		ExampleServicePortType {
+public class ExampleSecurityPolicyServicePortImpl6
+		implements
+			ExampleServicePortType {
 
 	@Resource
 	private WebServiceContext context;

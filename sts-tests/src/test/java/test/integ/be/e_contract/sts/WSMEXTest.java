@@ -53,7 +53,7 @@ public class WSMEXTest {
 	@Before
 	public void setUp() throws Exception {
 		TrustManager trustManager = new MyTrustManager();
-		TrustManager[] sslTrustManagers = new TrustManager[] { trustManager };
+		TrustManager[] sslTrustManagers = new TrustManager[]{trustManager};
 		SSLContext ssl_ctx = SSLContext.getInstance("TLS");
 		ssl_ctx.init(null, sslTrustManagers, new SecureRandom());
 		SSLSocketFactory sslSocketFactory = ssl_ctx.getSocketFactory();
@@ -61,12 +61,12 @@ public class WSMEXTest {
 
 		HostnameVerifier hostnameVerifier = new MyHostnameVerifier();
 		HttpsURLConnection.setDefaultHostnameVerifier(hostnameVerifier);
-		
+
 		SpringBusFactory bf = new SpringBusFactory();
 		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 	}
-	
+
 	@Test
 	public void testRetrieveMex() throws Exception {
 		JaxWsProxyFactoryBean proxyFac = new JaxWsProxyFactoryBean();

@@ -34,9 +34,10 @@ import be.e_contract.sts.example.ExampleServicePortType;
 
 @WebService(endpointInterface = "be.e_contract.sts.example.ExampleServicePortType", targetNamespace = "urn:be:e-contract:sts:example", serviceName = "ExampleService", wsdlLocation = "example-security-policy.wsdl", portName = "ExampleServicePort4")
 @HandlerChain(file = "/example-ws-handlers.xml")
-@EndpointProperties({ @EndpointProperty(key = "ws-security.signature.properties", value = "signature.properties") })
-public class ExampleSecurityPolicyServicePortImpl4 implements
-		ExampleServicePortType {
+@EndpointProperties({@EndpointProperty(key = "ws-security.signature.properties", value = "signature.properties")})
+public class ExampleSecurityPolicyServicePortImpl4
+		implements
+			ExampleServicePortType {
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(ExampleSecurityPolicyServicePortImpl4.class);

@@ -26,7 +26,7 @@ public class TrustManagersFactory {
 
 	public static TrustManager[] getTrustManagers() {
 		TrustManager trustManager = new MyTrustManager();
-		TrustManager[] sslTrustManagers = new TrustManager[] { trustManager };
+		TrustManager[] sslTrustManagers = new TrustManager[]{trustManager};
 		return sslTrustManagers;
 	}
 }

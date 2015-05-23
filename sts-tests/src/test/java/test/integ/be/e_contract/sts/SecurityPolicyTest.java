@@ -176,7 +176,7 @@ public class SecurityPolicyTest {
 				new ExampleSecurityPolicyServicePortImpl8());
 
 		TrustManager trustManager = new MyTrustManager();
-		TrustManager[] sslTrustManagers = new TrustManager[] { trustManager };
+		TrustManager[] sslTrustManagers = new TrustManager[]{trustManager};
 		SSLContext ssl_ctx = SSLContext.getInstance("TLS");
 		ssl_ctx.init(null, sslTrustManagers, new SecureRandom());
 		SSLSocketFactory sslSocketFactory = ssl_ctx.getSocketFactory();
@@ -393,7 +393,7 @@ public class SecurityPolicyTest {
 				.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
 		stsClient.validateSecurityToken(securityToken);
 	}
-	
+
 	@Test
 	public void testPublicKeyTokenOtherKey() throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
@@ -419,11 +419,12 @@ public class SecurityPolicyTest {
 		X509Certificate certificate = getCertificate(privateKey, publicKey);
 		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
 		certificates.add(certificate);
-		
+
 		KeyPair hokKeyPair = keyPairGenerator.generateKeyPair();
 		PrivateKey hokPrivateKey = hokKeyPair.getPrivate();
 		PublicKey hokPublicKey = hokKeyPair.getPublic();
-		X509Certificate hokCertificate = getCertificate(hokPrivateKey, hokPublicKey);
+		X509Certificate hokCertificate = getCertificate(hokPrivateKey,
+				hokPublicKey);
 		List<X509Certificate> hokCertificates = new LinkedList<X509Certificate>();
 		hokCertificates.add(hokCertificate);
 
@@ -749,7 +750,6 @@ public class SecurityPolicyTest {
 			return serverSocket.getLocalPort();
 		}
 	}
-
 	private static X509Certificate getCertificate(PrivateKey privateKey,
 			PublicKey publicKey) throws Exception {
 		X500Name subjectName = new X500Name("CN=Test");

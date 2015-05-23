@@ -31,10 +31,11 @@ import org.apache.cxf.annotations.EndpointProperty;
 import be.e_contract.sts.example.ExampleServicePortType;
 
 @WebService(endpointInterface = "be.e_contract.sts.example.ExampleServicePortType", targetNamespace = "urn:be:e-contract:sts:example", serviceName = "ExampleService", wsdlLocation = "example-security-policy.wsdl", portName = "ExampleServicePort3")
-@EndpointProperties({ @EndpointProperty(key = "ws-security.saml2.validator", value = "test.integ.be.e_contract.sts.ExampleSamlAssertionValidator") })
+@EndpointProperties({@EndpointProperty(key = "ws-security.saml2.validator", value = "test.integ.be.e_contract.sts.ExampleSamlAssertionValidator")})
 @HandlerChain(file = "/example-ws-handlers.xml")
-public class ExampleSecurityPolicyServicePortImpl3 implements
-		ExampleServicePortType {
+public class ExampleSecurityPolicyServicePortImpl3
+		implements
+			ExampleServicePortType {
 
 	@Resource
 	private WebServiceContext context;
@@ -42,8 +43,8 @@ public class ExampleSecurityPolicyServicePortImpl3 implements
 	@Override
 	public String echo(String echoRequest) {
 		Principal userPrincipal = this.context.getUserPrincipal();
-		//String username = userPrincipal.getName();
-		//return username + ":" + echoRequest;
+		// String username = userPrincipal.getName();
+		// return username + ":" + echoRequest;
 		// not receiving credentials here...
 		return echoRequest;
 	}

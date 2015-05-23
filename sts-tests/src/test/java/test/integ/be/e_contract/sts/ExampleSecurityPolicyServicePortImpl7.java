@@ -33,10 +33,11 @@ import org.slf4j.LoggerFactory;
 import be.e_contract.sts.example.ExampleServicePortType;
 
 @WebService(endpointInterface = "be.e_contract.sts.example.ExampleServicePortType", targetNamespace = "urn:be:e-contract:sts:example", serviceName = "ExampleService", wsdlLocation = "example-security-policy.wsdl", portName = "ExampleServicePort7")
-@EndpointProperties({ @EndpointProperty(key = "ws-security.saml2.validator", value = "test.integ.be.e_contract.sts.ExampleSamlAssertionValidator") })
+@EndpointProperties({@EndpointProperty(key = "ws-security.saml2.validator", value = "test.integ.be.e_contract.sts.ExampleSamlAssertionValidator")})
 @HandlerChain(file = "/example-ws-handlers.xml")
-public class ExampleSecurityPolicyServicePortImpl7 implements
-		ExampleServicePortType {
+public class ExampleSecurityPolicyServicePortImpl7
+		implements
+			ExampleServicePortType {
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(ExampleSecurityPolicyServicePortImpl7.class);

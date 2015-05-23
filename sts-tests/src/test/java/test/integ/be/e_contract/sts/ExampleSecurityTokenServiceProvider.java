@@ -67,9 +67,10 @@ import org.joda.time.DateTime;
 
 @WebService(targetNamespace = "http://docs.oasis-open.org/ws-sx/ws-trust/200512", serviceName = "SecurityTokenService", wsdlLocation = "ws-trust-1.3.wsdl", portName = "SecurityTokenServicePort")
 @HandlerChain(file = "/example-ws-handlers.xml")
-@EndpointProperties({ @EndpointProperty(key = "ws-security.signature.properties", value = "signature.properties") })
-public class ExampleSecurityTokenServiceProvider extends
-		SecurityTokenServiceProvider {
+@EndpointProperties({@EndpointProperty(key = "ws-security.signature.properties", value = "signature.properties")})
+public class ExampleSecurityTokenServiceProvider
+		extends
+			SecurityTokenServiceProvider {
 
 	public ExampleSecurityTokenServiceProvider() throws Exception {
 		super();
@@ -138,7 +139,6 @@ public class ExampleSecurityTokenServiceProvider extends
 
 		setValidateOperation(validateOperation);
 	}
-
 	private static X509Certificate getCertificate(PrivateKey privateKey,
 			PublicKey publicKey) throws Exception {
 		X500Name subjectName = new X500Name("CN=Test");

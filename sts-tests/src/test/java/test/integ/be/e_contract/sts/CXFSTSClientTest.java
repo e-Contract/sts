@@ -112,7 +112,7 @@ public class CXFSTSClientTest {
 	@Before
 	public void setUp() throws Exception {
 		TrustManager trustManager = new MyTrustManager();
-		TrustManager[] sslTrustManagers = new TrustManager[] { trustManager };
+		TrustManager[] sslTrustManagers = new TrustManager[]{trustManager};
 		SSLContext ssl_ctx = SSLContext.getInstance("TLS");
 		ssl_ctx.init(null, sslTrustManagers, new SecureRandom());
 		SSLSocketFactory sslSocketFactory = ssl_ctx.getSocketFactory();
@@ -226,7 +226,7 @@ public class CXFSTSClientTest {
 
 		bus.shutdown(true);
 	}
-	
+
 	@Test
 	public void testExampleWebServiceHolderOfKey() throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
@@ -245,7 +245,7 @@ public class CXFSTSClientTest {
 
 		// invoke the web service
 		port.holderOfKeyEcho("hello world");
-		
+
 		bus.shutdown(true);
 	}
 
@@ -481,7 +481,7 @@ public class CXFSTSClientTest {
 		TLSClientParameters tlsParams = new TLSClientParameters();
 		tlsParams.setSecureSocketProtocol("SSL");
 		tlsParams.setDisableCNCheck(true);
-		tlsParams.setTrustManagers(new TrustManager[] { new MyTrustManager() });
+		tlsParams.setTrustManagers(new TrustManager[]{new MyTrustManager()});
 		httpConduit.setTlsClientParameters(tlsParams);
 
 		LOGGER.debug("STS location: {}", stsClient.getLocation());
@@ -541,7 +541,7 @@ public class CXFSTSClientTest {
 		TLSClientParameters tlsParams = new TLSClientParameters();
 		tlsParams.setSecureSocketProtocol("SSL");
 		tlsParams.setDisableCNCheck(true);
-		tlsParams.setTrustManagers(new TrustManager[] { new MyTrustManager() });
+		tlsParams.setTrustManagers(new TrustManager[]{new MyTrustManager()});
 		httpConduit.setTlsClientParameters(tlsParams);
 
 		LOGGER.debug("STS location: {}", stsClient.getLocation());

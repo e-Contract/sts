@@ -130,7 +130,7 @@ public class ServerCrypto implements Crypto {
 	public X509Certificate[] getX509Certificates(CryptoType cryptoType)
 			throws WSSecurityException {
 		LOGGER.debug("getX509Certificates");
-		return new X509Certificate[] { this.certificate };
+		return new X509Certificate[]{this.certificate};
 	}
 
 	@Override

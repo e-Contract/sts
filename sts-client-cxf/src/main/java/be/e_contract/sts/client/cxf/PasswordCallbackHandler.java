@@ -29,7 +29,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
  * even if we don't really need it in the context of eID.
  * 
  * @author Frank Cornelis
- *
+ * 
  */
 public class PasswordCallbackHandler implements CallbackHandler {
 

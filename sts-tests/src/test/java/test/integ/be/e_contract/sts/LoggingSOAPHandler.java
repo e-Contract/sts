@@ -35,48 +35,46 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
 
-public class LoggingSOAPHandler
-        implements SOAPHandler<SOAPMessageContext> {
+public class LoggingSOAPHandler implements SOAPHandler<SOAPMessageContext> {
 
-    private static final Logger LOGGER = LoggerFactory
-            .getLogger(LoggingSOAPHandler.class);
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(LoggingSOAPHandler.class);
 
-    @Override
-    public boolean handleMessage(SOAPMessageContext context) {
-        boolean outbound
-                = (boolean) context.get(
-                        SOAPMessageContext.MESSAGE_OUTBOUND_PROPERTY);
-        SOAPMessage soapMessage = context.getMessage();
-        try {
-            LOGGER.debug("SOAP message (outbound {}): {}", outbound,
-                    toString(soapMessage.getSOAPPart()));
-        } catch (Exception e) {
-            LOGGER.error("SOAP toString error");
-        }
-        return true;
-    }
+	@Override
+	public boolean handleMessage(SOAPMessageContext context) {
+		boolean outbound = (boolean) context
+				.get(SOAPMessageContext.MESSAGE_OUTBOUND_PROPERTY);
+		SOAPMessage soapMessage = context.getMessage();
+		try {
+			LOGGER.debug("SOAP message (outbound {}): {}", outbound,
+					toString(soapMessage.getSOAPPart()));
+		} catch (Exception e) {
+			LOGGER.error("SOAP toString error");
+		}
+		return true;
+	}
 
-    @Override
-    public boolean handleFault(SOAPMessageContext context) {
-        return true;
-    }
+	@Override
+	public boolean handleFault(SOAPMessageContext context) {
+		return true;
+	}
 
-    @Override
-    public void close(MessageContext context) {
-    }
+	@Override
+	public void close(MessageContext context) {
+	}
 
-    @Override
-    public Set<QName> getHeaders() {
-        return null;
-    }
+	@Override
+	public Set<QName> getHeaders() {
+		return null;
+	}
 
-    private static String toString(Node node) throws Exception {
-        TransformerFactory transformerFactory = TransformerFactory
-                .newInstance();
-        Transformer transformer = transformerFactory.newTransformer();
-        StringWriter stringWriter = new StringWriter();
-        transformer.transform(new DOMSource(node), new StreamResult(
-                stringWriter));
-        return stringWriter.toString();
-    }
+	private static String toString(Node node) throws Exception {
+		TransformerFactory transformerFactory = TransformerFactory
+				.newInstance();
+		Transformer transformer = transformerFactory.newTransformer();
+		StringWriter stringWriter = new StringWriter();
+		transformer.transform(new DOMSource(node), new StreamResult(
+				stringWriter));
+		return stringWriter.toString();
+	}
 }

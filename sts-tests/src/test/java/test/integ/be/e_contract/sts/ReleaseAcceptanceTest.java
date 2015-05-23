@@ -80,7 +80,7 @@ import be.fedict.commons.eid.jca.BeIDProvider;
  * tests should pass.
  * 
  * @author Frank Cornelis
- *
+ * 
  */
 public class ReleaseAcceptanceTest {
 

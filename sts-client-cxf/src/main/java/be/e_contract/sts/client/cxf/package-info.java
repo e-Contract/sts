@@ -20,4 +20,3 @@
  * eID Security Token Service CXF Client classes.
  */
 package be.e_contract.sts.client.cxf;
-

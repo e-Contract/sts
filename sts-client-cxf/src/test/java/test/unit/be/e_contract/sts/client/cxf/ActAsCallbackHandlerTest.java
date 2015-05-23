@@ -39,7 +39,7 @@ public class ActAsCallbackHandlerTest {
 		DelegationCallback callback = new DelegationCallback();
 
 		// operate
-		callbackHandler.handle(new Callback[] { callback });
+		callbackHandler.handle(new Callback[]{callback});
 
 		// verify
 		Element token = callback.getToken();

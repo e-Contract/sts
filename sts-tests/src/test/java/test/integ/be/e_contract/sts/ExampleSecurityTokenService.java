@@ -31,7 +31,7 @@ import be.e_contract.sts.ws.jaxws.SecurityTokenServicePort;
 
 @WebService(endpointInterface = "be.e_contract.sts.ws.jaxws.SecurityTokenServicePort", targetNamespace = "http://docs.oasis-open.org/ws-sx/ws-trust/200512", serviceName = "SecurityTokenService", wsdlLocation = "ws-trust-1.3.wsdl", portName = "SecurityTokenServicePort")
 @HandlerChain(file = "/example-ws-handlers.xml")
-@EndpointProperties({ @EndpointProperty(key = "ws-security.signature.properties", value = "signature.properties") })
+@EndpointProperties({@EndpointProperty(key = "ws-security.signature.properties", value = "signature.properties")})
 public class ExampleSecurityTokenService implements SecurityTokenServicePort {
 
 	@Override

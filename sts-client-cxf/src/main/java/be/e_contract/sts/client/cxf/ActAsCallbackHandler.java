@@ -53,7 +53,7 @@ import be.e_contract.sts.ws.Attributes;
  * JAAS callback for Apache CXF ActAs token construction.
  * 
  * @author Frank Cornelis
- *
+ * 
  */
 public class ActAsCallbackHandler implements CallbackHandler {
 

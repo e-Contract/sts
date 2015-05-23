@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  * WSS4J crypto implementation for WS-Security based authentication.
  * 
  * @author Frank Cornelis
- *
+ * 
  */
 public class BeIDCrypto implements Crypto {
 

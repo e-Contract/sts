@@ -36,7 +36,7 @@ import org.apache.cxf.ws.security.SecurityConstants;
  * usage.
  * 
  * @author Frank Cornelis
- *
+ * 
  */
 public class SecurityDecorator {
 

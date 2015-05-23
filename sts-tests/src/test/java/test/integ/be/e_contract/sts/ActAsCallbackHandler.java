@@ -64,7 +64,8 @@ public class ActAsCallbackHandler implements CallbackHandler {
 		DocumentBuilder documentBuilder = documentBuilderFactory
 				.newDocumentBuilder();
 		InputStream inputStream = new ByteArrayInputStream(
-				"<saml2:Assertion xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\"/>".getBytes());
+				"<saml2:Assertion xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\"/>"
+						.getBytes());
 		Document document = documentBuilder.parse(inputStream);
 		return document.getDocumentElement();
 	}

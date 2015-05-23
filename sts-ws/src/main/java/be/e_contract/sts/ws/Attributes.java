@@ -22,7 +22,7 @@ package be.e_contract.sts.ws;
  * Enumeration of supported attributes for the ActAs input SAML assertion.
  * 
  * @author Frank Cornelis
- *
+ * 
  */
 public enum Attributes {
 
