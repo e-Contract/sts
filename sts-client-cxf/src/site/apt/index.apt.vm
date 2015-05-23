@@ -25,11 +25,42 @@ eID Security Token Service CXF Client
 </dependency>
 +---
 
+  The Apache CXF JAX-WS runtime needs the WS-Security modules. Hence add the following dependencies:
+
++---
+<dependency>
+        <groupId>org.apache.cxf</groupId>
+        <artifactId>cxf-rt-frontend-jaxws</artifactId>
+</dependency>
+<dependency>
+	<groupId>org.apache.cxf</groupId>
+	<artifactId>cxf-rt-ws-policy</artifactId>
+</dependency>
+<dependency>
+	<groupId>org.apache.cxf</groupId>
+	<artifactId>cxf-rt-ws-security</artifactId>
+</dependency>
+<dependency>
+	<groupId>org.apache.cxf</groupId>
+	<artifactId>cxf-rt-ws-mex</artifactId>
+</dependency>
++---
+
 * Securing a JAX-WS client port for STS usage
 
   After compiling the WSDL of a web service that has an STS WS-SecurityPolicy you can enable the security as follows:
   
 +---
+import java.security.Security;
+import be.fedict.commons.eid.jca.BeIDProvider;
+import be.e_contract.sts.client.cxf.SecurityDecorator;
+
+...
+static {
+    Security.addProvider(new BeIDProvider());
+}
+
+...
 ExampleService exampleService = ExampleServiceFactory.newInstance();
 ExampleServicePortType port = exampleService.getExampleServicePort();
 
