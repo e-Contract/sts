@@ -23,7 +23,7 @@ https://www.e-contract.be/sites/sts/
 
 ## Requirements
 
-The following is required for compiling the Commons eID software:
+The following is required for compiling the eID STS software:
 
 * Oracle Java 1.7.0_80 or 1.8.0_45
 * Apache Maven 3.3.3
