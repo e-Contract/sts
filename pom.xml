@@ -162,18 +162,18 @@
 		<bouncycastle.version>1.51</bouncycastle.version>
 	</properties>
 	<scm>
-		<connection>scm:git:ssh://e-contract.be/home/fcorneli/git/sts.git</connection>
+		<connection>scm:git:ssh://192.168.100.1/home/fcorneli/git/sts.git</connection>
 		<tag>HEAD</tag>
 	</scm>
 	<distributionManagement>
 		<repository>
 			<id>e-contract-deploy</id>
-			<url>sftp://e-contract.be/maven2</url>
+			<url>sftp://192.168.100.1/maven2</url>
 			<uniqueVersion>false</uniqueVersion>
 		</repository>
 		<site>
 			<id>e-contract-site</id>
-			<url>sftp://e-contract.be/sites/sts/</url>
+			<url>sftp://192.168.100.1/sites/sts/</url>
 		</site>
 	</distributionManagement>
 	<dependencyManagement>
