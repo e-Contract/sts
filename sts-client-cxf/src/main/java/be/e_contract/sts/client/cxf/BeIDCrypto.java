@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014 e-Contract.be BVBA.
+ * Copyright (C) 2014-2015 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -19,9 +19,11 @@
 package be.e_contract.sts.client.cxf;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -62,13 +64,12 @@ public class BeIDCrypto implements Crypto {
 		for (X509Certificate cert : certs) {
 			try {
 				output.write(cert.getEncoded());
-			} catch (Exception e) {
+			} catch (CertificateEncodingException | IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
 		return output.toByteArray();
 	}
-
 	@Override
 	public CertificateFactory getCertificateFactory()
 			throws WSSecurityException {

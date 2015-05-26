@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014 e-Contract.be BVBA.
+ * Copyright (C) 2014-2015 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -27,7 +27,7 @@ import org.apache.cxf.sts.service.ServiceMBean;
 
 public class ExampleServiceMBean implements ServiceMBean {
 
-	private static final Set<String> addresses = new HashSet<String>();
+	private static final Set<String> addresses = new HashSet<>();
 
 	public static void trustAddress(String address) {
 		addresses.add(address);

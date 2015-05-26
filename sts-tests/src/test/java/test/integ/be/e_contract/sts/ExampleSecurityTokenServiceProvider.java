@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014 e-Contract.be BVBA.
+ * Copyright (C) 2014-2015 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -83,14 +83,14 @@ public class ExampleSecurityTokenServiceProvider
 		PrivateKey privateKey = keyPair.getPrivate();
 		PublicKey publicKey = keyPair.getPublic();
 		X509Certificate certificate = getCertificate(privateKey, publicKey);
-		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		List<X509Certificate> certificates = new LinkedList<>();
 		certificates.add(certificate);
 		stsProperties.setSignatureCrypto(new ClientCrypto(privateKey,
 				certificates));
 		issueOperation.setStsProperties(stsProperties);
 		stsProperties.setIssuer("https://issuer");
 
-		List<ServiceMBean> services = new LinkedList<ServiceMBean>();
+		List<ServiceMBean> services = new LinkedList<>();
 		ExampleServiceMBean service = new ExampleServiceMBean();
 		service.setEndpoints(Collections
 				.singletonList("https://demo.app.applies.to"));
@@ -108,10 +108,10 @@ public class ExampleSecurityTokenServiceProvider
 		
 		issueOperation.setServices(services);
 
-		List<TokenProvider> tokenProviders = new LinkedList<TokenProvider>();
+		List<TokenProvider> tokenProviders = new LinkedList<>();
 		SAMLTokenProvider samlTokenProvider = new SAMLTokenProvider();
 		samlTokenProvider.setSubjectProvider(new ExampleSubjectProvider());
-		List<AuthenticationStatementProvider> authnStatementProviders = new LinkedList<AuthenticationStatementProvider>();
+		List<AuthenticationStatementProvider> authnStatementProviders = new LinkedList<>();
 		authnStatementProviders
 				.add(new ExampleAuthenticationStatementProvider());
 		samlTokenProvider
@@ -132,7 +132,7 @@ public class ExampleSecurityTokenServiceProvider
 		validateOperation.setStsProperties(stsProperties);
 		stsProperties.setSignatureCrypto(new ServerCrypto());
 
-		List<TokenValidator> tokenValidators = new LinkedList<TokenValidator>();
+		List<TokenValidator> tokenValidators = new LinkedList<>();
 		SAMLTokenValidator samlTokenValidator = new SAMLTokenValidator();
 		tokenValidators.add(new SAMLTokenValidatorWrapper(samlTokenValidator));
 		validateOperation.setTokenValidators(tokenValidators);

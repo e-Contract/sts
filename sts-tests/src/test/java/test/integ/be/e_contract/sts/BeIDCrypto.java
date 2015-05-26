@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014 e-Contract.be BVBA.
+ * Copyright (C) 2014-2015 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -19,11 +19,13 @@
 package test.integ.be.e_contract.sts;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.LinkedList;
@@ -52,12 +54,11 @@ public class BeIDCrypto implements Crypto {
 		this.privateKey = (PrivateKey) keyStore.getKey("Authentication", null);
 		Certificate[] certificateChain = keyStore
 				.getCertificateChain("Authentication");
-		this.certificates = new LinkedList<X509Certificate>();
+		this.certificates = new LinkedList<>();
 		for (Certificate certificate : certificateChain) {
 			certificates.add((X509Certificate) certificate);
 		}
 	}
-
 	@Override
 	public byte[] getBytesFromCertificates(X509Certificate[] certs)
 			throws WSSecurityException {
@@ -66,13 +67,12 @@ public class BeIDCrypto implements Crypto {
 		for (X509Certificate cert : certs) {
 			try {
 				output.write(cert.getEncoded());
-			} catch (Exception e) {
+			} catch (CertificateEncodingException | IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
 		return output.toByteArray();
 	}
-
 	@Override
 	public CertificateFactory getCertificateFactory()
 			throws WSSecurityException {

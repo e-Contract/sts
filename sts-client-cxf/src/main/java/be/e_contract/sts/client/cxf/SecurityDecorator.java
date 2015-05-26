@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014 e-Contract.be BVBA.
+ * Copyright (C) 2014-2015 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -18,9 +18,14 @@
 
 package be.e_contract.sts.client.cxf;
 
+import java.io.IOException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.LinkedList;
 import java.util.List;
@@ -152,11 +157,11 @@ public class SecurityDecorator {
 			privateKey = (PrivateKey) keyStore.getKey("Authentication", null);
 			Certificate[] certificateChain = keyStore
 					.getCertificateChain("Authentication");
-			certificates = new LinkedList<X509Certificate>();
+			certificates = new LinkedList<>();
 			for (Certificate certificate : certificateChain) {
 				certificates.add((X509Certificate) certificate);
 			}
-		} catch (Exception e) {
+		} catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException e) {
 			throw new RuntimeException("Error loading eID: " + e.getMessage(),
 					e);
 		}

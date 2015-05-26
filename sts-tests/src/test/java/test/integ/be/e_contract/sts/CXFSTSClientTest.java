@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014 e-Contract.be BVBA.
+ * Copyright (C) 2014-2015 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -423,7 +423,7 @@ public class CXFSTSClientTest {
 		PrivateKey privateKey = keyPair.getPrivate();
 		PublicKey publicKey = keyPair.getPublic();
 		X509Certificate certificate = getCertificate(privateKey, publicKey);
-		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		List<X509Certificate> certificates = new LinkedList<>();
 		certificates.add(certificate);
 
 		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
@@ -448,7 +448,6 @@ public class CXFSTSClientTest {
 
 		bus.shutdown(true);
 	}
-
 	@Test
 	public void testCXFSTS() throws Exception {
 		// SpringBusFactory bf = new SpringBusFactory();

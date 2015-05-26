@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014 e-Contract.be BVBA.
+ * Copyright (C) 2014-2015 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -25,12 +25,14 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.ws.security.saml.ext.SAMLCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 public class SamlClientCallbackHandler implements CallbackHandler {
 
@@ -54,7 +56,7 @@ public class SamlClientCallbackHandler implements CallbackHandler {
 					document = documentBuilder
 							.parse(SamlClientCallbackHandler.class
 									.getResourceAsStream("/saml-assertion.xml"));
-				} catch (Exception e) {
+				} catch (ParserConfigurationException | SAXException | IOException e) {
 					throw new RuntimeException(e);
 				}
 				Element assertionElement = document.getDocumentElement();
