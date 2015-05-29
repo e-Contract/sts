@@ -189,7 +189,7 @@
 
 	<profiles>
 		<profile>
-			<id>netbeans</id>
+			<id>integration-tests</id>
 			<build>
 				<plugins>
 					<plugin>

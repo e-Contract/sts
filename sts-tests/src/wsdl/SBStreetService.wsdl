@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+			xmlns:tns="http://services.advocaat.be/street/v1" 
+			xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+			xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+			xmlns:wsa="http://www.w3.org/2005/08/addressing"
+			xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl"
+			xmlns:wsp="http://www.w3.org/ns/ws-policy"
+			xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata"
+			xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702"
+			xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+			xmlns:wst="http://docs.oasis-open.org/ws-sx/ws-trust/200512"
+			xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex"
+			xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/"
+			name="Service" 
+			targetNamespace="http://services.advocaat.be/street/v1">
+  <wsdl:types>
+        <xsd:schema xmlns="http://www.w3.org/2001/XMLSchema">
+            <xsd:import namespace="http://services.advocaat.be/street/v1"
+                    schemaLocation="SBStreetService.xsd" />
+        </xsd:schema>
+    </wsdl:types>
+  <wsdl:message name="SearchCityRequestMsg">
+    <wsdl:part element="tns:SearchCityRequestMsgType" name="parameters"/>
+  </wsdl:message>
+  <wsdl:message name="SearchCityResponseMsg">
+    <wsdl:part element="tns:SearchCityResponseMsgType" name="parameters"/>
+  </wsdl:message>
+  <wsdl:message name="SearchStreetRequestMsg">
+  	<wsdl:part element="tns:SearchStreetRequestMsgType" name="parameters"/>
+  </wsdl:message>
+  <wsdl:message name="SearchStreetResponseMsg">
+  	<wsdl:part element="tns:SearchStreetResponseMsgType" name="parameters"/>
+  </wsdl:message>
+  <wsdl:message name="EchoRequest">
+    <wsdl:part element="tns:EchoRequest" name="parameters"/>
+  </wsdl:message>
+  <wsdl:message name="EchoResponse">
+    <wsdl:part element="tns:EchoResponse" name="parameters"/>
+  </wsdl:message>
+  <wsdl:portType name="IService">
+    <wsdl:operation name="fSearchCity">
+      <wsdl:input message="tns:SearchCityRequestMsg" wsaw:Action="http://services.advocaat.be/street/v1/IService/Input/fSearchCity" />
+      <wsdl:output message="tns:SearchCityResponseMsg" wsaw:Action="http://services.advocaat.be/street/v1/IService/Output/fSearchCity"/>
+    </wsdl:operation>
+    <wsdl:operation name="fSearchStreet">
+    	<wsdl:input message="tns:SearchStreetRequestMsg" wsaw:Action="http://services.advocaat.be/street/v1/IService/Input/fSearchStreet"/>
+    	<wsdl:output message="tns:SearchStreetResponseMsg" wsaw:Action="http://services.advocaat.be/street/v1/IService/Output/fSearchStreet"/>
+    </wsdl:operation>
+    <wsdl:operation name="echo">
+      	<wsdl:input message="tns:EchoRequest" wsaw:Action="http://services.advocaat.be/street/v1/IService/Input/echo"/>
+      	<wsdl:output message="tns:EchoResponse" wsaw:Action="http://services.advocaat.be/street/v1/IService/Output/echo"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="SBStreetServiceBinding" type="tns:IService">
+    <wsoap12:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="fSearchCity">
+    	<wsp:PolicyReference URI="#PolicyWithClaims"/>
+    	<wsoap12:operation soapAction="http://services.advocaat.be/street/v1/IService/Input/fSearchCity"/>
+      	<wsdl:input >
+ 	       <wsoap12:body use="literal"/>
+        </wsdl:input>
+        <wsdl:output >
+        	<wsoap12:body use="literal"/>
+        </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="fSearchStreet">
+    	<wsp:PolicyReference URI="#PolicyWithClaims"/>
+    	<wsoap12:operation soapAction="http://services.advocaat.be/street/v1/IService/Input/fSearchStreet"/>
+    	<wsdl:input>
+        	<wsoap12:body use="literal"/>
+      	</wsdl:input>
+      	<wsdl:output>
+        	<wsoap12:body use="literal"/>
+        </wsdl:output>
+    </wsdl:operation>
+   <wsdl:operation name="echo">
+    	<wsp:PolicyReference URI="#PolicyWithClaims"/>
+    	<wsoap12:operation soapAction="http://services.advocaat.be/street/v1/IService/Input/echo"/>
+    	<wsdl:input>
+        	<wsoap12:body use="literal"/>
+      	</wsdl:input>
+      	<wsdl:output>
+        	<wsoap12:body use="literal"/>
+        </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="SBStreetService">
+    <wsdl:port binding="tns:SBStreetServiceBinding" name="SBStreetServicePort">
+      <wsoap12:address location="https://services.test.advocaat.be/OVB.Services.SB.Street/Service.svc"/>
+    </wsdl:port>
+  </wsdl:service>
+   <wsp:Policy wsu:Id="PolicyWithClaims">
+		<wsp:ExactlyOne>
+			<wsp:All>
+				<sp:TransportBinding>
+					<wsp:Policy>
+						<sp:TransportToken>
+							<wsp:Policy>
+								<sp:HttpsToken>
+									<wsp:Policy/>
+								</sp:HttpsToken>
+							</wsp:Policy>
+						</sp:TransportToken>
+						<sp:AlgorithmSuite>
+							<wsp:Policy>
+								<sp:Basic128/>
+							</wsp:Policy>
+						</sp:AlgorithmSuite>
+						<sp:IncludeTimestamp/>
+					</wsp:Policy>
+				</sp:TransportBinding>
+				<sp:SignedSupportingTokens>
+					<wsp:Policy>
+						<sp:IssuedToken sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
+						  <sp:Issuer>
+								<wsa:Address>http://www.w3.org/2005/08/addressing/anonymous</wsa:Address>
+								<wsa:Metadata>
+									<wsx:Metadata>
+										<wsx:MetadataSection>
+											<wsx:MetadataReference>
+												<wsa:Address>https://sts.advocaat.be/iam/sts/mex</wsa:Address>
+												<!--<wsa:Address>https://www.e-contract.be/iam/sts/mex</wsa:Address> -->
+											</wsx:MetadataReference>
+										</wsx:MetadataSection>
+									</wsx:Metadata>
+								</wsa:Metadata>
+							</sp:Issuer>
+							<sp:RequestSecurityTokenTemplate>
+								<wst:TokenType>http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0
+								</wst:TokenType>
+								<wst:KeyType>http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer
+								</wst:KeyType>
+								<wst:Claims Dialect="http://schemas.xmlsoap.org/ws/2005/05/identity">
+									<wsid:ClaimType xmlns:wsid="http://schemas.xmlsoap.org/ws/2005/05/identity" Uri="urn:be:e-contract:iam:claims:self-claimed:office-key"/>
+									<wsid:ClaimType xmlns:wsid="http://schemas.xmlsoap.org/ws/2005/05/identity" Uri="urn:be:e-contract:iam:claims:self-claimed:software-key"/>
+								</wst:Claims>
+							</sp:RequestSecurityTokenTemplate>
+							<wsp:Policy>
+								<sp:RequireInternalReference/>
+							</wsp:Policy>
+						</sp:IssuedToken>
+					</wsp:Policy>
+				</sp:SignedSupportingTokens>
+				<wsam:Addressing wsp:Optional="false">
+					<wsp:Policy/>
+				</wsam:Addressing>
+			</wsp:All>
+		</wsp:ExactlyOne>
+	</wsp:Policy>
+</wsdl:definitions>
