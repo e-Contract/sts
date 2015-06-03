@@ -2,6 +2,10 @@ eID Security Token Service CXF Client
 
   This Java library provides an implementation of the client side of the eID STS protocol.
   This library targets the {{{http://cxf.apache.org/}Apache CXF}} JAX-WS runtime.
+
+  You need at least Apache CXF version 2.7.12.
+  Tested Apache CXF versions: 2.7.12, 2.7.13, 2.7.16.
+  This eID STS CXF client does not work with Apache CXF version 3.
   
   The Java client library is available within the e-contract.be Maven repository.
   Configure this Maven repository within your pom.xml as follows:
