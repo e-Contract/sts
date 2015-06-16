@@ -59,6 +59,8 @@ public class ExampleClaimsHandler implements ClaimsHandler {
 		ClaimCollection claimCollection = new ClaimCollection();
 		CustomTokenPrincipal customTokenPrincipal = (CustomTokenPrincipal) paramClaimsParameters
 				.getPrincipal();
+		LOGGER.debug("custom token principal: {}",
+				customTokenPrincipal.getName());
 		ReceivedToken receivedToken = (ReceivedToken) customTokenPrincipal
 				.getTokenObject();
 		LOGGER.debug("received token type: {}", receivedToken.getClass()

@@ -206,8 +206,8 @@ public class SecurityPolicyTest {
 		Bus bus = bf.createBus("cxf_https.xml");
 		STSClient stsClient = new STSClient(bus);
 		stsClient.setSoap12();
-		stsClient.setWsdlLocation(this.stsUrl + "?wsdl");
-		stsClient.setLocation(this.stsUrl);
+		stsClient.setWsdlLocation(this.sts2Url + "?wsdl");
+		stsClient.setLocation(this.sts2Url);
 		stsClient
 				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
 		stsClient
@@ -222,7 +222,7 @@ public class SecurityPolicyTest {
 		PrivateKey privateKey = keyPair.getPrivate();
 		PublicKey publicKey = keyPair.getPublic();
 		X509Certificate certificate = getCertificate(privateKey, publicKey);
-		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		List<X509Certificate> certificates = new LinkedList<>();
 		certificates.add(certificate);
 		certificates.add(certificate);
 
@@ -237,7 +237,6 @@ public class SecurityPolicyTest {
 
 		stsClient.requestSecurityToken("https://demo.app.applies.to");
 	}
-
 	@Test
 	public void testCXFSTSIssue() throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
@@ -261,7 +260,7 @@ public class SecurityPolicyTest {
 		PrivateKey privateKey = keyPair.getPrivate();
 		PublicKey publicKey = keyPair.getPublic();
 		X509Certificate certificate = getCertificate(privateKey, publicKey);
-		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		List<X509Certificate> certificates = new LinkedList<>();
 		certificates.add(certificate);
 		// certificates.add(certificate);
 
@@ -284,7 +283,6 @@ public class SecurityPolicyTest {
 				securityToken.getTokenType());
 		LOGGER.debug("security token expires: {}", securityToken.getExpires());
 	}
-
 	@Test
 	public void testCXFSTS() throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
@@ -308,7 +306,7 @@ public class SecurityPolicyTest {
 		PrivateKey privateKey = keyPair.getPrivate();
 		PublicKey publicKey = keyPair.getPublic();
 		X509Certificate certificate = getCertificate(privateKey, publicKey);
-		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		List<X509Certificate> certificates = new LinkedList<>();
 		certificates.add(certificate);
 		certificates.add(certificate);
 
@@ -323,6 +321,7 @@ public class SecurityPolicyTest {
 
 		SecurityToken securityToken = stsClient
 				.requestSecurityToken("https://demo.app.applies.to");
+                LOGGER.debug("security token type: {}", securityToken.getClass().getName());
 		Principal principal = securityToken.getPrincipal();
 		LOGGER.debug("principal: {}", principal);
 		LOGGER.debug("token type: {}", securityToken.getTokenType());
@@ -337,7 +336,6 @@ public class SecurityPolicyTest {
 				.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
 		stsClient.validateSecurityToken(securityToken);
 	}
-
 	@Test
 	public void testPublicKeyToken() throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
@@ -361,7 +359,7 @@ public class SecurityPolicyTest {
 		PrivateKey privateKey = keyPair.getPrivate();
 		PublicKey publicKey = keyPair.getPublic();
 		X509Certificate certificate = getCertificate(privateKey, publicKey);
-		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		List<X509Certificate> certificates = new LinkedList<>();
 		certificates.add(certificate);
 		certificates.add(certificate);
 
@@ -393,7 +391,6 @@ public class SecurityPolicyTest {
 				.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
 		stsClient.validateSecurityToken(securityToken);
 	}
-
 	@Test
 	public void testPublicKeyTokenOtherKey() throws Exception {
 		SpringBusFactory bf = new SpringBusFactory();
@@ -417,7 +414,7 @@ public class SecurityPolicyTest {
 		PrivateKey privateKey = keyPair.getPrivate();
 		PublicKey publicKey = keyPair.getPublic();
 		X509Certificate certificate = getCertificate(privateKey, publicKey);
-		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		List<X509Certificate> certificates = new LinkedList<>();
 		certificates.add(certificate);
 
 		KeyPair hokKeyPair = keyPairGenerator.generateKeyPair();
@@ -425,7 +422,7 @@ public class SecurityPolicyTest {
 		PublicKey hokPublicKey = hokKeyPair.getPublic();
 		X509Certificate hokCertificate = getCertificate(hokPrivateKey,
 				hokPublicKey);
-		List<X509Certificate> hokCertificates = new LinkedList<X509Certificate>();
+		List<X509Certificate> hokCertificates = new LinkedList<>();
 		hokCertificates.add(hokCertificate);
 
 		// Apache CXF specific configuration
@@ -456,7 +453,6 @@ public class SecurityPolicyTest {
 				.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
 		stsClient.validateSecurityToken(securityToken);
 	}
-
 	@Test
 	public void testSupportingTokensUsernameToken() throws Exception {
 		// get the JAX-WS client
@@ -633,7 +629,7 @@ public class SecurityPolicyTest {
 		PrivateKey privateKey = keyPair.getPrivate();
 		PublicKey publicKey = keyPair.getPublic();
 		X509Certificate certificate = getCertificate(privateKey, publicKey);
-		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		List<X509Certificate> certificates = new LinkedList<>();
 		certificates.add(certificate);
 
 		Map<String, Object> properties = stsClient.getProperties();
@@ -652,7 +648,6 @@ public class SecurityPolicyTest {
 
 		bus.shutdown(true);
 	}
-
 	@Test
 	public void testTransportBindingHttpsTokenSupportingTokensSamlTokenViaSTSWithMEX()
 			throws Exception {
@@ -675,7 +670,7 @@ public class SecurityPolicyTest {
 		PrivateKey privateKey = keyPair.getPrivate();
 		PublicKey publicKey = keyPair.getPublic();
 		X509Certificate certificate = getCertificate(privateKey, publicKey);
-		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		List<X509Certificate> certificates = new LinkedList<>();
 		certificates.add(certificate);
 
 		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
@@ -697,7 +692,6 @@ public class SecurityPolicyTest {
 
 		bus.shutdown(true);
 	}
-
 	@Test
 	public void testTransportBindingHttpsTokenSupportingTokensSamlTokenViaSTSWithMEXAndClaims()
 			throws Exception {
@@ -720,7 +714,7 @@ public class SecurityPolicyTest {
 		PrivateKey privateKey = keyPair.getPrivate();
 		PublicKey publicKey = keyPair.getPublic();
 		X509Certificate certificate = getCertificate(privateKey, publicKey);
-		List<X509Certificate> certificates = new LinkedList<X509Certificate>();
+		List<X509Certificate> certificates = new LinkedList<>();
 		certificates.add(certificate);
 
 		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
@@ -740,11 +734,10 @@ public class SecurityPolicyTest {
 
 		// invoke the web service
 		String result = port.echo("hello world");
-		Assert.assertEquals("CN=Test:hello world", result);
+                Assert.assertEquals("custom-CN=Test:hello world", result);
 
 		bus.shutdown(true);
 	}
-
 	private static int getFreePort() throws Exception {
 		try (ServerSocket serverSocket = new ServerSocket(0)) {
 			return serverSocket.getLocalPort();

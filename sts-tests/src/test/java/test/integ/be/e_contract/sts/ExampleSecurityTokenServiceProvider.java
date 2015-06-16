@@ -77,6 +77,9 @@ public class ExampleSecurityTokenServiceProvider
 		TokenIssueOperation issueOperation = new TokenIssueOperation();
 
 		STSPropertiesMBean stsProperties = new StaticSTSProperties();
+                //stsProperties.setRealmParser(new ExampleRealmParser());
+                //stsProperties.setIdentityMapper(new ExampleIdentityMapper());
+                
 		stsProperties.setCallbackHandler(new ServerCallbackHandler()); // SAMLTokenProvider
 		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
 		KeyPair keyPair = keyPairGenerator.generateKeyPair();

@@ -49,7 +49,9 @@ public class ExampleTokenDelegationHandler implements TokenDelegationHandler {
 		ReceivedToken receivedToken = paramTokenDelegationParameters.getToken();
 		receivedToken.setState(STATE.VALID);
 		CustomTokenPrincipal customTokenPrincipal = new CustomTokenPrincipal(
-				paramTokenDelegationParameters.getPrincipal().getName());
+				"custom-"
+						+ paramTokenDelegationParameters.getPrincipal()
+								.getName());
 		customTokenPrincipal.setTokenObject(receivedToken);
 		receivedToken.setPrincipal(customTokenPrincipal);
 		response.setToken(receivedToken);

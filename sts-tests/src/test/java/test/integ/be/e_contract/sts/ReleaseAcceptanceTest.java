@@ -87,7 +87,11 @@ public class ReleaseAcceptanceTest {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(ReleaseAcceptanceTest.class);
 
-	private static final String STS_LOCATION = "https://www.e-contract.be/iam/sts";
+	private static final String STS_LOCATION = "http://sts.test.advocaat.be/iam/sts";
+	// private static final String STS_LOCATION =
+	// "https://sts.test.advocaat.be/iam/sts";
+	// private static final String STS_LOCATION =
+	// "https://www.e-contract.be/iam/sts";
 
 	@Before
 	public void setUp() throws Exception {

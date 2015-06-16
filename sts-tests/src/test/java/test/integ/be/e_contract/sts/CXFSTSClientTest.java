@@ -170,8 +170,10 @@ public class CXFSTSClientTest {
 		BindingProvider bindingProvider = (BindingProvider) port;
 		Map<String, Object> requestContext = bindingProvider
 				.getRequestContext();
+		final String WS_LOCATION = "https://localhost/iam/example";
+		// final String WS_LOCATION = "https://www.e-contract.be/iam/example";
 		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY,
-				"https://localhost/iam/example");
+				WS_LOCATION);
 
 		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
 		requestContext
