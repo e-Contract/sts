@@ -63,6 +63,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import be.e_contract.sts.client.cxf.SecurityDecorator;
+import be.e_contract.sts.example.ws.jaxb.BearerRequest;
 import be.e_contract.sts.example.ws.jaxb.ClaimType;
 import be.e_contract.sts.example.ws.jaxb.ClaimsResponseType;
 import be.e_contract.sts.example.ws.jaxb.GetAddressClaimsRequest;
@@ -87,11 +88,11 @@ public class ReleaseAcceptanceTest {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(ReleaseAcceptanceTest.class);
 
-	private static final String STS_LOCATION = "http://sts.test.advocaat.be/iam/sts";
+	// private static final String STS_LOCATION =
+	// "http://sts.test.advocaat.be/iam/sts";
 	// private static final String STS_LOCATION =
 	// "https://sts.test.advocaat.be/iam/sts";
-	// private static final String STS_LOCATION =
-	// "https://www.e-contract.be/iam/sts";
+	private static final String STS_LOCATION = "https://www.e-contract.be/iam/sts";
 
 	@Before
 	public void setUp() throws Exception {
@@ -125,7 +126,7 @@ public class ReleaseAcceptanceTest {
 
 		LOGGER.debug("STS location: {}", stsClient.getLocation());
 		SecurityToken securityToken = stsClient
-				.requestSecurityToken("https://demo.app.applies.to");
+				.requestSecurityToken("https://www.e-contract.be/iam/example");
 		Principal principal = securityToken.getPrincipal();
 		LOGGER.debug("principal: {}", principal);
 		LOGGER.debug("token type: {}", securityToken.getTokenType());
@@ -146,6 +147,21 @@ public class ReleaseAcceptanceTest {
 		assertEquals(
 				"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
 				resultSecurityToken.getTokenType());
+
+		// use the SAML bearer token directly.
+		ExampleService exampleService = new ExampleService();
+		ExampleServicePortType port = exampleService.getExampleServicePort();
+		SecurityDecorator securityDecorator = new SecurityDecorator();
+		securityDecorator.decorate((BindingProvider) port,
+				resultSecurityToken.getToken(),
+				"https://www.e-contract.be/iam/example");
+
+		BearerRequest bearerRequest = new BearerRequest();
+		ClaimsResponseType response = port.bearer(bearerRequest);
+		LOGGER.debug("subject: {}", response.getSubject());
+		for (ClaimType claim : response.getClaim()) {
+			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
+		}
 	}
 
 	/**
