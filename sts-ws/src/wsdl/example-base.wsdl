@@ -46,6 +46,12 @@
 	<message name="HolderOfKeyEchoResponse">
 		<part name="HolderOfKeyEchoResponse" element="tns:HolderOfKeyEchoResponse" />
 	</message>
+        <message name="BearerRequest">
+		<part name="BearerRequest" element="tns:BearerRequest" />
+	</message>
+	<message name="BearerResponse">
+		<part name="BearerResponse" element="tns:BearerResponse" />
+	</message>
 
 	<portType name="ExampleServicePortType">
 		<operation name="echo">
@@ -67,6 +73,10 @@
 		<operation name="holderOfKeyEcho">
 			<input message="tns:HolderOfKeyEchoRequest" />
 			<output message="tns:HolderOfKeyEchoResponse" />
+		</operation>
+                <operation name="bearer">
+			<input message="tns:BearerRequest" />
+			<output message="tns:BearerResponse" />
 		</operation>
 	</portType>
 

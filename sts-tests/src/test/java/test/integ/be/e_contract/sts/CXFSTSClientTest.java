@@ -92,6 +92,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import be.e_contract.sts.client.cxf.SecurityDecorator;
+import be.e_contract.sts.example.ws.jaxb.BearerRequest;
 import be.e_contract.sts.example.ws.jaxb.ClaimType;
 import be.e_contract.sts.example.ws.jaxb.ClaimsResponseType;
 import be.e_contract.sts.example.ws.jaxb.GetAddressClaimsRequest;
@@ -103,6 +104,7 @@ import be.fedict.commons.eid.client.BeIDCard;
 import be.fedict.commons.eid.client.BeIDCards;
 import be.fedict.commons.eid.client.FileType;
 import be.fedict.commons.eid.jca.BeIDProvider;
+import org.w3c.dom.Element;
 
 public class CXFSTSClientTest {
 
@@ -511,6 +513,64 @@ public class CXFSTSClientTest {
 	}
 
 	@Test
+	public void testBearer() throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
+		BusFactory.setDefaultBus(bus);
+		STSClient stsClient = new STSClient(bus);
+		stsClient.setSoap12();
+		stsClient.setWsdlLocation("https://localhost/iam/sts?wsdl");
+		stsClient.setLocation("https://localhost/iam/sts");
+		stsClient
+				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient
+				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient
+				.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
+		stsClient
+				.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
+		stsClient.setAllowRenewing(false);
+
+		// Apache CXF specific configuration
+		Map<String, Object> properties = stsClient.getProperties();
+		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		properties.put(SecurityConstants.CALLBACK_HANDLER,
+				new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
+		stsClient.setProperties(properties);
+
+		Client client = stsClient.getClient();
+		HTTPConduit httpConduit = (HTTPConduit) client.getConduit();
+		TLSClientParameters tlsParams = new TLSClientParameters();
+		tlsParams.setSecureSocketProtocol("TLSv1");
+		tlsParams.setDisableCNCheck(true);
+		tlsParams.setTrustManagers(new TrustManager[]{new MyTrustManager()});
+		httpConduit.setTlsClientParameters(tlsParams);
+
+		LOGGER.debug("STS location: {}", stsClient.getLocation());
+		SecurityToken securityToken = stsClient
+				.requestSecurityToken("https://localhost/iam/example");
+		Element assertionElement = securityToken.getToken();
+
+		URL wsdlLocation = CXFSTSClientTest.class
+				.getResource("/example-localhost-sts.wsdl");
+		ExampleService exampleService = new ExampleService(wsdlLocation,
+				new QName("urn:be:e-contract:sts:example", "ExampleService"));
+		ExampleServicePortType port = exampleService.getExampleServicePort();
+
+		SecurityDecorator securityDecorator = new SecurityDecorator();
+		securityDecorator.decorate((BindingProvider) port, assertionElement,
+				"https://localhost/iam/example");
+
+		BearerRequest bearerRequest = new BearerRequest();
+		ClaimsResponseType response = port.bearer(bearerRequest);
+		LOGGER.debug("subject: {}", response.getSubject());
+		for (ClaimType claim : response.getClaim()) {
+			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
+		}
+	}
+
+	@Test
 	public void testCXFSTSWithClaimsAndActAsAssertion() throws Exception {
 		// SpringBusFactory bf = new SpringBusFactory();
 		// Bus bus = bf.createBus();
@@ -540,14 +600,14 @@ public class CXFSTSClientTest {
 		Client client = stsClient.getClient();
 		HTTPConduit httpConduit = (HTTPConduit) client.getConduit();
 		TLSClientParameters tlsParams = new TLSClientParameters();
-		tlsParams.setSecureSocketProtocol("SSL");
+		tlsParams.setSecureSocketProtocol("TLSv1");
 		tlsParams.setDisableCNCheck(true);
 		tlsParams.setTrustManagers(new TrustManager[]{new MyTrustManager()});
 		httpConduit.setTlsClientParameters(tlsParams);
 
 		LOGGER.debug("STS location: {}", stsClient.getLocation());
 		SecurityToken securityToken = stsClient
-				.requestSecurityToken("https://demo.app.applies.to");
+				.requestSecurityToken("https://localhost/iam/example");
 		Principal principal = securityToken.getPrincipal();
 		LOGGER.debug("principal: {}", principal);
 		LOGGER.debug("token type: {}", securityToken.getTokenType());

@@ -64,6 +64,16 @@
 				<wsoap12:body use="literal" />
 			</output>
 		</operation>
+                <operation name="bearer">
+			<wsp:PolicyReference URI="#BearerPolicy" />
+			<wsoap12:operation soapAction="bearer" />
+			<input>
+				<wsoap12:body use="literal" />
+			</input>
+			<output>
+				<wsoap12:body use="literal" />
+			</output>
+		</operation>
 	</binding>
 
 	<service name="ExampleService">
@@ -381,6 +391,44 @@
 				<wsam:Addressing wsp:Optional="false">
 					<wsp:Policy />
 				</wsam:Addressing>
+			</wsp:All>
+		</wsp:ExactlyOne>
+	</wsp:Policy>
+        
+        <wsp:Policy wsu:Id="BearerPolicy">
+		<wsp:ExactlyOne>
+			<wsp:All>
+				<sp:TransportBinding>
+					<wsp:Policy>
+						<sp:TransportToken>
+							<wsp:Policy>
+								<sp:HttpsToken>
+									<wsp:Policy />
+								</sp:HttpsToken>
+							</wsp:Policy>
+						</sp:TransportToken>
+						<sp:AlgorithmSuite>
+							<wsp:Policy>
+								<sp:Basic128 />
+							</wsp:Policy>
+						</sp:AlgorithmSuite>
+						<sp:IncludeTimestamp />
+					</wsp:Policy>
+				</sp:TransportBinding>
+				<sp:SignedSupportingTokens>
+					<wsp:Policy>
+						<sp:SamlToken>
+							<wsp:Policy>
+								<sp:WssSamlV20Token11 />
+							</wsp:Policy>
+						</sp:SamlToken>
+					</wsp:Policy>
+				</sp:SignedSupportingTokens>
+				<sp:Wss11>
+					<wsp:Policy>
+						<sp:MustSupportRefEmbeddedToken />
+					</wsp:Policy>
+				</sp:Wss11>
 			</wsp:All>
 		</wsp:ExactlyOne>
 	</wsp:Policy>

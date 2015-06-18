@@ -35,5 +35,10 @@
 
 	<element name="HolderOfKeyEchoRequest" type="xs:string" />
 	<element name="HolderOfKeyEchoResponse" type="xs:string" />
+        
+        <element name="BearerRequest">
+		<complexType />
+	</element>
+	<element name="BearerResponse" type="tns:ClaimsResponseType" />
 
 </schema>
