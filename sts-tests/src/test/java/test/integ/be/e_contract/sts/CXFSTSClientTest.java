@@ -482,7 +482,7 @@ public class CXFSTSClientTest {
 		Client client = stsClient.getClient();
 		HTTPConduit httpConduit = (HTTPConduit) client.getConduit();
 		TLSClientParameters tlsParams = new TLSClientParameters();
-		tlsParams.setSecureSocketProtocol("SSL");
+		tlsParams.setSecureSocketProtocol("TLSv1");
 		tlsParams.setDisableCNCheck(true);
 		tlsParams.setTrustManagers(new TrustManager[]{new MyTrustManager()});
 		httpConduit.setTlsClientParameters(tlsParams);

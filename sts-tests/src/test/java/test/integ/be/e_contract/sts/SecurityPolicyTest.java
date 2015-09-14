@@ -125,6 +125,10 @@ public class SecurityPolicyTest {
 
 	private Endpoint sts2Endpoint;
 
+	private String stsUsernameUrl;
+
+	private Endpoint stsUsernameEndpoint;
+
 	private Bus bus;
 
 	@Before
@@ -161,6 +165,11 @@ public class SecurityPolicyTest {
 		this.sts2Url = "https://localhost:" + sslFreePort + "/example/sts2";
 		this.sts2Endpoint = Endpoint.publish(this.sts2Url,
 				new ExampleSecurityTokenServiceProvider());
+
+		this.stsUsernameUrl = "https://localhost:" + sslFreePort
+				+ "/example/sts-username";
+		this.stsUsernameEndpoint = Endpoint.publish(this.stsUsernameUrl,
+				new UsernamePasswordSecurityTokenServiceProvider());
 
 		int freePort = getFreePort();
 		this.url = "http://localhost:" + freePort + "/example/ws";
@@ -202,6 +211,7 @@ public class SecurityPolicyTest {
 		this.endpoint8.stop();
 		this.stsEndpoint.stop();
 		this.sts2Endpoint.stop();
+		this.stsUsernameEndpoint.stop();
 	}
 
 	@Test
@@ -527,6 +537,41 @@ public class SecurityPolicyTest {
 		// invoke the web service
 		String result = port.echo("hello world");
 		Assert.assertEquals("username:hello world", result);
+
+		bus.shutdown(true);
+	}
+
+	@Test
+	public void testUsernamePasswordCXFSTS() throws Exception {
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf_https.xml");
+		STSClient stsClient = new STSClient(bus);
+		stsClient.setSoap12();
+		stsClient.setWsdlLocation(this.stsUsernameUrl + "?wsdl");
+		stsClient.setLocation(this.stsUsernameUrl);
+		stsClient
+				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient
+				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient
+				.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
+		stsClient.setTokenType("urn:oasis:names:tc:SAML:2.0:assertion");
+		stsClient.setAllowRenewing(false);
+
+		Map<String, Object> properties = stsClient.getProperties();
+		properties.put(SecurityConstants.USERNAME, "username");
+		properties.put(SecurityConstants.PASSWORD, "password");
+		stsClient.setProperties(properties);
+
+		LOGGER.debug("STS location: {}", stsClient.getLocation());
+		SecurityToken securityToken = stsClient
+				.requestSecurityToken("https://demo.app.applies.to");
+		Principal principal = securityToken.getPrincipal();
+		LOGGER.debug("principal: {}", principal);
+		LOGGER.debug("token type: {}", securityToken.getTokenType());
+		assertEquals("urn:oasis:names:tc:SAML:2.0:assertion",
+				securityToken.getTokenType());
+		LOGGER.debug("security token expires: {}", securityToken.getExpires());
 
 		bus.shutdown(true);
 	}

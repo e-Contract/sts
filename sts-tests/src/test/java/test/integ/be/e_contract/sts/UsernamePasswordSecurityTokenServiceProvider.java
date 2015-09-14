@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014-2015 e-Contract.be BVBA.
+ * Copyright (C) 2015 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -29,27 +29,20 @@ import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-
 import javax.jws.HandlerChain;
 import javax.jws.WebService;
-
 import org.apache.cxf.annotations.EndpointProperties;
 import org.apache.cxf.annotations.EndpointProperty;
 import org.apache.cxf.sts.STSPropertiesMBean;
 import org.apache.cxf.sts.StaticSTSProperties;
 import org.apache.cxf.sts.claims.ClaimsAttributeStatementProvider;
-import org.apache.cxf.sts.claims.ClaimsHandler;
-import org.apache.cxf.sts.claims.ClaimsManager;
 import org.apache.cxf.sts.operation.TokenIssueOperation;
-import org.apache.cxf.sts.operation.TokenValidateOperation;
 import org.apache.cxf.sts.service.ServiceMBean;
-import org.apache.cxf.sts.token.delegation.TokenDelegationHandler;
 import org.apache.cxf.sts.token.provider.AttributeStatementProvider;
 import org.apache.cxf.sts.token.provider.AuthenticationStatementProvider;
 import org.apache.cxf.sts.token.provider.SAMLTokenProvider;
 import org.apache.cxf.sts.token.provider.TokenProvider;
-import org.apache.cxf.sts.token.validator.SAMLTokenValidator;
-import org.apache.cxf.sts.token.validator.TokenValidator;
+import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.sts.provider.SecurityTokenServiceProvider;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -64,21 +57,17 @@ import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.joda.time.DateTime;
 
-@WebService(targetNamespace = "http://docs.oasis-open.org/ws-sx/ws-trust/200512", serviceName = "SecurityTokenService", wsdlLocation = "ws-trust-1.3.wsdl", portName = "SecurityTokenServicePort")
+@WebService(targetNamespace = "http://docs.oasis-open.org/ws-sx/ws-trust/200512", serviceName = "SecurityTokenService", wsdlLocation = "ws-trust-1.4-username-password.wsdl", portName = "SecurityTokenServicePort")
+@EndpointProperties({@EndpointProperty(key = SecurityConstants.CALLBACK_HANDLER, value = "test.integ.be.e_contract.sts.ExampleSecurityPolicyCallbackHandler")})
 @HandlerChain(file = "/example-ws-handlers.xml")
-@EndpointProperties({@EndpointProperty(key = "ws-security.signature.properties", value = "signature.properties")})
-public class ExampleSecurityTokenServiceProvider
+public class UsernamePasswordSecurityTokenServiceProvider
 		extends
 			SecurityTokenServiceProvider {
 
-	public ExampleSecurityTokenServiceProvider() throws Exception {
-        super();
+	public UsernamePasswordSecurityTokenServiceProvider() throws Exception {
         TokenIssueOperation issueOperation = new TokenIssueOperation();
 
         STSPropertiesMBean stsProperties = new StaticSTSProperties();
-        //stsProperties.setRealmParser(new ExampleRealmParser());
-        //stsProperties.setIdentityMapper(new ExampleIdentityMapper());
-
         stsProperties.setCallbackHandler(new ServerCallbackHandler()); // SAMLTokenProvider
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         KeyPair keyPair = keyPairGenerator.generateKeyPair();
@@ -98,16 +87,6 @@ public class ExampleSecurityTokenServiceProvider
                 .singletonList("https://demo.app.applies.to"));
         services.add(service);
 
-        ClaimsManager claimsManager = new ClaimsManager();
-        claimsManager.setClaimHandlers(Collections
-                .singletonList((ClaimsHandler) new ExampleClaimsHandler()));
-        issueOperation.setClaimsManager(claimsManager);
-
-        List<TokenDelegationHandler> delegationHandlers = new LinkedList<>();
-        TokenDelegationHandler tokenDelegationHandler = new ExampleTokenDelegationHandler();
-        delegationHandlers.add(tokenDelegationHandler);
-        issueOperation.setDelegationHandlers(delegationHandlers);
-
         issueOperation.setServices(services);
 
         List<TokenProvider> tokenProviders = new LinkedList<>();
@@ -126,20 +105,6 @@ public class ExampleSecurityTokenServiceProvider
         issueOperation.setTokenProviders(tokenProviders);
 
         setIssueOperation(issueOperation);
-
-        // validation
-        TokenValidateOperation validateOperation = new TokenValidateOperation();
-
-        stsProperties = new StaticSTSProperties();
-        validateOperation.setStsProperties(stsProperties);
-        stsProperties.setSignatureCrypto(new ServerCrypto());
-
-        List<TokenValidator> tokenValidators = new LinkedList<>();
-        SAMLTokenValidator samlTokenValidator = new SAMLTokenValidator();
-        tokenValidators.add(new SAMLTokenValidatorWrapper(samlTokenValidator));
-        validateOperation.setTokenValidators(tokenValidators);
-
-        setValidateOperation(validateOperation);
     }
 	private static X509Certificate getCertificate(PrivateKey privateKey,
 			PublicKey publicKey) throws Exception {
