@@ -353,7 +353,7 @@ public class SecurityPolicyTest {
 	@Test
     public void testPublicKeyToken() throws Exception {
         SpringBusFactory bf = new SpringBusFactory();
-        Bus bus = bf.createBus("cxf_https.xml");
+        Bus bus = bf.createBus("cxf-https-trust-all.xml");
         STSClient stsClient = new STSClient(bus);
         stsClient.setSoap12();
         stsClient.setWsdlLocation(this.sts2Url + "?wsdl");
