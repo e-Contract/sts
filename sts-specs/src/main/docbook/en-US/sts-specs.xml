@@ -6,6 +6,12 @@
 	<title>eID Security Token Service Specifications</title>
 	<subtitle>
 		Version &project.version;
+		<mediaobject>
+			<imageobject>
+				<imagedata format="PNG" fileref="e-contract-logoFINAL.svg"
+					scale="50" />
+			</imageobject>
+		</mediaobject>
 	</subtitle>
 
 	<info>
@@ -18,7 +24,7 @@
 			</author>
 		</authorgroup>
 		<copyright>
-			<year>2014-2015</year>
+			<year>2014-2019</year>
 			<holder>e-Contract.be BVBA</holder>
 		</copyright>
 		<pubdate>
