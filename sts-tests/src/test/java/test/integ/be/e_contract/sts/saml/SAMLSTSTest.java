@@ -24,13 +24,12 @@ import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 import javax.xml.transform.Transformer;
@@ -60,14 +59,35 @@ import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opensaml.Configuration;
+import org.opensaml.DefaultBootstrap;
+import org.opensaml.common.SAMLObjectBuilder;
+import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.Issuer;
+import org.opensaml.saml2.core.NameID;
+import org.opensaml.saml2.core.Subject;
+import org.opensaml.saml2.core.SubjectConfirmation;
+import org.opensaml.saml2.core.SubjectConfirmationData;
+import org.opensaml.xml.XMLObjectBuilderFactory;
+import org.opensaml.xml.io.Marshaller;
+import org.opensaml.xml.io.MarshallerFactory;
+import org.opensaml.xml.security.SecurityConfiguration;
+import org.opensaml.xml.security.keyinfo.KeyInfoGenerator;
+import org.opensaml.xml.security.keyinfo.KeyInfoGeneratorFactory;
+import org.opensaml.xml.security.keyinfo.KeyInfoGeneratorManager;
+import org.opensaml.xml.security.keyinfo.NamedKeyInfoGeneratorManager;
+import org.opensaml.xml.security.x509.BasicX509Credential;
+import org.opensaml.xml.signature.KeyInfo;
+import org.opensaml.xml.signature.Signature;
+import org.opensaml.xml.signature.SignatureConstants;
+import org.opensaml.xml.signature.Signer;
+import org.opensaml.xml.signature.impl.SignatureBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import be.e_contract.sts.client.cxf.SAMLCallbackHandler;
-import test.integ.be.e_contract.sts.ClientCrypto;
-import test.integ.be.e_contract.sts.ExampleSecurityPolicyCallbackHandler;
 import test.integ.be.e_contract.sts.ExampleSecurityTokenServiceProvider;
 import test.integ.be.e_contract.sts.SecurityPolicyTest;
 
@@ -84,6 +104,55 @@ public class SAMLSTSTest {
 	private String samlStsUrl;
 
 	private Endpoint samlStsEndpoint;
+
+	private static final X509Certificate SAML_SIGNER_CERTIFICATE;
+
+	private static final PrivateKey SAML_SIGNER_PRIVATE_KEY;
+
+	static {
+		KeyPairGenerator keyPairGenerator;
+		try {
+			keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+		SAML_SIGNER_PRIVATE_KEY = keyPair.getPrivate();
+		PublicKey publicKey = keyPair.getPublic();
+		try {
+			SAML_SIGNER_CERTIFICATE = getCertificate(SAML_SIGNER_PRIVATE_KEY, publicKey);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private static X509Certificate getCertificate(PrivateKey privateKey, PublicKey publicKey) throws Exception {
+		X500Name subjectName = new X500Name("CN=SAML Signer");
+		X500Name issuerName = subjectName; // self-signed
+		BigInteger serial = new BigInteger(128, new SecureRandom());
+		SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());
+		DateTime notBefore = new DateTime();
+		DateTime notAfter = notBefore.plusMonths(1);
+		X509v3CertificateBuilder x509v3CertificateBuilder = new X509v3CertificateBuilder(issuerName, serial,
+				notBefore.toDate(), notAfter.toDate(), subjectName, publicKeyInfo);
+		AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA1withRSA");
+		AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId);
+		AsymmetricKeyParameter asymmetricKeyParameter = PrivateKeyFactory.createKey(privateKey.getEncoded());
+
+		ContentSigner contentSigner = new BcRSAContentSignerBuilder(sigAlgId, digAlgId).build(asymmetricKeyParameter);
+		X509CertificateHolder x509CertificateHolder = x509v3CertificateBuilder.build(contentSigner);
+
+		byte[] encodedCertificate = x509CertificateHolder.getEncoded();
+
+		CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+		X509Certificate certificate = (X509Certificate) certificateFactory
+				.generateCertificate(new ByteArrayInputStream(encodedCertificate));
+		return certificate;
+	}
+
+	public static X509Certificate getSAMLSignerCertificate() {
+		return SAML_SIGNER_CERTIFICATE;
+	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -113,42 +182,73 @@ public class SAMLSTSTest {
 	@Test
 	public void testSAMLSTS() throws Exception {
 		LOGGER.debug("SAML STS test");
+		DefaultBootstrap.bootstrap();
+		XMLObjectBuilderFactory builderFactory = Configuration.getBuilderFactory();
+		SAMLObjectBuilder<Assertion> assertionBuilder = (SAMLObjectBuilder<Assertion>) builderFactory
+				.getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
+		Assertion assertion = assertionBuilder.buildObject();
+		assertion.setID("saml-id");
 
+		SAMLObjectBuilder<Subject> subjectBuilder = (SAMLObjectBuilder<Subject>) builderFactory
+				.getBuilder(Subject.DEFAULT_ELEMENT_NAME);
+		Subject subject = subjectBuilder.buildObject();
+		SAMLObjectBuilder<NameID> nameIDBuilder = (SAMLObjectBuilder<NameID>) builderFactory
+				.getBuilder(NameID.DEFAULT_ELEMENT_NAME);
+		NameID nameID = nameIDBuilder.buildObject();
+		nameID.setValue("subject");
+		subject.setNameID(nameID);
+		SAMLObjectBuilder<SubjectConfirmation> subjectConfirmationBuilder = (SAMLObjectBuilder<SubjectConfirmation>) builderFactory
+				.getBuilder(SubjectConfirmation.DEFAULT_ELEMENT_NAME);
+		SubjectConfirmation subjectConfirmation = subjectConfirmationBuilder.buildObject();
+		subjectConfirmation.setMethod(SubjectConfirmation.METHOD_BEARER);
+		SAMLObjectBuilder<SubjectConfirmationData> subjectConfirmationDataBuilder = (SAMLObjectBuilder<SubjectConfirmationData>) builderFactory
+				.getBuilder(SubjectConfirmationData.DEFAULT_ELEMENT_NAME);
+		SubjectConfirmationData subjectConfirmationData = subjectConfirmationDataBuilder.buildObject();
+		subjectConfirmationData.setRecipient("recipient");
+		subjectConfirmation.setSubjectConfirmationData(subjectConfirmationData);
+		subject.getSubjectConfirmations().add(subjectConfirmation);
+		assertion.setSubject(subject);
+
+		SAMLObjectBuilder<Issuer> issuerBuilder = (SAMLObjectBuilder<Issuer>) builderFactory
+				.getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
+		Issuer issuer = issuerBuilder.buildObject();
+		issuer.setValue("passive-saml-issuer");
+		assertion.setIssuer(issuer);
+
+		DateTime issueInstance = new DateTime();
+		assertion.setIssueInstant(issueInstance);
+
+		SignatureBuilder signatureBuilder = new SignatureBuilder();
+		Signature signature = signatureBuilder.buildObject();
+		BasicX509Credential credential = new BasicX509Credential();
+		credential.setPrivateKey(SAML_SIGNER_PRIVATE_KEY);
+		credential.setEntityCertificate(SAML_SIGNER_CERTIFICATE);
+		signature.setSigningCredential(credential);
+		signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1);
+		signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
+		SecurityConfiguration secConfiguration = Configuration.getGlobalSecurityConfiguration();
+		NamedKeyInfoGeneratorManager namedKeyInfoGeneratorManager = secConfiguration.getKeyInfoGeneratorManager();
+		KeyInfoGeneratorManager keyInfoGeneratorManager = namedKeyInfoGeneratorManager.getDefaultManager();
+		KeyInfoGeneratorFactory keyInfoGeneratorFactory = keyInfoGeneratorManager.getFactory(credential);
+		KeyInfoGenerator keyInfoGenerator = keyInfoGeneratorFactory.newInstance();
+		KeyInfo keyInfo = keyInfoGenerator.generate(credential);
+		signature.setKeyInfo(keyInfo);
+		assertion.setSignature(signature);
+
+		MarshallerFactory marshallerFactory = Configuration.getMarshallerFactory();
+		Marshaller marshaller = marshallerFactory.getMarshaller(assertion);
+		Element token = marshaller.marshall(assertion);
+
+		Signer.signObject(signature);
+
+		LOGGER.debug("SAML token: {}", toString(token));
+
+		// next we test the SAML STS
 		SpringBusFactory bf = new SpringBusFactory();
 		Bus bus = bf.createBus("cxf_https.xml");
 		// NOT WORKING: cxf-https-trust-all.xml
 		// WORKING: cxf_https.xml
 		STSClient stsClient = new STSClient(bus);
-		stsClient.setSoap12();
-		stsClient.setWsdlLocation(this.stsUrl + "?wsdl");
-		stsClient.setLocation(this.stsUrl);
-		stsClient.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
-		stsClient.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
-		stsClient.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
-		stsClient.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
-		stsClient.setAllowRenewing(false);
-
-		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-		KeyPair keyPair = keyPairGenerator.generateKeyPair();
-		PrivateKey privateKey = keyPair.getPrivate();
-		PublicKey publicKey = keyPair.getPublic();
-		X509Certificate certificate = getCertificate(privateKey, publicKey);
-		List<X509Certificate> certificates = new LinkedList<>();
-		certificates.add(certificate);
-
-		// Apache CXF specific configuration
-		Map<String, Object> properties = stsClient.getProperties();
-		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
-		properties.put(SecurityConstants.CALLBACK_HANDLER, new ExampleSecurityPolicyCallbackHandler());
-		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new ClientCrypto(privateKey, certificates));
-		stsClient.setProperties(properties);
-
-		SecurityToken securityToken = stsClient.requestSecurityToken("https://demo.app.applies.to");
-		Element token = securityToken.getToken();
-		LOGGER.debug("SAML token: {}", toString(token));
-
-		// next we test the SAML STS
-		stsClient = new STSClient(bus);
 		stsClient.setSoap12();
 		stsClient.setWsdlLocation(this.samlStsUrl + "?wsdl");
 		stsClient.setLocation(this.samlStsUrl);
@@ -156,10 +256,10 @@ public class SAMLSTSTest {
 		stsClient.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
 		stsClient.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
 		stsClient.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
-		properties = stsClient.getProperties();
+		Map<String, Object> properties = stsClient.getProperties();
 		properties.put(SecurityConstants.SAML_CALLBACK_HANDLER, new SAMLCallbackHandler(token));
 		stsClient.setProperties(properties);
-		securityToken = stsClient.requestSecurityToken();
+		SecurityToken securityToken = stsClient.requestSecurityToken("http://active.saml.token.target");
 		token = securityToken.getToken();
 		LOGGER.debug("STS SAML token: {}", toString(token));
 	}
@@ -170,8 +270,9 @@ public class SAMLSTSTest {
 		}
 	}
 
-	private static X509Certificate getCertificate(PrivateKey privateKey, PublicKey publicKey) throws Exception {
-		X500Name subjectName = new X500Name("CN=Test");
+	private static X509Certificate getCertificate(String name, PrivateKey privateKey, PublicKey publicKey)
+			throws Exception {
+		X500Name subjectName = new X500Name(name);
 		X500Name issuerName = subjectName; // self-signed
 		BigInteger serial = new BigInteger(128, new SecureRandom());
 		SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());

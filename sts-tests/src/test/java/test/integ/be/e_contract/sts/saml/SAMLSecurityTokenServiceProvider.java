@@ -21,6 +21,7 @@ import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -39,9 +40,11 @@ import org.apache.cxf.sts.SignatureProperties;
 import org.apache.cxf.sts.StaticSTSProperties;
 import org.apache.cxf.sts.claims.ClaimsAttributeStatementProvider;
 import org.apache.cxf.sts.operation.TokenIssueOperation;
+import org.apache.cxf.sts.service.ServiceMBean;
 import org.apache.cxf.sts.token.provider.AttributeStatementProvider;
 import org.apache.cxf.sts.token.provider.DefaultConditionsProvider;
 import org.apache.cxf.sts.token.provider.SAMLTokenProvider;
+import org.apache.cxf.sts.token.provider.SamlCustomHandler;
 import org.apache.cxf.sts.token.provider.TokenProvider;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.sts.provider.SecurityTokenServiceProvider;
@@ -65,8 +68,30 @@ import test.integ.be.e_contract.sts.ServerCallbackHandler;
 @WebService(targetNamespace = "http://docs.oasis-open.org/ws-sx/ws-trust/200512", serviceName = "SecurityTokenService", wsdlLocation = "ws-trust-1.4-saml.wsdl", portName = "SecurityTokenServicePort")
 @HandlerChain(file = "/example-ws-handlers.xml")
 @EndpointProperties({
-		@EndpointProperty(key = SecurityConstants.SAML2_TOKEN_VALIDATOR, value = "test.integ.be.e_contract.sts.ExampleSamlAssertionValidator") })
+		@EndpointProperty(key = SecurityConstants.SIGNATURE_PROPERTIES, value = "saml-signature.properties"),
+		@EndpointProperty(key = SecurityConstants.SAML2_TOKEN_VALIDATOR, value = "test.integ.be.e_contract.sts.saml.SAMLSamlAssertionValidator") })
 public class SAMLSecurityTokenServiceProvider extends SecurityTokenServiceProvider {
+
+	private static final X509Certificate SAML_SIGNER_CERTIFICATE;
+
+	private static final PrivateKey SAML_SIGNER_PRIVATE_KEY;
+
+	static {
+		KeyPairGenerator keyPairGenerator;
+		try {
+			keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+		SAML_SIGNER_PRIVATE_KEY = keyPair.getPrivate();
+		PublicKey publicKey = keyPair.getPublic();
+		try {
+			SAML_SIGNER_CERTIFICATE = getCertificate(SAML_SIGNER_PRIVATE_KEY, publicKey);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	public SAMLSecurityTokenServiceProvider() throws Exception {
 		super();
@@ -74,23 +99,27 @@ public class SAMLSecurityTokenServiceProvider extends SecurityTokenServiceProvid
 
 		STSPropertiesMBean stsProperties = new StaticSTSProperties();
 		stsProperties.setCallbackHandler(new ServerCallbackHandler()); // SAMLTokenProvider
-		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-		KeyPair keyPair = keyPairGenerator.generateKeyPair();
-		PrivateKey privateKey = keyPair.getPrivate();
-		PublicKey publicKey = keyPair.getPublic();
-		X509Certificate certificate = getCertificate(privateKey, publicKey);
+
 		List<X509Certificate> certificates = new LinkedList<>();
-		certificates.add(certificate);
-		stsProperties.setSignatureCrypto(new ClientCrypto(privateKey, certificates));
+		certificates.add(SAML_SIGNER_CERTIFICATE);
+		stsProperties.setSignatureCrypto(new ClientCrypto(SAML_SIGNER_PRIVATE_KEY, certificates));
 		issueOperation.setStsProperties(stsProperties);
 		stsProperties.setIssuer("https://issuer");
 		SignatureProperties signatureProperties = stsProperties.getSignatureProperties();
 		signatureProperties.setSignatureAlgorithm("http://www.w3.org/2001/04/xmldsig-more#rsa-sha256");
 		signatureProperties.setDigestAlgorithm(WSConstants.SHA256);
 
+		List<ServiceMBean> services = new LinkedList<>();
+		SAMLServiceMBean service = new SAMLServiceMBean();
+		services.add(service);
+		issueOperation.setServices(services);
+
 		List<TokenProvider> tokenProviders = new LinkedList<>();
 		SAMLTokenProvider samlTokenProvider = new SAMLTokenProvider();
 		samlTokenProvider.setSubjectProvider(new SAMLSubjectProvider());
+
+		SamlCustomHandler samlCustomHandler = new SAMLSamlCustomHandler();
+		samlTokenProvider.setSamlCustomHandler(samlCustomHandler);
 
 		List<AttributeStatementProvider> attributeStatementProviders = new LinkedList<>();
 		attributeStatementProviders.add(new ClaimsAttributeStatementProvider());
@@ -107,7 +136,7 @@ public class SAMLSecurityTokenServiceProvider extends SecurityTokenServiceProvid
 	}
 
 	private static X509Certificate getCertificate(PrivateKey privateKey, PublicKey publicKey) throws Exception {
-		X500Name subjectName = new X500Name("CN=Test");
+		X500Name subjectName = new X500Name("CN=SAML STS Signer");
 		X500Name issuerName = subjectName; // self-signed
 		BigInteger serial = new BigInteger(128, new SecureRandom());
 		SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());
@@ -128,5 +157,9 @@ public class SAMLSecurityTokenServiceProvider extends SecurityTokenServiceProvid
 		X509Certificate certificate = (X509Certificate) certificateFactory
 				.generateCertificate(new ByteArrayInputStream(encodedCertificate));
 		return certificate;
+	}
+
+	public static X509Certificate getSAMLSignerCertificate() {
+		return SAML_SIGNER_CERTIFICATE;
 	}
 }

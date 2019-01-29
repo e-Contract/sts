@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014-2019 e-Contract.be BVBA.
+ * Copyright (C) 2019 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -18,24 +18,19 @@
 
 package test.integ.be.e_contract.sts.saml;
 
-import java.security.Principal;
-
-import org.apache.cxf.sts.token.provider.DefaultSubjectProvider;
+import org.apache.cxf.sts.token.provider.SamlCustomHandler;
 import org.apache.cxf.sts.token.provider.TokenProviderParameters;
-import org.apache.ws.security.saml.ext.bean.SubjectBean;
-import org.w3c.dom.Document;
+import org.apache.ws.security.saml.ext.AssertionWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class SAMLSubjectProvider extends DefaultSubjectProvider {
+public class SAMLSamlCustomHandler implements SamlCustomHandler {
 
-	public SAMLSubjectProvider() {
-		setSubjectNameIDFormat("urn:oasis:names:tc:SAML:1.1:nameid-format:transient");
-		setSubjectNameQualifier(null);
-	}
+	private static final Logger LOGGER = LoggerFactory.getLogger(SAMLSamlCustomHandler.class);
 
 	@Override
-	public SubjectBean getSubject(TokenProviderParameters providerParameters, Document doc, byte[] secret) {
-		Principal principal = providerParameters.getPrincipal();
-		providerParameters.setPrincipal(principal);
-		return super.getSubject(providerParameters, doc, secret);
+	public void handle(AssertionWrapper assertionWrapper, TokenProviderParameters tokenParameters) {
+		LOGGER.debug("handle");
+		LOGGER.debug("applies to address: {}", tokenParameters.getAppliesToAddress());
 	}
 }

@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014-2015 e-Contract.be BVBA.
+ * Copyright (C) 2014-2019 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -21,6 +21,7 @@ import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -66,112 +67,116 @@ import org.joda.time.DateTime;
 
 @WebService(targetNamespace = "http://docs.oasis-open.org/ws-sx/ws-trust/200512", serviceName = "SecurityTokenService", wsdlLocation = "ws-trust-1.3.wsdl", portName = "SecurityTokenServicePort")
 @HandlerChain(file = "/example-ws-handlers.xml")
-@EndpointProperties({@EndpointProperty(key = "ws-security.signature.properties", value = "signature.properties")})
-public class ExampleSecurityTokenServiceProvider
-		extends
-			SecurityTokenServiceProvider {
+@EndpointProperties({ @EndpointProperty(key = "ws-security.signature.properties", value = "signature.properties") })
+public class ExampleSecurityTokenServiceProvider extends SecurityTokenServiceProvider {
+
+	private static final X509Certificate SAML_SIGNER_CERTIFICATE;
+
+	private static final PrivateKey SAML_SIGNER_PRIVATE_KEY;
+
+	static {
+		KeyPairGenerator keyPairGenerator;
+		try {
+			keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+		SAML_SIGNER_PRIVATE_KEY = keyPair.getPrivate();
+		PublicKey publicKey = keyPair.getPublic();
+		try {
+			SAML_SIGNER_CERTIFICATE = getCertificate(SAML_SIGNER_PRIVATE_KEY, publicKey);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	public ExampleSecurityTokenServiceProvider() throws Exception {
-        super();
-        TokenIssueOperation issueOperation = new TokenIssueOperation();
+		super();
+		TokenIssueOperation issueOperation = new TokenIssueOperation();
 
-        STSPropertiesMBean stsProperties = new StaticSTSProperties();
-        //stsProperties.setRealmParser(new ExampleRealmParser());
-        //stsProperties.setIdentityMapper(new ExampleIdentityMapper());
+		STSPropertiesMBean stsProperties = new StaticSTSProperties();
+		// stsProperties.setRealmParser(new ExampleRealmParser());
+		// stsProperties.setIdentityMapper(new ExampleIdentityMapper());
 
-        stsProperties.setCallbackHandler(new ServerCallbackHandler()); // SAMLTokenProvider
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
-        PrivateKey privateKey = keyPair.getPrivate();
-        PublicKey publicKey = keyPair.getPublic();
-        X509Certificate certificate = getCertificate(privateKey, publicKey);
-        List<X509Certificate> certificates = new LinkedList<>();
-        certificates.add(certificate);
-        stsProperties.setSignatureCrypto(new ClientCrypto(privateKey,
-                certificates));
-        issueOperation.setStsProperties(stsProperties);
-        stsProperties.setIssuer("https://issuer");
+		stsProperties.setCallbackHandler(new ServerCallbackHandler()); // SAMLTokenProvider
 
-        List<ServiceMBean> services = new LinkedList<>();
-        ExampleServiceMBean service = new ExampleServiceMBean();
-        service.setEndpoints(Collections
-                .singletonList("https://demo.app.applies.to"));
-        services.add(service);
+		List<X509Certificate> certificates = new LinkedList<>();
+		certificates.add(SAML_SIGNER_CERTIFICATE);
+		stsProperties.setSignatureCrypto(new ClientCrypto(SAML_SIGNER_PRIVATE_KEY, certificates));
+		issueOperation.setStsProperties(stsProperties);
+		stsProperties.setIssuer("https://issuer");
 
-        ClaimsManager claimsManager = new ClaimsManager();
-        claimsManager.setClaimHandlers(Collections
-                .singletonList((ClaimsHandler) new ExampleClaimsHandler()));
-        issueOperation.setClaimsManager(claimsManager);
+		List<ServiceMBean> services = new LinkedList<>();
+		ExampleServiceMBean service = new ExampleServiceMBean();
+		service.setEndpoints(Collections.singletonList("https://demo.app.applies.to"));
+		services.add(service);
 
-        List<TokenDelegationHandler> delegationHandlers = new LinkedList<>();
-        TokenDelegationHandler tokenDelegationHandler = new ExampleTokenDelegationHandler();
-        delegationHandlers.add(tokenDelegationHandler);
-        issueOperation.setDelegationHandlers(delegationHandlers);
+		ClaimsManager claimsManager = new ClaimsManager();
+		claimsManager.setClaimHandlers(Collections.singletonList((ClaimsHandler) new ExampleClaimsHandler()));
+		issueOperation.setClaimsManager(claimsManager);
 
-        issueOperation.setServices(services);
+		List<TokenDelegationHandler> delegationHandlers = new LinkedList<>();
+		TokenDelegationHandler tokenDelegationHandler = new ExampleTokenDelegationHandler();
+		delegationHandlers.add(tokenDelegationHandler);
+		issueOperation.setDelegationHandlers(delegationHandlers);
 
-        List<TokenProvider> tokenProviders = new LinkedList<>();
-        SAMLTokenProvider samlTokenProvider = new SAMLTokenProvider();
-        samlTokenProvider.setSubjectProvider(new ExampleSubjectProvider());
-        List<AuthenticationStatementProvider> authnStatementProviders = new LinkedList<>();
-        authnStatementProviders
-                .add(new ExampleAuthenticationStatementProvider());
-        samlTokenProvider
-                .setAuthenticationStatementProviders(authnStatementProviders);
-        List<AttributeStatementProvider> attributeStatementProviders = new LinkedList<>();
-        attributeStatementProviders.add(new ClaimsAttributeStatementProvider());
-        samlTokenProvider
-                .setAttributeStatementProviders(attributeStatementProviders);
-        tokenProviders.add(samlTokenProvider);
-        issueOperation.setTokenProviders(tokenProviders);
+		issueOperation.setServices(services);
 
-        setIssueOperation(issueOperation);
+		List<TokenProvider> tokenProviders = new LinkedList<>();
+		SAMLTokenProvider samlTokenProvider = new SAMLTokenProvider();
+		samlTokenProvider.setSubjectProvider(new ExampleSubjectProvider());
+		List<AuthenticationStatementProvider> authnStatementProviders = new LinkedList<>();
+		authnStatementProviders.add(new ExampleAuthenticationStatementProvider());
+		samlTokenProvider.setAuthenticationStatementProviders(authnStatementProviders);
+		List<AttributeStatementProvider> attributeStatementProviders = new LinkedList<>();
+		attributeStatementProviders.add(new ClaimsAttributeStatementProvider());
+		samlTokenProvider.setAttributeStatementProviders(attributeStatementProviders);
+		tokenProviders.add(samlTokenProvider);
+		issueOperation.setTokenProviders(tokenProviders);
 
-        // validation
-        TokenValidateOperation validateOperation = new TokenValidateOperation();
+		setIssueOperation(issueOperation);
 
-        stsProperties = new StaticSTSProperties();
-        validateOperation.setStsProperties(stsProperties);
-        stsProperties.setSignatureCrypto(new ServerCrypto());
+		// validation
+		TokenValidateOperation validateOperation = new TokenValidateOperation();
 
-        List<TokenValidator> tokenValidators = new LinkedList<>();
-        SAMLTokenValidator samlTokenValidator = new SAMLTokenValidator();
-        tokenValidators.add(new SAMLTokenValidatorWrapper(samlTokenValidator));
-        validateOperation.setTokenValidators(tokenValidators);
+		stsProperties = new StaticSTSProperties();
+		validateOperation.setStsProperties(stsProperties);
+		stsProperties.setSignatureCrypto(new ServerCrypto());
 
-        setValidateOperation(validateOperation);
-    }
-	private static X509Certificate getCertificate(PrivateKey privateKey,
-			PublicKey publicKey) throws Exception {
-		X500Name subjectName = new X500Name("CN=Test");
+		List<TokenValidator> tokenValidators = new LinkedList<>();
+		SAMLTokenValidator samlTokenValidator = new SAMLTokenValidator();
+		tokenValidators.add(new SAMLTokenValidatorWrapper(samlTokenValidator));
+		validateOperation.setTokenValidators(tokenValidators);
+
+		setValidateOperation(validateOperation);
+	}
+
+	private static X509Certificate getCertificate(PrivateKey privateKey, PublicKey publicKey) throws Exception {
+		X500Name subjectName = new X500Name("CN=SAML Signer");
 		X500Name issuerName = subjectName; // self-signed
 		BigInteger serial = new BigInteger(128, new SecureRandom());
-		SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo
-				.getInstance(publicKey.getEncoded());
+		SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());
 		DateTime notBefore = new DateTime();
 		DateTime notAfter = notBefore.plusMonths(1);
-		X509v3CertificateBuilder x509v3CertificateBuilder = new X509v3CertificateBuilder(
-				issuerName, serial, notBefore.toDate(), notAfter.toDate(),
-				subjectName, publicKeyInfo);
-		AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder()
-				.find("SHA1withRSA");
-		AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder()
-				.find(sigAlgId);
-		AsymmetricKeyParameter asymmetricKeyParameter = PrivateKeyFactory
-				.createKey(privateKey.getEncoded());
+		X509v3CertificateBuilder x509v3CertificateBuilder = new X509v3CertificateBuilder(issuerName, serial,
+				notBefore.toDate(), notAfter.toDate(), subjectName, publicKeyInfo);
+		AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA1withRSA");
+		AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId);
+		AsymmetricKeyParameter asymmetricKeyParameter = PrivateKeyFactory.createKey(privateKey.getEncoded());
 
-		ContentSigner contentSigner = new BcRSAContentSignerBuilder(sigAlgId,
-				digAlgId).build(asymmetricKeyParameter);
-		X509CertificateHolder x509CertificateHolder = x509v3CertificateBuilder
-				.build(contentSigner);
+		ContentSigner contentSigner = new BcRSAContentSignerBuilder(sigAlgId, digAlgId).build(asymmetricKeyParameter);
+		X509CertificateHolder x509CertificateHolder = x509v3CertificateBuilder.build(contentSigner);
 
 		byte[] encodedCertificate = x509CertificateHolder.getEncoded();
 
-		CertificateFactory certificateFactory = CertificateFactory
-				.getInstance("X.509");
+		CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
 		X509Certificate certificate = (X509Certificate) certificateFactory
-				.generateCertificate(new ByteArrayInputStream(
-						encodedCertificate));
+				.generateCertificate(new ByteArrayInputStream(encodedCertificate));
 		return certificate;
+	}
+
+	public static X509Certificate getSAMLSignerCertificate() {
+		return SAML_SIGNER_CERTIFICATE;
 	}
 }
