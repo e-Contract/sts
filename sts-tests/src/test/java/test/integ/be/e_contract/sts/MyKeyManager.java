@@ -29,7 +29,9 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+
 import javax.net.ssl.X509KeyManager;
+
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -86,19 +88,19 @@ public class MyKeyManager implements X509KeyManager {
 	}
 
 	@Override
-	public X509Certificate[] getCertificateChain(String string) {
-		LOGGER.debug("getCertificateChain");
+	public X509Certificate[] getCertificateChain(String alias) {
+		LOGGER.debug("getCertificateChain: {}", alias);
 		return new X509Certificate[] { this.serverCertificate };
 	}
 
 	@Override
-	public PrivateKey getPrivateKey(String string) {
-		LOGGER.debug("getPrivateKey");
+	public PrivateKey getPrivateKey(String alias) {
+		LOGGER.debug("getPrivateKey: {}", alias);
 		return this.serverPrivateKey;
 	}
 
 	private static X509Certificate getCertificate(PrivateKey privateKey, PublicKey publicKey) throws Exception {
-		X500Name subjectName = new X500Name("CN=TestServer");
+		X500Name subjectName = new X500Name("CN=localhost");
 		X500Name issuerName = subjectName; // self-signed
 		BigInteger serial = new BigInteger(128, new SecureRandom());
 		SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());

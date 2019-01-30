@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses/.
  */
 
-package test.integ.be.e_contract.sts;
+package test.integ.be.e_contract.sts.onbehalfof;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -37,21 +37,21 @@ import org.apache.ws.security.components.crypto.CryptoType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ClientCrypto implements Crypto {
+public class OnBehalfOfCrypto implements Crypto {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ClientCrypto.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(OnBehalfOfCrypto.class);
 
 	private final PrivateKey privateKey;
 
 	private final List<X509Certificate> certificates;
 
-	public ClientCrypto(PrivateKey privateKey, List<X509Certificate> certificates) {
+	public OnBehalfOfCrypto(PrivateKey privateKey, List<X509Certificate> certificates) {
 		this.privateKey = privateKey;
 		this.certificates = certificates;
 		LOGGER.debug("constructor");
 	}
 
-	public ClientCrypto(PrivateKey privateKey, X509Certificate certificate) {
+	public OnBehalfOfCrypto(PrivateKey privateKey, X509Certificate certificate) {
 		this.privateKey = privateKey;
 		this.certificates = new LinkedList<>();
 		this.certificates.add(certificate);
@@ -116,7 +116,7 @@ public class ClientCrypto implements Crypto {
 
 	@Override
 	public X509Certificate[] getX509Certificates(CryptoType cryptoType) throws WSSecurityException {
-		LOGGER.debug("getX509Certificates");
+		LOGGER.debug("getX509Certificates: {}", cryptoType);
 		return this.certificates.toArray(new X509Certificate[this.certificates.size()]);
 	}
 
@@ -149,19 +149,23 @@ public class ClientCrypto implements Crypto {
 
 	@Override
 	public boolean verifyTrust(X509Certificate[] certs) throws WSSecurityException {
-		LOGGER.debug("verifyTrust");
+		LOGGER.debug("verifyTrust(X509Certificate[])");
 		return false;
 	}
 
 	@Override
 	public boolean verifyTrust(PublicKey publicKey) throws WSSecurityException {
-		LOGGER.debug("verifyTrust");
+		LOGGER.debug("verifyTrust(PublicKey)");
 		return false;
 	}
 
 	@Override
 	public boolean verifyTrust(X509Certificate[] certs, boolean enableRevocation) throws WSSecurityException {
-		LOGGER.debug("verifyTrust");
-		return false;
+		LOGGER.debug("verifyTrust(X509Certificate[], boolean)");
+		// the OnBehalfOf SAML signing certificate is verified here
+		X509Certificate samlSigner = certs[0];
+		boolean result = OnBehalfOfTest.getSAMLSignerCertificate().equals(samlSigner);
+		LOGGER.debug("result: {}", result);
+		return result;
 	}
 }

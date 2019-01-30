@@ -90,6 +90,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
 
 import be.e_contract.sts.client.cxf.SecurityDecorator;
 import be.e_contract.sts.example.ws.jaxb.BearerRequest;
@@ -104,17 +105,15 @@ import be.fedict.commons.eid.client.BeIDCard;
 import be.fedict.commons.eid.client.BeIDCards;
 import be.fedict.commons.eid.client.FileType;
 import be.fedict.commons.eid.jca.BeIDProvider;
-import org.w3c.dom.Element;
 
 public class CXFSTSClientTest {
 
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(CXFSTSClientTest.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(CXFSTSClientTest.class);
 
 	@Before
 	public void setUp() throws Exception {
 		TrustManager trustManager = new MyTrustManager();
-		TrustManager[] sslTrustManagers = new TrustManager[]{trustManager};
+		TrustManager[] sslTrustManagers = new TrustManager[] { trustManager };
 		SSLContext ssl_ctx = SSLContext.getInstance("TLS");
 		ssl_ctx.init(null, sslTrustManagers, new SecureRandom());
 		SSLSocketFactory sslSocketFactory = ssl_ctx.getSocketFactory();
@@ -136,23 +135,22 @@ public class CXFSTSClientTest {
 
 	public static class MyTrustManager implements X509TrustManager {
 
-		private static final Logger LOGGER = LoggerFactory
-				.getLogger(MyTrustManager.class);
+		private static final Logger LOGGER = LoggerFactory.getLogger(MyTrustManager.class);
 
 		@Override
-		public void checkClientTrusted(X509Certificate[] arg0, String arg1)
-				throws CertificateException {
+		public void checkClientTrusted(X509Certificate[] certs, String arg1) throws CertificateException {
+			LOGGER.debug("check client trusted: {}", certs[0]);
 		}
 
 		@Override
-		public void checkServerTrusted(X509Certificate[] certs, String arg1)
-				throws CertificateException {
+		public void checkServerTrusted(X509Certificate[] certs, String arg1) throws CertificateException {
 			LOGGER.debug("server cert: {}", certs[0].toString());
 		}
 
 		@Override
 		public X509Certificate[] getAcceptedIssuers() {
-			return null;
+			LOGGER.debug("getAcceptedIssuers");
+			return new X509Certificate[0];
 		}
 	}
 
@@ -162,31 +160,24 @@ public class CXFSTSClientTest {
 		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
-		URL wsdlLocation = CXFSTSClientTest.class
-				.getResource("/example-localhost-sts.wsdl");
+		URL wsdlLocation = CXFSTSClientTest.class.getResource("/example-localhost-sts.wsdl");
 		ExampleService exampleService = new ExampleService(wsdlLocation,
 				new QName("urn:be:e-contract:sts:example", "ExampleService"));
 		ExampleServicePortType port = exampleService.getExampleServicePort();
 
 		// set the web service address on the client stub
 		BindingProvider bindingProvider = (BindingProvider) port;
-		Map<String, Object> requestContext = bindingProvider
-				.getRequestContext();
+		Map<String, Object> requestContext = bindingProvider.getRequestContext();
 		final String WS_LOCATION = "https://localhost/iam/example";
 		// final String WS_LOCATION = "https://www.e-contract.be/iam/example";
-		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY,
-				WS_LOCATION);
+		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, WS_LOCATION);
 
 		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
-		requestContext
-				.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
-		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO,
-				"true");
+		requestContext.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
+		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO, "true");
 		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "username");
-		requestContext.put(SecurityConstants.CALLBACK_HANDLER,
-				new ExampleSecurityPolicyCallbackHandler());
-		requestContext.put(
-				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
+		requestContext.put(SecurityConstants.CALLBACK_HANDLER, new ExampleSecurityPolicyCallbackHandler());
+		requestContext.put(SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
 
 		// invoke the web service
 		String result = port.echo("hello world");
@@ -201,8 +192,7 @@ public class CXFSTSClientTest {
 		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
-		URL wsdlLocation = CXFSTSClientTest.class
-				.getResource("/example-localhost-sts.wsdl");
+		URL wsdlLocation = CXFSTSClientTest.class.getResource("/example-localhost-sts.wsdl");
 		ExampleService exampleService = new ExampleService(wsdlLocation,
 				new QName("urn:be:e-contract:sts:example", "ExampleService"));
 		ExampleServicePortType port = exampleService.getExampleServicePort();
@@ -210,22 +200,18 @@ public class CXFSTSClientTest {
 		SecurityDecorator securityDecorator = new SecurityDecorator();
 		securityDecorator.setOfficeKey("example-office-key");
 		securityDecorator.setSoftwareKey("example-software-key");
-		securityDecorator.decorate((BindingProvider) port,
-				"https://localhost/iam/example");
+		securityDecorator.decorate((BindingProvider) port, "https://localhost/iam/example");
 
 		// invoke the web service
 		GetSelfClaimsRequest getSelfClaimsRequest = new GetSelfClaimsRequest();
-		ClaimsResponseType claimsResponse = port
-				.getSelfClaims(getSelfClaimsRequest);
+		ClaimsResponseType claimsResponse = port.getSelfClaims(getSelfClaimsRequest);
 		LOGGER.debug("subject: {}", claimsResponse.getSubject());
 		for (ClaimType claim : claimsResponse.getClaim()) {
 			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
 		}
-		assertTrue(hasClaim(claimsResponse.getClaim(),
-				"urn:be:e-contract:iam:claims:self-claimed:office-key",
+		assertTrue(hasClaim(claimsResponse.getClaim(), "urn:be:e-contract:iam:claims:self-claimed:office-key",
 				"example-office-key"));
-		assertTrue(hasClaim(claimsResponse.getClaim(),
-				"urn:be:e-contract:iam:claims:self-claimed:software-key",
+		assertTrue(hasClaim(claimsResponse.getClaim(), "urn:be:e-contract:iam:claims:self-claimed:software-key",
 				"example-software-key"));
 
 		bus.shutdown(true);
@@ -237,15 +223,13 @@ public class CXFSTSClientTest {
 		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
-		URL wsdlLocation = CXFSTSClientTest.class
-				.getResource("/example-localhost-sts.wsdl");
+		URL wsdlLocation = CXFSTSClientTest.class.getResource("/example-localhost-sts.wsdl");
 		ExampleService exampleService = new ExampleService(wsdlLocation,
 				new QName("urn:be:e-contract:sts:example", "ExampleService"));
 		ExampleServicePortType port = exampleService.getExampleServicePort();
 
 		SecurityDecorator securityDecorator = new SecurityDecorator();
-		securityDecorator.decorate((BindingProvider) port,
-				"https://localhost/iam/example");
+		securityDecorator.decorate((BindingProvider) port, "https://localhost/iam/example");
 
 		// invoke the web service
 		port.holderOfKeyEcho("hello world");
@@ -279,8 +263,7 @@ public class CXFSTSClientTest {
 		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
-		URL wsdlLocation = CXFSTSClientTest.class
-				.getResource("/example-localhost-sts.wsdl");
+		URL wsdlLocation = CXFSTSClientTest.class.getResource("/example-localhost-sts.wsdl");
 		ExampleService exampleService = new ExampleService(wsdlLocation,
 				new QName("urn:be:e-contract:sts:example", "ExampleService"));
 		ExampleServicePortType port = exampleService.getExampleServicePort();
@@ -288,13 +271,11 @@ public class CXFSTSClientTest {
 		SecurityDecorator securityDecorator = new SecurityDecorator();
 		securityDecorator.setOfficeKey("example-office-key");
 		securityDecorator.setSoftwareKey("example-software-key");
-		securityDecorator.decorate((BindingProvider) port,
-				"https://localhost/iam/example");
+		securityDecorator.decorate((BindingProvider) port, "https://localhost/iam/example");
 
 		// invoke the web service
 		GetSelfClaimsRequest getSelfClaimsRequest = new GetSelfClaimsRequest();
-		ClaimsResponseType claimsResponse = port
-				.getSelfClaims(getSelfClaimsRequest);
+		ClaimsResponseType claimsResponse = port.getSelfClaims(getSelfClaimsRequest);
 		LOGGER.debug("subject: {}", claimsResponse.getSubject());
 		for (ClaimType claim : claimsResponse.getClaim()) {
 			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
@@ -309,8 +290,7 @@ public class CXFSTSClientTest {
 		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
-		URL wsdlLocation = CXFSTSClientTest.class
-				.getResource("/example-localhost-sts.wsdl");
+		URL wsdlLocation = CXFSTSClientTest.class.getResource("/example-localhost-sts.wsdl");
 		ExampleService exampleService = new ExampleService(wsdlLocation,
 				new QName("urn:be:e-contract:sts:example", "ExampleService"));
 		ExampleServicePortType port = exampleService.getExampleServicePort();
@@ -318,8 +298,7 @@ public class CXFSTSClientTest {
 		BeIDCards beIDCards = new BeIDCards();
 		BeIDCard beIDCard = beIDCards.getOneBeIDCard();
 		byte[] identity = beIDCard.readFile(FileType.Identity);
-		byte[] identitySignature = beIDCard
-				.readFile(FileType.IdentitySignature);
+		byte[] identitySignature = beIDCard.readFile(FileType.IdentitySignature);
 		byte[] nrCert = beIDCard.readFile(FileType.RRNCertificate);
 
 		SecurityDecorator securityDecorator = new SecurityDecorator();
@@ -328,25 +307,21 @@ public class CXFSTSClientTest {
 		securityDecorator.setIdentity(identity);
 		securityDecorator.setIdentitySignature(identitySignature);
 		securityDecorator.setNationalRegistrationCertificate(nrCert);
-		securityDecorator.decorate((BindingProvider) port,
-				"https://localhost/iam/example");
+		securityDecorator.decorate((BindingProvider) port, "https://localhost/iam/example");
 
 		// invoke the web service
 		GetIdentityClaimsRequest getIdentityClaimsRequest = new GetIdentityClaimsRequest();
-		ClaimsResponseType claimsResponse = port
-				.getIdentityClaims(getIdentityClaimsRequest);
+		ClaimsResponseType claimsResponse = port.getIdentityClaims(getIdentityClaimsRequest);
 		LOGGER.debug("subject: {}", claimsResponse.getSubject());
 		for (ClaimType claim : claimsResponse.getClaim()) {
 			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
 		}
-		assertTrue(hasClaim(claimsResponse.getClaim(),
-				"urn:be:e-contract:iam:claims:self-claimed:office-key",
+		assertTrue(hasClaim(claimsResponse.getClaim(), "urn:be:e-contract:iam:claims:self-claimed:office-key",
 				"example-office-key"));
-		assertTrue(hasClaim(claimsResponse.getClaim(),
-				"urn:be:e-contract:iam:claims:self-claimed:software-key",
+		assertTrue(hasClaim(claimsResponse.getClaim(), "urn:be:e-contract:iam:claims:self-claimed:software-key",
 				"example-software-key"));
-		assertTrue(hasClaim(claimsResponse.getClaim(),
-				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"));
+		assertTrue(
+				hasClaim(claimsResponse.getClaim(), "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"));
 
 		bus.shutdown(true);
 	}
@@ -357,8 +332,7 @@ public class CXFSTSClientTest {
 		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
-		URL wsdlLocation = CXFSTSClientTest.class
-				.getResource("/example-localhost-sts.wsdl");
+		URL wsdlLocation = CXFSTSClientTest.class.getResource("/example-localhost-sts.wsdl");
 		ExampleService exampleService = new ExampleService(wsdlLocation,
 				new QName("urn:be:e-contract:sts:example", "ExampleService"));
 		ExampleServicePortType port = exampleService.getExampleServicePort();
@@ -366,8 +340,7 @@ public class CXFSTSClientTest {
 		BeIDCards beIDCards = new BeIDCards();
 		BeIDCard beIDCard = beIDCards.getOneBeIDCard();
 		byte[] identity = beIDCard.readFile(FileType.Identity);
-		byte[] identitySignature = beIDCard
-				.readFile(FileType.IdentitySignature);
+		byte[] identitySignature = beIDCard.readFile(FileType.IdentitySignature);
 		byte[] nrCert = beIDCard.readFile(FileType.RRNCertificate);
 		byte[] address = beIDCard.readFile(FileType.Address);
 		byte[] addressSignature = beIDCard.readFile(FileType.AddressSignature);
@@ -380,22 +353,18 @@ public class CXFSTSClientTest {
 		securityDecorator.setNationalRegistrationCertificate(nrCert);
 		securityDecorator.setAddress(address);
 		securityDecorator.setAddressSignature(addressSignature);
-		securityDecorator.decorate((BindingProvider) port,
-				"https://localhost/iam/example");
+		securityDecorator.decorate((BindingProvider) port, "https://localhost/iam/example");
 
 		// invoke the web service
 		GetAddressClaimsRequest getAddressClaimsRequest = new GetAddressClaimsRequest();
-		ClaimsResponseType claimsResponse = port
-				.getAddressClaims(getAddressClaimsRequest);
+		ClaimsResponseType claimsResponse = port.getAddressClaims(getAddressClaimsRequest);
 		LOGGER.debug("subject: {}", claimsResponse.getSubject());
 		for (ClaimType claim : claimsResponse.getClaim()) {
 			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());
 		}
-		assertTrue(hasClaim(claimsResponse.getClaim(),
-				"urn:be:e-contract:iam:claims:self-claimed:office-key",
+		assertTrue(hasClaim(claimsResponse.getClaim(), "urn:be:e-contract:iam:claims:self-claimed:office-key",
 				"example-office-key"));
-		assertTrue(hasClaim(claimsResponse.getClaim(),
-				"urn:be:e-contract:iam:claims:self-claimed:software-key",
+		assertTrue(hasClaim(claimsResponse.getClaim(), "urn:be:e-contract:iam:claims:self-claimed:software-key",
 				"example-software-key"));
 		assertTrue(hasClaim(claimsResponse.getClaim(),
 				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/streetaddress"));
@@ -409,18 +378,15 @@ public class CXFSTSClientTest {
 		Bus bus = bf.createBus("cxf-https-trust-all.xml");
 		BusFactory.setDefaultBus(bus);
 		// get the JAX-WS client
-		URL wsdlLocation = CXFSTSClientTest.class
-				.getResource("/example-localhost-sts.wsdl");
+		URL wsdlLocation = CXFSTSClientTest.class.getResource("/example-localhost-sts.wsdl");
 		ExampleService exampleService = new ExampleService(wsdlLocation,
 				new QName("urn:be:e-contract:sts:example", "ExampleService"));
 		ExampleServicePortType port = exampleService.getExampleServicePort();
 
 		// set the web service address on the client stub
 		BindingProvider bindingProvider = (BindingProvider) port;
-		Map<String, Object> requestContext = bindingProvider
-				.getRequestContext();
-		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY,
-				"https://localhost/iam/example");
+		Map<String, Object> requestContext = bindingProvider.getRequestContext();
+		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://localhost/iam/example");
 
 		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
 		KeyPair keyPair = keyPairGenerator.generateKeyPair();
@@ -431,15 +397,11 @@ public class CXFSTSClientTest {
 		certificates.add(certificate);
 
 		requestContext.put(SecurityConstants.STS_CLIENT_SOAP12_BINDING, "true");
-		requestContext.put(SecurityConstants.SIGNATURE_CRYPTO,
-				new ClientCrypto(privateKey, certificates));
-		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO,
-				"true");
+		requestContext.put(SecurityConstants.SIGNATURE_CRYPTO, new ClientCrypto(privateKey, certificates));
+		requestContext.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO, "true");
 		requestContext.put(SecurityConstants.SIGNATURE_USERNAME, "username");
-		requestContext.put(SecurityConstants.CALLBACK_HANDLER,
-				new ExampleSecurityPolicyCallbackHandler());
-		requestContext.put(
-				SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
+		requestContext.put(SecurityConstants.CALLBACK_HANDLER, new ExampleSecurityPolicyCallbackHandler());
+		requestContext.put(SecurityConstants.PREFER_WSMEX_OVER_STS_CLIENT_CONFIG, "true");
 
 		// invoke the web service
 		try {
@@ -452,6 +414,7 @@ public class CXFSTSClientTest {
 
 		bus.shutdown(true);
 	}
+
 	@Test
 	public void testCXFSTS() throws Exception {
 		// SpringBusFactory bf = new SpringBusFactory();
@@ -461,21 +424,16 @@ public class CXFSTSClientTest {
 		stsClient.setSoap12();
 		stsClient.setWsdlLocation("https://localhost/iam/sts?wsdl");
 		stsClient.setLocation("https://localhost/iam/sts");
-		stsClient
-				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
-		stsClient
-				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
-		stsClient
-				.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
-		stsClient
-				.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
+		stsClient.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
+		stsClient.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
 		stsClient.setAllowRenewing(false);
 
 		// Apache CXF specific configuration
 		Map<String, Object> properties = stsClient.getProperties();
 		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
-		properties.put(SecurityConstants.CALLBACK_HANDLER,
-				new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.CALLBACK_HANDLER, new ExampleSecurityPolicyCallbackHandler());
 		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
 		stsClient.setProperties(properties);
 
@@ -484,31 +442,26 @@ public class CXFSTSClientTest {
 		TLSClientParameters tlsParams = new TLSClientParameters();
 		tlsParams.setSecureSocketProtocol("TLSv1");
 		tlsParams.setDisableCNCheck(true);
-		tlsParams.setTrustManagers(new TrustManager[]{new MyTrustManager()});
+		tlsParams.setTrustManagers(new TrustManager[] { new MyTrustManager() });
 		httpConduit.setTlsClientParameters(tlsParams);
 
 		LOGGER.debug("STS location: {}", stsClient.getLocation());
-		SecurityToken securityToken = stsClient
-				.requestSecurityToken("https://demo.app.applies.to");
+		SecurityToken securityToken = stsClient.requestSecurityToken("https://demo.app.applies.to");
 		Principal principal = securityToken.getPrincipal();
 		LOGGER.debug("principal: {}", principal);
 		LOGGER.debug("token type: {}", securityToken.getTokenType());
-		assertEquals(
-				"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
+		assertEquals("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
 				securityToken.getTokenType());
 		LOGGER.debug("security token expires: {}", securityToken.getExpires());
 
 		LOGGER.debug("---------------------------------------------------------------");
 		stsClient.setEnableAppliesTo(true);
-		stsClient
-				.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
-		List<SecurityToken> result = stsClient
-				.validateSecurityToken(securityToken);
+		stsClient.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
+		List<SecurityToken> result = stsClient.validateSecurityToken(securityToken);
 		assertEquals(1, result.size());
 		SecurityToken resultSecurityToken = result.get(0);
 		LOGGER.debug("token type: {}", resultSecurityToken.getTokenType());
-		assertEquals(
-				"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
+		assertEquals("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
 				resultSecurityToken.getTokenType());
 	}
 
@@ -521,21 +474,16 @@ public class CXFSTSClientTest {
 		stsClient.setSoap12();
 		stsClient.setWsdlLocation("https://localhost/iam/sts?wsdl");
 		stsClient.setLocation("https://localhost/iam/sts");
-		stsClient
-				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
-		stsClient
-				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
-		stsClient
-				.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
-		stsClient
-				.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
+		stsClient.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
+		stsClient.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
 		stsClient.setAllowRenewing(false);
 
 		// Apache CXF specific configuration
 		Map<String, Object> properties = stsClient.getProperties();
 		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
-		properties.put(SecurityConstants.CALLBACK_HANDLER,
-				new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.CALLBACK_HANDLER, new ExampleSecurityPolicyCallbackHandler());
 		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
 		stsClient.setProperties(properties);
 
@@ -544,23 +492,20 @@ public class CXFSTSClientTest {
 		TLSClientParameters tlsParams = new TLSClientParameters();
 		tlsParams.setSecureSocketProtocol("TLSv1");
 		tlsParams.setDisableCNCheck(true);
-		tlsParams.setTrustManagers(new TrustManager[]{new MyTrustManager()});
+		tlsParams.setTrustManagers(new TrustManager[] { new MyTrustManager() });
 		httpConduit.setTlsClientParameters(tlsParams);
 
 		LOGGER.debug("STS location: {}", stsClient.getLocation());
-		SecurityToken securityToken = stsClient
-				.requestSecurityToken("https://localhost/iam/example");
+		SecurityToken securityToken = stsClient.requestSecurityToken("https://localhost/iam/example");
 		Element assertionElement = securityToken.getToken();
 
-		URL wsdlLocation = CXFSTSClientTest.class
-				.getResource("/example-localhost-sts.wsdl");
+		URL wsdlLocation = CXFSTSClientTest.class.getResource("/example-localhost-sts.wsdl");
 		ExampleService exampleService = new ExampleService(wsdlLocation,
 				new QName("urn:be:e-contract:sts:example", "ExampleService"));
 		ExampleServicePortType port = exampleService.getExampleServicePort();
 
 		SecurityDecorator securityDecorator = new SecurityDecorator();
-		securityDecorator.decorate((BindingProvider) port, assertionElement,
-				"https://localhost/iam/example");
+		securityDecorator.decorate((BindingProvider) port, assertionElement, "https://localhost/iam/example");
 
 		BearerRequest bearerRequest = new BearerRequest();
 		ClaimsResponseType response = port.bearer(bearerRequest);
@@ -579,21 +524,16 @@ public class CXFSTSClientTest {
 		stsClient.setSoap12();
 		stsClient.setWsdlLocation("https://localhost/iam/sts?wsdl");
 		stsClient.setLocation("https://localhost/iam/sts");
-		stsClient
-				.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
-		stsClient
-				.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
-		stsClient
-				.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
-		stsClient
-				.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
+		stsClient.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
+		stsClient.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
 		stsClient.setAllowRenewing(false);
 
 		// Apache CXF specific configuration
 		Map<String, Object> properties = stsClient.getProperties();
 		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
-		properties.put(SecurityConstants.CALLBACK_HANDLER,
-				new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.CALLBACK_HANDLER, new ExampleSecurityPolicyCallbackHandler());
 		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
 		stsClient.setProperties(properties);
 
@@ -602,31 +542,26 @@ public class CXFSTSClientTest {
 		TLSClientParameters tlsParams = new TLSClientParameters();
 		tlsParams.setSecureSocketProtocol("TLSv1");
 		tlsParams.setDisableCNCheck(true);
-		tlsParams.setTrustManagers(new TrustManager[]{new MyTrustManager()});
+		tlsParams.setTrustManagers(new TrustManager[] { new MyTrustManager() });
 		httpConduit.setTlsClientParameters(tlsParams);
 
 		LOGGER.debug("STS location: {}", stsClient.getLocation());
-		SecurityToken securityToken = stsClient
-				.requestSecurityToken("https://localhost/iam/example");
+		SecurityToken securityToken = stsClient.requestSecurityToken("https://localhost/iam/example");
 		Principal principal = securityToken.getPrincipal();
 		LOGGER.debug("principal: {}", principal);
 		LOGGER.debug("token type: {}", securityToken.getTokenType());
-		assertEquals(
-				"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
+		assertEquals("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
 				securityToken.getTokenType());
 		LOGGER.debug("security token expires: {}", securityToken.getExpires());
 
 		LOGGER.debug("---------------------------------------------------------------");
 		stsClient.setEnableAppliesTo(true);
-		stsClient
-				.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
-		List<SecurityToken> result = stsClient
-				.validateSecurityToken(securityToken);
+		stsClient.setTokenType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/RSTR/Status");
+		List<SecurityToken> result = stsClient.validateSecurityToken(securityToken);
 		assertEquals(1, result.size());
 		SecurityToken resultSecurityToken = result.get(0);
 		LOGGER.debug("token type: {}", resultSecurityToken.getTokenType());
-		assertEquals(
-				"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
+		assertEquals("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
 				resultSecurityToken.getTokenType());
 	}
 
@@ -646,11 +581,8 @@ public class CXFSTSClientTest {
 		// String wsdlLocation = CXFSTSClientTest.class
 		// .getResource("/ws-trust-1.3.wsdl").toURI().toURL().toString();
 		String wsdlLocation = "https://localhost/iam/sts?wsdl";
-		QName serviceName = new QName(
-				"http://docs.oasis-open.org/ws-sx/ws-trust/200512",
-				"SecurityTokenService");
-		WSDLServiceFactory factory = new WSDLServiceFactory(bus, wsdlLocation,
-				serviceName);
+		QName serviceName = new QName("http://docs.oasis-open.org/ws-sx/ws-trust/200512", "SecurityTokenService");
+		WSDLServiceFactory factory = new WSDLServiceFactory(bus, wsdlLocation, serviceName);
 		SourceDataBinding dataBinding = new SourceDataBinding();
 		factory.setDataBinding(dataBinding);
 		Service service = factory.create();
@@ -667,13 +599,10 @@ public class CXFSTSClientTest {
 	@Test
 	public void testCXFExampleSecurityPolicy() throws Exception {
 		Bus bus = BusFactory.getDefaultBus();
-		String wsdlLocation = CXFSTSClientTest.class
-				.getResource("/example-security-policy.wsdl").toURI().toURL()
+		String wsdlLocation = CXFSTSClientTest.class.getResource("/example-security-policy.wsdl").toURI().toURL()
 				.toString();
-		QName serviceName = new QName("urn:be:e-contract:sts:example",
-				"ExampleService");
-		WSDLServiceFactory factory = new WSDLServiceFactory(bus, wsdlLocation,
-				serviceName);
+		QName serviceName = new QName("urn:be:e-contract:sts:example", "ExampleService");
+		WSDLServiceFactory factory = new WSDLServiceFactory(bus, wsdlLocation, serviceName);
 		SourceDataBinding dataBinding = new SourceDataBinding();
 		factory.setDataBinding(dataBinding);
 		Service service = factory.create();
@@ -693,11 +622,8 @@ public class CXFSTSClientTest {
 		// String wsdlLocation = CXFSTSClientTest.class
 		// .getResource("/ws-trust-1.3.wsdl").toURI().toURL().toString();
 		String wsdlLocation = "https://auth.beta.agiv.be/ipsts/Services/DaliSecurityTokenServiceConfiguration.svc?wsdl";
-		QName serviceName = new QName(
-				"http://docs.oasis-open.org/ws-sx/ws-trust/200512",
-				"SecurityTokenService");
-		WSDLServiceFactory factory = new WSDLServiceFactory(bus, wsdlLocation,
-				serviceName);
+		QName serviceName = new QName("http://docs.oasis-open.org/ws-sx/ws-trust/200512", "SecurityTokenService");
+		WSDLServiceFactory factory = new WSDLServiceFactory(bus, wsdlLocation, serviceName);
 		SourceDataBinding dataBinding = new SourceDataBinding();
 		factory.setDataBinding(dataBinding);
 		Service service = factory.create();
@@ -714,8 +640,7 @@ public class CXFSTSClientTest {
 	public class UTCallbackHandler implements CallbackHandler {
 
 		@Override
-		public void handle(Callback[] callbacks) throws IOException,
-				UnsupportedCallbackException {
+		public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
 			LOGGER.debug("callback handler invoked");
 			for (Callback callback : callbacks) {
 				LOGGER.debug("callback type: " + callback.getClass().getName());
@@ -729,37 +654,27 @@ public class CXFSTSClientTest {
 		}
 	}
 
-	private static X509Certificate getCertificate(PrivateKey privateKey,
-			PublicKey publicKey) throws Exception {
+	private static X509Certificate getCertificate(PrivateKey privateKey, PublicKey publicKey) throws Exception {
 		X500Name subjectName = new X500Name("CN=Test");
 		X500Name issuerName = subjectName; // self-signed
 		BigInteger serial = new BigInteger(128, new SecureRandom());
-		SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo
-				.getInstance(publicKey.getEncoded());
+		SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());
 		DateTime notBefore = new DateTime();
 		DateTime notAfter = notBefore.plusMonths(1);
-		X509v3CertificateBuilder x509v3CertificateBuilder = new X509v3CertificateBuilder(
-				issuerName, serial, notBefore.toDate(), notAfter.toDate(),
-				subjectName, publicKeyInfo);
-		AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder()
-				.find("SHA1withRSA");
-		AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder()
-				.find(sigAlgId);
-		AsymmetricKeyParameter asymmetricKeyParameter = PrivateKeyFactory
-				.createKey(privateKey.getEncoded());
+		X509v3CertificateBuilder x509v3CertificateBuilder = new X509v3CertificateBuilder(issuerName, serial,
+				notBefore.toDate(), notAfter.toDate(), subjectName, publicKeyInfo);
+		AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA1withRSA");
+		AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId);
+		AsymmetricKeyParameter asymmetricKeyParameter = PrivateKeyFactory.createKey(privateKey.getEncoded());
 
-		ContentSigner contentSigner = new BcRSAContentSignerBuilder(sigAlgId,
-				digAlgId).build(asymmetricKeyParameter);
-		X509CertificateHolder x509CertificateHolder = x509v3CertificateBuilder
-				.build(contentSigner);
+		ContentSigner contentSigner = new BcRSAContentSignerBuilder(sigAlgId, digAlgId).build(asymmetricKeyParameter);
+		X509CertificateHolder x509CertificateHolder = x509v3CertificateBuilder.build(contentSigner);
 
 		byte[] encodedCertificate = x509CertificateHolder.getEncoded();
 
-		CertificateFactory certificateFactory = CertificateFactory
-				.getInstance("X.509");
+		CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
 		X509Certificate certificate = (X509Certificate) certificateFactory
-				.generateCertificate(new ByteArrayInputStream(
-						encodedCertificate));
+				.generateCertificate(new ByteArrayInputStream(encodedCertificate));
 		return certificate;
 	}
 }
