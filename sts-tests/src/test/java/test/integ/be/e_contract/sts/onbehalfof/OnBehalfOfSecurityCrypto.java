@@ -18,14 +18,17 @@
 
 package test.integ.be.e_contract.sts.onbehalfof;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.cert.CertificateEncodingException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Properties;
 
 import javax.security.auth.callback.CallbackHandler;
 
@@ -35,31 +38,29 @@ import org.apache.ws.security.components.crypto.CryptoType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OnBehalfOfCrypto implements Crypto {
+public class OnBehalfOfSecurityCrypto implements Crypto {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(OnBehalfOfCrypto.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(OnBehalfOfSecurityCrypto.class);
 
-	private final OnBehalfOfService onBehalfOfService;
+	private final CertificateFactory certificateFactory;
 
-	private final OnBehalfOfSecurityTokenServiceProvider context;
+	public OnBehalfOfSecurityCrypto() {
+		LOGGER.debug("constructor");
+		try {
+			this.certificateFactory = CertificateFactory.getInstance("X.509");
+		} catch (CertificateException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
-	public OnBehalfOfCrypto(OnBehalfOfService onBehalfOfService, OnBehalfOfSecurityTokenServiceProvider context) {
-		this.onBehalfOfService = onBehalfOfService;
-		this.context = context;
+	public OnBehalfOfSecurityCrypto(Properties map, ClassLoader loader) {
+		this();
 	}
 
 	@Override
 	public byte[] getBytesFromCertificates(X509Certificate[] certs) throws WSSecurityException {
 		LOGGER.debug("getBytesFromCertificates");
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		for (X509Certificate cert : certs) {
-			try {
-				output.write(cert.getEncoded());
-			} catch (CertificateEncodingException | IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		return output.toByteArray();
+		return null;
 	}
 
 	@Override
@@ -71,7 +72,20 @@ public class OnBehalfOfCrypto implements Crypto {
 	@Override
 	public X509Certificate[] getCertificatesFromBytes(byte[] data) throws WSSecurityException {
 		LOGGER.debug("getCertificatesFromBytes");
-		return null;
+		Collection<? extends Certificate> certificates;
+		try {
+			certificates = this.certificateFactory.generateCertificates(new ByteArrayInputStream(data));
+		} catch (CertificateException e) {
+			throw new RuntimeException(e);
+		}
+		X509Certificate[] result = new X509Certificate[certificates.size()];
+		int idx = 0;
+		Iterator<? extends Certificate> iter = certificates.iterator();
+		while (iter.hasNext()) {
+			result[idx] = (X509Certificate) iter.next();
+			idx++;
+		}
+		return result;
 	}
 
 	@Override
@@ -83,7 +97,7 @@ public class OnBehalfOfCrypto implements Crypto {
 	@Override
 	public String getDefaultX509Identifier() throws WSSecurityException {
 		LOGGER.debug("getDefaultX509Identifier");
-		return "client";
+		return null;
 	}
 
 	@Override
@@ -96,7 +110,7 @@ public class OnBehalfOfCrypto implements Crypto {
 	@Override
 	public PrivateKey getPrivateKey(String identifier, String password) throws WSSecurityException {
 		LOGGER.debug("getPrivateKey");
-		return this.onBehalfOfService.getPrivateKey();
+		return null;
 	}
 
 	@Override
@@ -107,8 +121,8 @@ public class OnBehalfOfCrypto implements Crypto {
 
 	@Override
 	public X509Certificate[] getX509Certificates(CryptoType cryptoType) throws WSSecurityException {
-		LOGGER.debug("getX509Certificates: {}", cryptoType);
-		return new X509Certificate[] { this.onBehalfOfService.getCertificate() };
+		LOGGER.debug("getX509Certificates");
+		return new X509Certificate[] { this.certificate };
 	}
 
 	@Override
@@ -117,10 +131,16 @@ public class OnBehalfOfCrypto implements Crypto {
 		return null;
 	}
 
+	private X509Certificate certificate;
+
 	@Override
 	public X509Certificate loadCertificate(InputStream in) throws WSSecurityException {
 		LOGGER.debug("loadCertificate");
-		return null;
+		try {
+			return (X509Certificate) this.certificateFactory.generateCertificate(in);
+		} catch (CertificateException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
@@ -140,24 +160,22 @@ public class OnBehalfOfCrypto implements Crypto {
 
 	@Override
 	public boolean verifyTrust(X509Certificate[] certs) throws WSSecurityException {
-		LOGGER.debug("verifyTrust(X509Certificate[])");
+		LOGGER.debug("verifyTrust(certs)");
 		return false;
 	}
 
 	@Override
 	public boolean verifyTrust(PublicKey publicKey) throws WSSecurityException {
-		LOGGER.debug("verifyTrust(PublicKey)");
+		LOGGER.debug("verifyTrust(publicKey)");
 		return false;
 	}
 
 	@Override
 	public boolean verifyTrust(X509Certificate[] certs, boolean enableRevocation) throws WSSecurityException {
-		LOGGER.debug("verifyTrust(X509Certificate[], boolean)");
-		// the OnBehalfOf SAML signing certificate is verified here
-		X509Certificate samlSigner = certs[0];
-		X509Certificate callerCertificate = this.context.getCallerCertificate();
-		boolean result = this.onBehalfOfService.verifyTrust(callerCertificate, samlSigner);
-		LOGGER.debug("result: {}", result);
-		return result;
+		LOGGER.debug("verifyTrust(certs, enableRevocation)");
+		// artificially construct here...
+		this.certificate = certs[0];
+		// TODO: check trust here in WS-Security principal
+		return true; // called
 	}
 }

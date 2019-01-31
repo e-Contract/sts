@@ -337,6 +337,10 @@ public class OnBehalfOfTest {
 		return SAML_SIGNER_CERTIFICATE;
 	}
 
+	public static X509Certificate getCallerCertificate() {
+		return WS_SECURITY_SIGNER_CERTIFICATE;
+	}
+
 	private static X509Certificate getCertificate(String name, PrivateKey privateKey, PublicKey publicKey)
 			throws Exception {
 		X500Name subjectName = new X500Name(name);
