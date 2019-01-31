@@ -69,7 +69,8 @@ import test.integ.be.e_contract.sts.saml.SAMLSubjectProvider;
 
 @WebService(targetNamespace = "http://docs.oasis-open.org/ws-sx/ws-trust/200512", serviceName = "SecurityTokenService", wsdlLocation = "ws-trust-1.4.wsdl", portName = "SecurityTokenServicePort")
 @HandlerChain(file = "/example-ws-handlers.xml")
-@EndpointProperties({ @EndpointProperty(key = SecurityConstants.SIGNATURE_PROPERTIES, value = "signature.properties") })
+@EndpointProperties({ @EndpointProperty(key = SecurityConstants.SIGNATURE_PROPERTIES, value = "signature.properties"),
+		@EndpointProperty(key = SecurityConstants.IS_BSP_COMPLIANT, value = "false") })
 public class OnBehalfOfSecurityTokenServiceProvider extends SecurityTokenServiceProvider {
 
 	private static final X509Certificate SAML_SIGNER_CERTIFICATE;
@@ -123,7 +124,9 @@ public class OnBehalfOfSecurityTokenServiceProvider extends SecurityTokenService
 		samlTokenProvider.setAttributeStatementProviders(attributeStatementProviders);
 
 		DefaultConditionsProvider defaultConditionsProvider = new DefaultConditionsProvider();
-		defaultConditionsProvider.setLifetime(60 * 60 * 3);
+		defaultConditionsProvider.setLifetime(60 * 60 * 3); // seconds
+		defaultConditionsProvider.setMaxLifetime(60 * 60 * 10); // seconds
+		defaultConditionsProvider.setAcceptClientLifetime(true);
 		samlTokenProvider.setConditionsProvider(defaultConditionsProvider);
 
 		tokenProviders.add(samlTokenProvider);

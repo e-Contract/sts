@@ -184,8 +184,37 @@ public class OnBehalfOfTest {
 		stsClient.setProperties(properties);
 		stsClient.setOnBehalfOf(onBehalfOfToken);
 		stsClient.setEnableLifetime(true);
-		stsClient.setTtl(600);
+		stsClient.setTtl(60 * 60 * 5);
 		SecurityToken securityToken = stsClient.requestSecurityToken("http://active.saml.token.target");
+		Element token = securityToken.getToken();
+		LOGGER.debug("STS SAML token: {}", toFormattedString(token));
+	}
+
+	@Test
+	public void testOnBehalfOfNoAppliesTo() throws Exception {
+		Element onBehalfOfToken = generateToken();
+		LOGGER.debug("OnBehalfOf SAML token: {}", toFormattedString(onBehalfOfToken));
+
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
+		STSClient stsClient = new STSClient(bus);
+		stsClient.setSoap12();
+		stsClient.setWsdlLocation(this.stsUrl + "?wsdl");
+		stsClient.setLocation(this.stsUrl);
+		stsClient.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
+		stsClient.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
+		Map<String, Object> properties = stsClient.getProperties();
+		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		properties.put(SecurityConstants.CALLBACK_HANDLER, new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.SIGNATURE_CRYPTO,
+				new ClientCrypto(WS_SECURITY_SIGNER_PRIVATE_KEY, WS_SECURITY_SIGNER_CERTIFICATE));
+		stsClient.setProperties(properties);
+		stsClient.setOnBehalfOf(onBehalfOfToken);
+		stsClient.setEnableLifetime(true);
+		stsClient.setTtl(60 * 60 * 5);
+		SecurityToken securityToken = stsClient.requestSecurityToken();
 		Element token = securityToken.getToken();
 		LOGGER.debug("STS SAML token: {}", toFormattedString(token));
 	}
