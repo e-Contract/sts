@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014-2015 e-Contract.be BVBA.
+ * Copyright (C) 2014-2019 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.net.URL;
 import java.security.KeyPair;
@@ -54,6 +55,11 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.xml.namespace.QName;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.ws.BindingProvider;
 import javax.xml.ws.soap.SOAPFaultException;
 
@@ -91,6 +97,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 import be.e_contract.sts.client.cxf.SecurityDecorator;
 import be.e_contract.sts.example.ws.jaxb.BearerRequest;
@@ -463,6 +470,79 @@ public class CXFSTSClientTest {
 		LOGGER.debug("token type: {}", resultSecurityToken.getTokenType());
 		assertEquals("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0",
 				resultSecurityToken.getTokenType());
+	}
+
+	private static String toFormattedString(Node node) throws Exception {
+		TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		Transformer transformer = transformerFactory.newTransformer();
+		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+		StringWriter stringWriter = new StringWriter();
+		transformer.transform(new DOMSource(node), new StreamResult(stringWriter));
+		return stringWriter.toString();
+	}
+
+	@Test
+	public void testOnBehalfOf() throws Exception {
+		// SpringBusFactory bf = new SpringBusFactory();
+		// Bus bus = bf.createBus();
+		Bus bus = BusFactory.getDefaultBus();
+		STSClient stsClient = new STSClient(bus);
+		stsClient.setSoap12();
+		stsClient.setWsdlLocation("https://localhost/iam/sts?wsdl");
+		stsClient.setLocation("https://localhost/iam/sts");
+		stsClient.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
+		stsClient.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
+		stsClient.setAllowRenewing(false);
+
+		// Apache CXF specific configuration
+		Map<String, Object> properties = stsClient.getProperties();
+		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		properties.put(SecurityConstants.CALLBACK_HANDLER, new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
+		stsClient.setProperties(properties);
+
+		Client client = stsClient.getClient();
+		HTTPConduit httpConduit = (HTTPConduit) client.getConduit();
+		TLSClientParameters tlsParams = new TLSClientParameters();
+		tlsParams.setSecureSocketProtocol("TLSv1");
+		tlsParams.setDisableCNCheck(true);
+		tlsParams.setTrustManagers(new TrustManager[] { new MyTrustManager() });
+		httpConduit.setTlsClientParameters(tlsParams);
+
+		LOGGER.debug("STS location: {}", stsClient.getLocation());
+		SecurityToken securityToken = stsClient.requestSecurityToken("https://demo.app.applies.to");
+
+		stsClient = new STSClient(bus);
+		stsClient.setSoap12();
+		stsClient.setWsdlLocation("https://localhost/iam/onbehalfof-sts?wsdl");
+		stsClient.setLocation("https://localhost/iam/onbehalfof-sts");
+		stsClient.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
+		stsClient.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
+		properties = stsClient.getProperties();
+		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		properties.put(SecurityConstants.CALLBACK_HANDLER, new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.SIGNATURE_CRYPTO, new BeIDCrypto());
+		stsClient.setProperties(properties);
+		stsClient.setOnBehalfOf(securityToken.getToken());
+		stsClient.setEnableLifetime(true);
+		stsClient.setTtl(60 * 60 * 5);
+
+		client = stsClient.getClient();
+		httpConduit = (HTTPConduit) client.getConduit();
+		tlsParams = new TLSClientParameters();
+		tlsParams.setSecureSocketProtocol("TLSv1");
+		tlsParams.setDisableCNCheck(true);
+		tlsParams.setTrustManagers(new TrustManager[] { new MyTrustManager() });
+		httpConduit.setTlsClientParameters(tlsParams);
+
+		securityToken = stsClient.requestSecurityToken("http://active.saml.token.target");
+
+		LOGGER.debug("STS SAML token: {}", toFormattedString(securityToken.getToken()));
 	}
 
 	@Test
