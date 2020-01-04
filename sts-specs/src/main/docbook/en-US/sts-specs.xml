@@ -24,7 +24,7 @@
 			</author>
 		</authorgroup>
 		<copyright>
-			<year>2014-2019</year>
+			<year>2014-2020</year>
 			<holder>e-Contract.be BVBA</holder>
 		</copyright>
 		<pubdate>
@@ -588,19 +588,19 @@
           <ds:CanonicalizationMethod
             Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
           <ds:SignatureMethod
-            Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+            Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
           <ds:Reference URI="#timestamp">
             <ds:Transforms>
               <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
             </ds:Transforms>
-            <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+            <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
             <ds:DigestValue>...</ds:DigestValue>
           </ds:Reference>
           <ds:Reference URI="#to">
             <ds:Transforms>
               <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
             </ds:Transforms>
-            <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+            <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
             <ds:DigestValue>...</DigestValue>
           </ds:Reference>
         </ds:SignedInfo>
@@ -840,7 +840,7 @@
                 <ds:CanonicalizationMethod
                   Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
                 <ds:SignatureMethod
-                  Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+                  Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
                 <ds:Reference URI="#assertion">
                   <ds:Transforms>
                     <ds:Transform
@@ -849,7 +849,7 @@
                       Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
                   </ds:Transforms>
                   <ds:DigestMethod
-                    Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+                    Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
                   <ds:DigestValue>...</ds:DigestValue>
                 </ds:Reference>
               </ds:SignedInfo>
@@ -2398,7 +2398,7 @@
             <ec:InclusiveNamespaces PrefixList="soap"/>
           </ds:CanonicalizationMethod>
           <ds:SignatureMethod
-            Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+            Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
           <ds:Reference URI="#TS">
             <ds:Transforms>
               <ds:Transform
@@ -2407,7 +2407,7 @@
               </ds:Transform>
             </ds:Transforms>
             <ds:DigestMethod
-              Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+              Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
             <ds:DigestValue>...</ds:DigestValue>
           </ds:Reference>
           <ds:Reference URI="#To">
@@ -2418,7 +2418,7 @@
               </ds:Transform>
             </ds:Transforms>
             <ds:DigestMethod
-              Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+              Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
             <ds:DigestValue>...</ds:DigestValue>
           </ds:Reference>
         </ds:SignedInfo>
@@ -2745,7 +2745,7 @@
                 <ds:CanonicalizationMethod
                   Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
                 <ds:SignatureMethod
-                  Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+                  Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
                 <ds:Reference URI="#assertion">
                   <ds:Transforms>
                     <ds:Transform
@@ -2754,7 +2754,7 @@
                       Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
                   </ds:Transforms>
                   <ds:DigestMethod
-                    Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+                    Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
                   <ds:DigestValue>...</ds:DigestValue>
                 </ds:Reference>
               </ds:SignedInfo>

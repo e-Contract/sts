@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014 e-Contract.be BVBA.
+ * Copyright (C) 2014-2020 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -29,29 +29,26 @@ import org.slf4j.LoggerFactory;
 
 public class ExampleTokenDelegationHandler implements TokenDelegationHandler {
 
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(ExampleTokenDelegationHandler.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ExampleTokenDelegationHandler.class);
 
 	@Override
 	public boolean canHandleToken(ReceivedToken paramReceivedToken) {
 		LOGGER.debug("canHandleToken");
+		LOGGER.debug("token context: {}", paramReceivedToken.getTokenContext());
 		return paramReceivedToken.isDOMElement();
 	}
 
 	@Override
-	public TokenDelegationResponse isDelegationAllowed(
-			TokenDelegationParameters paramTokenDelegationParameters) {
+	public TokenDelegationResponse isDelegationAllowed(TokenDelegationParameters paramTokenDelegationParameters) {
 		LOGGER.debug("isDelegationAllowed");
 		TokenDelegationResponse response = new TokenDelegationResponse();
-		LOGGER.debug("param principal: "
-				+ paramTokenDelegationParameters.getPrincipal().getName());
+		LOGGER.debug("param principal: " + paramTokenDelegationParameters.getPrincipal().getName());
 		response.setDelegationAllowed(true);
 		ReceivedToken receivedToken = paramTokenDelegationParameters.getToken();
+		LOGGER.debug("received token context: {}", receivedToken.getTokenContext());
 		receivedToken.setState(STATE.VALID);
 		CustomTokenPrincipal customTokenPrincipal = new CustomTokenPrincipal(
-				"custom-"
-						+ paramTokenDelegationParameters.getPrincipal()
-								.getName());
+				"custom-" + paramTokenDelegationParameters.getPrincipal().getName());
 		customTokenPrincipal.setTokenObject(receivedToken);
 		receivedToken.setPrincipal(customTokenPrincipal);
 		response.setToken(receivedToken);

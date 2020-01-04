@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014-2019 e-Contract.be BVBA.
+ * Copyright (C) 2014-2020 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -18,6 +18,7 @@
 package test.integ.be.e_contract.sts.onbehalfof;
 
 import java.security.cert.X509Certificate;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -34,23 +35,27 @@ import org.apache.cxf.annotations.EndpointProperty;
 import org.apache.cxf.sts.STSPropertiesMBean;
 import org.apache.cxf.sts.SignatureProperties;
 import org.apache.cxf.sts.claims.ClaimsAttributeStatementProvider;
+import org.apache.cxf.sts.claims.ClaimsHandler;
+import org.apache.cxf.sts.claims.ClaimsManager;
 import org.apache.cxf.sts.operation.TokenIssueOperation;
 import org.apache.cxf.sts.service.ServiceMBean;
 import org.apache.cxf.sts.token.delegation.SAMLDelegationHandler;
+import org.apache.cxf.sts.token.delegation.TokenDelegationHandler;
 import org.apache.cxf.sts.token.provider.AttributeStatementProvider;
 import org.apache.cxf.sts.token.provider.DefaultConditionsProvider;
 import org.apache.cxf.sts.token.provider.SAMLTokenProvider;
 import org.apache.cxf.sts.token.provider.TokenProvider;
-import org.apache.cxf.sts.token.validator.SAMLTokenValidator;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.sts.provider.SecurityTokenServiceProvider;
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSSecurityEngineResult;
 import org.apache.ws.security.handler.WSHandlerConstants;
 import org.apache.ws.security.handler.WSHandlerResult;
+import org.apache.xml.security.signature.XMLSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import test.integ.be.e_contract.sts.ExampleTokenDelegationHandler;
 import test.integ.be.e_contract.sts.ServerCallbackHandler;
 import test.integ.be.e_contract.sts.saml.SAMLSubjectProvider;
 
@@ -83,7 +88,7 @@ public class OnBehalfOfSecurityTokenServiceProvider extends SecurityTokenService
 		stsProperties.setSignatureCrypto(new OnBehalfOfCrypto(this.onBehalfOfService, this));
 		issueOperation.setStsProperties(stsProperties);
 		SignatureProperties signatureProperties = stsProperties.getSignatureProperties();
-		signatureProperties.setSignatureAlgorithm("http://www.w3.org/2001/04/xmldsig-more#rsa-sha256");
+		signatureProperties.setSignatureAlgorithm(XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA256);
 		signatureProperties.setDigestAlgorithm(WSConstants.SHA256);
 
 		List<ServiceMBean> services = new LinkedList<>();
@@ -94,6 +99,15 @@ public class OnBehalfOfSecurityTokenServiceProvider extends SecurityTokenService
 		List<TokenProvider> tokenProviders = new LinkedList<>();
 		SAMLTokenProvider samlTokenProvider = new SAMLTokenProvider();
 		samlTokenProvider.setSubjectProvider(new SAMLSubjectProvider());
+
+		List<TokenDelegationHandler> delegationHandlers = new LinkedList<>();
+		TokenDelegationHandler tokenDelegationHandler = new ExampleTokenDelegationHandler();
+		delegationHandlers.add(tokenDelegationHandler);
+		issueOperation.setDelegationHandlers(delegationHandlers);
+
+		ClaimsManager claimsManager = new ClaimsManager();
+		claimsManager.setClaimHandlers(Collections.singletonList((ClaimsHandler) new OnBehalfOfClaimsHandler()));
+		issueOperation.setClaimsManager(claimsManager);
 
 		List<AttributeStatementProvider> attributeStatementProviders = new LinkedList<>();
 		attributeStatementProviders.add(new ClaimsAttributeStatementProvider());
@@ -106,7 +120,7 @@ public class OnBehalfOfSecurityTokenServiceProvider extends SecurityTokenService
 		tokenProviders.add(samlTokenProvider);
 		issueOperation.setTokenProviders(tokenProviders);
 
-		issueOperation.getTokenValidators().add(new SAMLTokenValidator());
+		issueOperation.getTokenValidators().add(new OnBehalfOfSAMLTokenValidator());
 		issueOperation.getDelegationHandlers().add(new SAMLDelegationHandler());
 
 		setIssueOperation(issueOperation);

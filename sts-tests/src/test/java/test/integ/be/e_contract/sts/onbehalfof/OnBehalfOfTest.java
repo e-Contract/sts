@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2019 e-Contract.be BVBA.
+ * Copyright (C) 2019-2020 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -42,6 +42,7 @@ import javax.xml.ws.Endpoint;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.trust.STSClient;
@@ -64,15 +65,20 @@ import org.opensaml.Configuration;
 import org.opensaml.DefaultBootstrap;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.Attribute;
+import org.opensaml.saml2.core.AttributeStatement;
+import org.opensaml.saml2.core.AttributeValue;
 import org.opensaml.saml2.core.Conditions;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.core.SubjectConfirmation;
 import org.opensaml.saml2.core.SubjectConfirmationData;
+import org.opensaml.xml.XMLObjectBuilder;
 import org.opensaml.xml.XMLObjectBuilderFactory;
 import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallerFactory;
+import org.opensaml.xml.schema.XSString;
 import org.opensaml.xml.security.SecurityConfiguration;
 import org.opensaml.xml.security.keyinfo.KeyInfoGenerator;
 import org.opensaml.xml.security.keyinfo.KeyInfoGeneratorFactory;
@@ -86,6 +92,7 @@ import org.opensaml.xml.signature.Signer;
 import org.opensaml.xml.signature.impl.SignatureBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -136,8 +143,8 @@ public class OnBehalfOfTest {
 		WS_SECURITY_SIGNER_PRIVATE_KEY = wsSecurityKeyPair.getPrivate();
 		PublicKey wsSecurityPublicKey = wsSecurityKeyPair.getPublic();
 		try {
-			WS_SECURITY_SIGNER_CERTIFICATE = getCertificate("CN=PassiveIdentityProvider", SAML_SIGNER_PRIVATE_KEY,
-					wsSecurityPublicKey);
+			WS_SECURITY_SIGNER_CERTIFICATE = getCertificate("CN=PassiveIdentityProvider",
+					WS_SECURITY_SIGNER_PRIVATE_KEY, wsSecurityPublicKey);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -183,6 +190,40 @@ public class OnBehalfOfTest {
 				new ClientCrypto(WS_SECURITY_SIGNER_PRIVATE_KEY, WS_SECURITY_SIGNER_CERTIFICATE));
 		stsClient.setProperties(properties);
 		stsClient.setOnBehalfOf(onBehalfOfToken);
+		stsClient.setEnableLifetime(true);
+		stsClient.setTtl(60 * 60 * 5);
+		SecurityToken securityToken = stsClient.requestSecurityToken("http://active.saml.token.target");
+		Element token = securityToken.getToken();
+		LOGGER.debug("STS SAML token: {}", toFormattedString(token));
+	}
+
+	@Test
+	public void testOnBehalfOfActAs() throws Exception {
+		Element onBehalfOfToken = generateToken();
+		LOGGER.debug("OnBehalfOf SAML token: {}", toFormattedString(onBehalfOfToken));
+
+		Element actAsToken = generateActAsToken();
+		LOGGER.debug("ActAs SAML token: {}", toFormattedString(actAsToken));
+
+		SpringBusFactory bf = new SpringBusFactory();
+		Bus bus = bf.createBus("cxf-https-trust-all.xml");
+		STSClient stsClient = new STSClient(bus);
+		stsClient.setSoap12();
+		stsClient.setWsdlLocation(this.stsUrl + "?wsdl");
+		stsClient.setLocation(this.stsUrl);
+		stsClient.setServiceName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenService");
+		stsClient.setEndpointName("{http://docs.oasis-open.org/ws-sx/ws-trust/200512}SecurityTokenServicePort");
+		stsClient.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
+		stsClient.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
+		Map<String, Object> properties = stsClient.getProperties();
+		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
+		properties.put(SecurityConstants.CALLBACK_HANDLER, new ExampleSecurityPolicyCallbackHandler());
+		properties.put(SecurityConstants.SIGNATURE_CRYPTO,
+				new ClientCrypto(WS_SECURITY_SIGNER_PRIVATE_KEY, WS_SECURITY_SIGNER_CERTIFICATE));
+		stsClient.setProperties(properties);
+		stsClient.setOnBehalfOf(onBehalfOfToken);
+		stsClient.setClaims(createClaims());
+		stsClient.setActAs(actAsToken);
 		stsClient.setEnableLifetime(true);
 		stsClient.setTtl(60 * 60 * 5);
 		SecurityToken securityToken = stsClient.requestSecurityToken("http://active.saml.token.target");
@@ -262,6 +303,78 @@ public class OnBehalfOfTest {
 		}
 	}
 
+	private Element createClaims() {
+		Document doc = DOMUtils.createDocument();
+		Element claimsElement = doc.createElementNS("http://docs.oasis-open.org/ws-sx/ws-trust/200512", "Claims");
+		claimsElement.setAttributeNS(null, "Dialect", "http://schemas.xmlsoap.org/ws/2005/05/identity");
+
+		Element officeKeyClaimType = doc.createElementNS("http://schemas.xmlsoap.org/ws/2005/05/identity", "ClaimType");
+		officeKeyClaimType.setAttributeNS(null, "Uri", "urn:be:e-contract:iam:claims:self-claimed:office-key");
+		claimsElement.appendChild(officeKeyClaimType);
+
+		Element softwareKeyClaimType = doc.createElementNS("http://schemas.xmlsoap.org/ws/2005/05/identity",
+				"ClaimType");
+		softwareKeyClaimType.setAttributeNS(null, "Uri", "urn:be:e-contract:iam:claims:self-claimed:software-key");
+		claimsElement.appendChild(softwareKeyClaimType);
+
+		return claimsElement;
+	}
+
+	private Element generateActAsToken() throws Exception {
+		DefaultBootstrap.bootstrap();
+		XMLObjectBuilderFactory builderFactory = Configuration.getBuilderFactory();
+		SAMLObjectBuilder<Assertion> assertionBuilder = (SAMLObjectBuilder<Assertion>) builderFactory
+				.getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
+		Assertion assertion = assertionBuilder.buildObject();
+		assertion.setID("saml-id");
+
+		SAMLObjectBuilder<Issuer> issuerBuilder = (SAMLObjectBuilder<Issuer>) builderFactory
+				.getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
+		Issuer issuer = issuerBuilder.buildObject();
+		issuer.setValue("act-as-issuer");
+		assertion.setIssuer(issuer);
+
+		DateTime issueInstance = new DateTime();
+		assertion.setIssueInstant(issueInstance);
+
+		SAMLObjectBuilder<AttributeStatement> attributeStatementBuilder = (SAMLObjectBuilder<AttributeStatement>) builderFactory
+				.getBuilder(AttributeStatement.DEFAULT_ELEMENT_NAME);
+		AttributeStatement attributeStatement = attributeStatementBuilder.buildObject();
+		assertion.getAttributeStatements().add(attributeStatement);
+		SAMLObjectBuilder<Attribute> attributeBuilder = (SAMLObjectBuilder<Attribute>) builderFactory
+				.getBuilder(Attribute.DEFAULT_ELEMENT_NAME);
+
+		{
+			Attribute attribute = attributeBuilder.buildObject();
+			attributeStatement.getAttributes().add(attribute);
+			attribute.setName("urn:be:e-contract:iam:claims:self-claimed:office-key");
+			XMLObjectBuilder<XSString> attributeValueBuilder = (XMLObjectBuilder<XSString>) builderFactory
+					.getBuilder(XSString.TYPE_NAME);
+			XSString attributeValue = (XSString) attributeValueBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME,
+					XSString.TYPE_NAME);
+			attributeValue.setValue("office-key-value");
+			attribute.getAttributeValues().add(attributeValue);
+		}
+
+		{
+			Attribute attribute = attributeBuilder.buildObject();
+			attributeStatement.getAttributes().add(attribute);
+			attribute.setName("urn:be:e-contract:iam:claims:self-claimed:software-key");
+			XMLObjectBuilder<XSString> attributeValueBuilder = (XMLObjectBuilder<XSString>) builderFactory
+					.getBuilder(XSString.TYPE_NAME);
+			XSString attributeValue = (XSString) attributeValueBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME,
+					XSString.TYPE_NAME);
+			attributeValue.setValue("software-key-value");
+			attribute.getAttributeValues().add(attributeValue);
+		}
+
+		MarshallerFactory marshallerFactory = Configuration.getMarshallerFactory();
+		Marshaller marshaller = marshallerFactory.getMarshaller(assertion);
+		Element token = marshaller.marshall(assertion);
+
+		return token;
+	}
+
 	private Element generateToken() throws Exception {
 		DefaultBootstrap.bootstrap();
 		XMLObjectBuilderFactory builderFactory = Configuration.getBuilderFactory();
@@ -306,6 +419,22 @@ public class OnBehalfOfTest {
 		DateTime notAfter = issueInstance.plusMinutes(5);
 		conditions.setNotOnOrAfter(notAfter);
 		assertion.setConditions(conditions);
+
+		SAMLObjectBuilder<AttributeStatement> attributeStatementBuilder = (SAMLObjectBuilder<AttributeStatement>) builderFactory
+				.getBuilder(AttributeStatement.DEFAULT_ELEMENT_NAME);
+		AttributeStatement attributeStatement = attributeStatementBuilder.buildObject();
+		assertion.getAttributeStatements().add(attributeStatement);
+		SAMLObjectBuilder<Attribute> attributeBuilder = (SAMLObjectBuilder<Attribute>) builderFactory
+				.getBuilder(Attribute.DEFAULT_ELEMENT_NAME);
+		Attribute attribute = attributeBuilder.buildObject();
+		attributeStatement.getAttributes().add(attribute);
+		attribute.setName("test-attribute");
+		XMLObjectBuilder<XSString> attributeValueBuilder = (XMLObjectBuilder<XSString>) builderFactory
+				.getBuilder(XSString.TYPE_NAME);
+		XSString attributeValue = (XSString) attributeValueBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME,
+				XSString.TYPE_NAME);
+		attributeValue.setValue("attribute value");
+		attribute.getAttributeValues().add(attributeValue);
 
 		SignatureBuilder signatureBuilder = new SignatureBuilder();
 		Signature signature = signatureBuilder.buildObject();
