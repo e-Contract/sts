@@ -98,7 +98,7 @@
 				</listitem>
 				<listitem>
 					<para>
-						The usage of symmetric proof-of-possession keys can be made
+						The usage of proof-of-possession keys can be made
 						either mandatory or optional.
 					</para>
 				</listitem>
@@ -109,6 +109,13 @@
 					</para>
 				</listitem>
 			</itemizedlist>
+			<note>
+				<title>Feedback</title>
+				<para>
+					Questions and feedback related to the eID IP-STS document can be send to
+					<ulink url="mailto:info@e-contract.be">info@e-contract.be</ulink>.
+				</para>
+			</note>
 		</para>
 		<section>
 			<title>Namespaces</title>
@@ -553,10 +560,10 @@
 	<section id="sts-x509">
 		<title>X.509 Certificate Token Profile</title>
 		<para>
-			The first authentication construct is based on the OASIS WS-Security
+			The primary authentication construct is based on the OASIS WS-Security
 			X.509 Certificate Profile version 1.1
 			<xref linkend="wss-x509t" />
-			.
+			using the eID authentication certificate.
 		</para>
 		<section id="sts-x509-request">
 			<title>Request</title>
@@ -644,7 +651,8 @@
 				confidentiality and integrity.
 			</para>
 			<para>
-				The WS-Security XML signature SHOULD at least digest the
+				The WS-Security XML signature is created using the eID authentication certificate
+				and SHOULD at least digest the
 				<code>&lt;wsa:To&gt;</code>
 				element
 				and the
@@ -902,6 +910,7 @@
 				and the
 				<code>&lt;wst:Lifetime&gt;</code>
 				serve as proof of the message freshness towards the client.
+				The lifetime depends on the eID IP-STS policy configuration.
 			</para>
 			<para>
 				The
@@ -979,23 +988,21 @@
 				suffix.
 			</para>
 		</section>
-	</section>
-
-	<section id="section-saml-token">
-		<title>
-			SAML Token Profile
-		</title>
-		<para>
-			A client can used the SAML 2.0 bearer token, issued by the eID IP-STS, to secure the
-			communication towards SOAP web services of third parties.
-			A SOAP request message can
-			embed the SAML 2.0 bearer token according to OASIS WS-Security SAML
-			Token Profile 1.1.1
-			<xref linkend="wss-saml" />
-			. The following SOAP request message demonstrates the usage of such a
-			SAML 2.0 bearer token.
-		</para>
-		<programlisting language="xml"><![CDATA[<soap:Envelope>
+		<section id="section-saml-token">
+			<title>
+				Usage via a SAML Token Profile
+			</title>
+			<para>
+				A client can used the SAML 2.0 bearer token, issued by the eID IP-STS, to secure the
+				communication towards SOAP web services of third parties.
+				A SOAP request message can
+				embed the SAML 2.0 bearer token according to OASIS WS-Security SAML
+				Token Profile 1.1.1
+				<xref linkend="wss-saml" />
+				. The following SOAP request message demonstrates the usage of such a
+				SAML 2.0 bearer token.
+			</para>
+			<programlisting language="xml"><![CDATA[<soap:Envelope>
   <soap:Header>
     <wsse:Security soap:mustUnderstand="1">
       <wsu:Timestamp wsu:Id="timestamp">
@@ -1012,12 +1019,12 @@
     ...
   </soap:Body>
 </soap:Envelope>]]></programlisting>
-		<para>
-			A relying party web service supporting WS-SecurityPolicy
-			<xref linkend="ws-sp" />
-			could use the following security policy.
-		</para>
-		<programlisting language="xml"><![CDATA[<wsp:Policy wsu:Id="ExampleSamlSecurityPolicy">
+			<para>
+				A relying party web service supporting WS-SecurityPolicy
+				<xref linkend="ws-sp" />
+				could use the following security policy.
+			</para>
+			<programlisting language="xml"><![CDATA[<wsp:Policy wsu:Id="ExampleSamlSecurityPolicy">
   <wsp:ExactlyOne>
     <wsp:All>
       <sp:TransportBinding>
@@ -1052,11 +1059,11 @@
     </wsp:All>
   </wsp:ExactlyOne>
 </wsp:Policy>]]></programlisting>
-		<para>
-			A relying party web service could even refer directly to the eID
-			IP-STS within the security policy as shown below.
-		</para>
-		<programlisting language="xml"><![CDATA[<wsp:Policy wsu:Id="ExampleSamlSecurityPolicy">
+			<para>
+				A relying party web service could even refer directly to the eID
+				IP-STS within the security policy as shown below.
+			</para>
+			<programlisting language="xml"><![CDATA[<wsp:Policy wsu:Id="ExampleSamlSecurityPolicy">
   <wsp:ExactlyOne>
     <wsp:All>
       <sp:TransportBinding>
@@ -1114,10 +1121,11 @@
     </wsp:All>
   </wsp:ExactlyOne>
 </wsp:Policy>]]></programlisting>
-		<para>
-			The above security policy uses the WS-MetadataExchange feature
-			of the eID IP-STS to allow for easy configuration of STS clients.
-		</para>
+			<para>
+				The above security policy uses the WS-MetadataExchange feature
+				of the eID IP-STS to allow for easy configuration of STS clients.
+			</para>
+		</section>
 	</section>
 
 	<section id="section-validate-saml">
@@ -2285,7 +2293,9 @@
 			from the subject claiming
 			to have sent them. This protocol-level
 			protection guards against man
-			in the middle attacks.
+			in the middle attacks as it prevents the SAML assertions to grasshopper
+			between services.
+			Especially within the context of the GDPR this is an interesting security feature.
 			Depending on the
 			relying party's web service policy some relying parties might require
 			holder-of-key tokens.
@@ -2536,7 +2546,7 @@
 				<code>&lt;sp:SignedEndorsingSupportingToken&gt;</code>
 				.
 				"<code>Signed</code>"
-				because of the used TLS
+				because the used TLS
 				<code>TransportBinding</code>
 				signs the supporting token
 				.
