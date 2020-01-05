@@ -46,21 +46,25 @@
 			for example the eID Identity Provider. Different protocols can be
 			used
 			for web based authentication: SAML 2.0 Browser POST profile,
-			WS-Federation web passive profile, OpenID 2.0, OAuth 2.0 or OpenID
+			WS-Federation web passive profile, OpenID 2.0, OAuth 2.0, or OpenID
 			Connect.
 			When a relying party (a web application) authenticates an
-			end-user, based on the eID, it can trust the received claims.
+			end-user using an Identity Provider, based on the eID, it can trust the received claims
+			from that Identity Provider.
 		</para>
 		<para>
 			In the context of native (desktop/fat-client) applications
 			however,
 			achieving a trust relationship towards a remote relying
-			party can be a
+			party (SOAP web service) can be a
 			challenge. In this document we define the
 			specifications for an
 			Identity Provider Security Token Service
 			(IP-STS) that accepts eID as
-			primary credential. This eID IP-STS is based on open standards like
+			primary credential.
+			A relying party (SOAP web service) can use this IP-STS to offload the burden of performing 
+			all required security checks related to the eID authentication process.
+			This eID IP-STS is based on open standards like
 			<xref linkend="ws-trust" />
 			.
 			The most important features of the eID IP-STS are:
@@ -633,7 +637,7 @@
   </soap:Body>
 </soap:Envelope>]]></programlisting>
 			<para>
-				The client sends this request towards the eID IP-STS over SSL (
+				The client sends this request towards the eID IP-STS over TLS (
 				<xref linkend="TLS1.0" />
 				).
 				This allows the client to authenticate the eID IP-STS and gives us
@@ -660,7 +664,7 @@
 				The signing of the
 				<code>&lt;wsu:Timestamp&gt;</code>
 				element serves as proof of message freshness towards the eID IP-STS
-				as premisse for the entity authentication.
+				as premise for the entity authentication.
 			</para>
 			<para>
 				Ideally
@@ -704,9 +708,9 @@
 				The
 				<code>&lt;wst:KeyType&gt;</code>
 				element indicates which type of proof of possession key should be
-				returned by the eID IP-STS. In this case, the client SHOULD require
-				a
-				bearer token that does not provide any proof of possession.
+				returned by the eID IP-STS. In this case, the client SHOULD request
+				a bearer token.
+				Notice that a bearer token does not provide any proof of possession.
 			</para>
 			<para>
 				The
@@ -906,7 +910,10 @@
 				<code>&lt;saml2:Assertion&gt;</code>
 				SAML 2.0 bearer token.
 				The SAML 2.0 assertion has been signed using
-				the eID IP-STS signing certificate. This XML signature MAY be
+				the eID IP-STS signing certificate.
+				The XML signature should use at least the SHA-256 digest algorithm
+				and corresponding signing algorithm.
+				This XML signature MAY be
 				verified by the requesting client before consuming the
 				<code>&lt;saml2:NameID&gt;</code>
 				element
@@ -979,8 +986,8 @@
 			SAML Token Profile
 		</title>
 		<para>
-			A client can used the SAML 2.0 bearer token to secure the
-			communication towards relying parties.
+			A client can used the SAML 2.0 bearer token, issued by the eID IP-STS, to secure the
+			communication towards SOAP web services of third parties.
 			A SOAP request message can
 			embed the SAML 2.0 bearer token according to OASIS WS-Security SAML
 			Token Profile 1.1.1
@@ -1175,7 +1182,7 @@
 			A relying party can setup the trust relationship towards the eID
 			IP-STS instance in different ways.
 			The relying party could for example
-			keep reference of the SHA1 fingerprint of the trusted eID IP-STS
+			keep reference of the fingerprint of the trusted eID IP-STS
 			signing certificate. The relying party could also keep reference of
 			the X509 certificate of the trusted eID IP-STS instance.
 		</para>
@@ -1212,7 +1219,7 @@
 		<para>
 			A relying party SHOULD retrieve this SAML 2.0 metadata document
 			over
-			SSL. The eID IP-STS signing certificate is located within the
+			TLS. The eID IP-STS signing certificate is located within the
 			<code>&lt;md:KeyDescriptor&gt;</code>
 			element.
 		</para>
@@ -1274,7 +1281,7 @@
   </soap:Body>
 </soap:Envelope>]]></programlisting>
 			<para>
-				The relying party should send the request over SSL towards the
+				The relying party should send the request over TLS towards the
 				trusted eID IP-STS instance.
 			</para>
 			<para>
@@ -1426,14 +1433,14 @@
 		<itemizedlist>
 			<listitem>
 				<para>
-					Attributes can be self claimed.
+					Attributes can be self-claimed.
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-					Attributes can be derived from the eID card.
+					Attributes can be derived from the data found on the eID card.
 					As the eID card
-					also offers different
+					offers different
 					attributes (name, address, ...),
 					relying
 					parties probably also want
@@ -1492,10 +1499,10 @@
 			Depending on the attributes that the eID IP-STS should return,
 			other
 			<code>&lt;saml2:Attribute&gt;</code>
-			elements should be passed within the specific SAML 2.0 assertion.
+			elements should be passed within the <code>&lt;wst14:ActAs&gt;</code> SAML 2.0 assertion.
 			The
 			eID IP-STS should support the following
-			specific input attributes:
+			<code>&lt;wst14:ActAs&gt;</code> input attributes:
 			<variablelist>
 				<varlistentry>
 					<term>
@@ -1910,6 +1917,12 @@
   </soap:Body>
 </soap:Envelope>]]></programlisting>
 			<para>
+				Notice that the <code>&lt;wst14:ActAs&gt;</code>
+				<code>&lt;saml2:Assertion&gt;</code> is not signed.
+				This is because that <code>&lt;saml2:Assertion&gt;</code> either contains self-claimed attributes, or 
+				the integrity protection is guaranteed by other means (such as the signatures on the different eID data files).
+			</para>
+			<para>
 				As you can see from the example, the request for the
 				<code>surname</code>
 				and
@@ -1922,9 +1935,9 @@
 				The following
 				table
 				<xref linkend="table-mapping" />
-				summarizes which input attributes should be provided per requested
+				summarizes which <code>&lt;wst14:ActAs&gt;</code> input attributes should be provided per requested
 				claim
-				type. Note that we omitted the prefixes for brevity.
+				type. Notice that we omitted the prefixes for brevity.
 			</para>
 			<table id="table-mapping">
 				<title>Attribute mapping</title>
@@ -2348,7 +2361,7 @@
 				the
 				X509 certificate trust model to a SAML based trust model.
 				Important
-				to note here that the client keeps using the proof-of-possession
+				to notice here is that the client keeps using the proof-of-possession
 				key
 				towards relying parties when presenting the
 				corresponding SAML
@@ -2519,15 +2532,15 @@
   </wsp:ExactlyOne>
 </wsp:Policy>]]></programlisting>
 			<para>
-				Note here the usage of
+				Notice here the usage of
 				<code>&lt;sp:SignedEndorsingSupportingToken&gt;</code>
 				.
-				<code>Signed</code>
-				because of the used SSL
+				"<code>Signed</code>"
+				because of the used TLS
 				<code>TransportBinding</code>
 				signs the supporting token
 				.
-				<code>Endorsing</code>
+				"<code>Endorsing</code>"
 				because the holder-of-key token adds a required proof-of-possession
 				signature and thus endorses part of the message.
 			</para>
@@ -2572,6 +2585,8 @@
 					The STS must be able to selectively allow only certain web applications to exchange
 					a passive SAML assertion for an active SAML assertion.
 					Hence the web application needs to perform a strong authentication towards the STS.
+					Given this difference in security model,
+					implementing STS services should use a different endpoint.
 				</para>
 			</listitem>
 		</itemizedlist>
@@ -2629,7 +2644,7 @@
   </soap:Body>
 </soap:Envelope>]]></programlisting>
 			<para>
-				The STS client sends this request towards the STS over SSL (
+				The STS client sends this request towards the STS over TLS (
 				<xref linkend="TLS1.0" />
 				).
 				This allows the client to authenticate the STS and gives us
@@ -2798,11 +2813,14 @@
   <wsu:Created>2019-01-30T10:09:02.974Z</wsu:Created>
   <wsu:Expires>2019-01-30T10:19:02.974Z</wsu:Expires>
 </wst:Lifetime>]]></programlisting>
+				<para>
+					Depending on the STS policy configuration, the STS can honor the requested lifetime or not.
+				</para>
 			</section>
 			<section>
 				<title>Holder-of-key</title>
 				<para>
-					As the STS issued SAML assertions have a long lifetime, the web services might require
+					As the STS issued SAML assertions have a long lifetime, the consuming web services might require
 					a stricter security model using holder-of-key SAML assertions.
 					Hence the STS should also support the issuing of holder-of-key SAML assertions.
 					The STS client can indicate this within the STS request as follows.
@@ -2826,6 +2844,111 @@
 				contains the RSA public key to be used as proof-of-possession key in
 				combination	with the holder-of-key token issued by the STS.
 			</para>
+			</section>
+			<section>
+				<title>Self-claimed Attributes</title>
+				<para>
+					To allow the STS client to inject self-claimed attributes, an STS might support
+					the usage of <code>&lt;wst14:ActAs&gt;</code> in combination with <code>&lt;wst:OnBehalfOf&gt;</code>.
+					Although the WS-Trust <xref linkend="ws-trust-14" /> specification does not define the semantics when both
+					<code>&lt;wst14:ActAs&gt;</code> and <code>&lt;wst:OnBehalfOf&gt;</code> are used at the same time,
+					it does not prevent such scenario explicitly.
+					Furthermore both the Apache CXF STS client and WCF allow for such combined usage.
+				</para>
+				<para>
+					The following example illustrates how to enrich the STS response SAML assertion with self-claimed attributes.
+				</para>
+				<programlisting language="xml"><![CDATA[<soap:Envelope>
+  <soap:Header>
+    <wsa:Action soap:mustUnderstand="1">
+      http://docs.oasis-open.org/ws-sx/ws-trust/200512/RST/Issue
+    </wsa:Action>
+    <wsa:MessageID>urn:uuid:...</wsa:MessageID>
+    <wsa:To s:mustUnderstand="1" u:Id="to">https://...</wsa:To>
+    <wsa:ReplyTo>
+      <wsa:Address>http://www.w3.org/2005/08/addressing/anonymous</wsa:Address>
+    </wsa:ReplyTo>
+    <wsse:Security soap:mustUnderstand="1">
+      <wsse:BinarySecurityToken>
+        WS-Security X509 TOKEN HERE
+      </wsse:BinarySecurityToken>
+      <wsu:Timestamp wsu:Id="timestamp">
+        <wsu:Created>2012-01-17T09:31:27.700Z</wsu:Created>
+        <wsu:Expires>2012-01-17T09:36:27.700Z</wsu:Expires>
+      </wsu:Timestamp>
+      <ds:Signature>
+        WS-Security X509 SIGNATURE HERE
+      </ds:Signature>
+    </wsse:Security>
+  </soap:Header>
+  <soap:Body>
+    <wst:RequestSecurityToken>
+      <wst:RequestType>
+        http://docs.oasis-open.org/ws-sx/ws-trust/200512/Issue
+      </wst:RequestType>
+      <wsp:AppliesTo>
+        <wsa:EndpointReference>
+          <wsa:Address>urn:some-target-application</wsa:Address>
+        </wsa:EndpointReference>
+      </wsp:AppliesTo>
+	  <wst:Claims Dialect="http://schemas.xmlsoap.org/ws/2005/05/identity">
+        <wsid:ClaimType
+			Uri="urn:be:e-contract:iam:claims:self-claimed:office-key"/>
+        <wsid:ClaimType
+			Uri="urn:be:e-contract:iam:claims:self-claimed:software-key"/>
+      </wst:Claims>
+      <wst:OnBehalfOf>
+        <saml2:Assertion>
+          PASSIVE SAML ASSERTION HERE
+        </saml2:Assertion>
+      </wst:OnBehalfOf>
+      <wst:TokenType>
+        http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0
+      </wst:TokenType>
+      <wst:KeyType>
+        http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer
+      </wst:KeyType>
+	  <wst14:ActAs>
+	  	<saml2:Assertion ID="assertion-id"
+			IssueInstant="2011-05-09T09:36:37.359Z" Version="2.0">
+			<saml2:Issuer>self-claimed</saml2:Issuer>
+			<saml2:AttributeStatement>
+            <saml2:Attribute Name="urn:be:e-contract:iam:claims:self-claimed:office-key">
+            	<saml2:AttributeValue xsi:type="xs:string">
+					office-key-value
+				</saml2:AttributeValue>
+            </saml2:Attribute>
+            <saml2:Attribute Name="urn:be:e-contract:iam:claims:self-claimed:software-key">
+            	<saml2:AttributeValue xsi:type="xs:string">
+					software-key-value
+				</saml2:AttributeValue>
+            </saml2:Attribute>
+          </saml2:AttributeStatement>
+		</saml2:Assertion>
+	  </wst14:ActAs>
+      <wst:Renewing/>
+    </wst:RequestSecurityToken>
+  </soap:Body>
+</soap:Envelope>]]></programlisting>
+				<para>
+					As shown in the example, we request additional claims via the <code>&lt;wst:Claims&gt;</code> element.
+					These claims are provided via a <code>&lt;wst14:ActAs&gt;</code> SAML assertion.
+					The <code>&lt;wst14:ActAs&gt;</code> SAML assertion does not need to be signed as it may only contain
+					a restricted set of self-claimed attributes. STS implementations should support the following 
+					self-claimed attributes:
+				</para>
+				<itemizedlist>
+					<listitem>
+						<para>
+							<code>urn:be:e-contract:iam:claims:self-claimed:office-key</code>
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<code>urn:be:e-contract:iam:claims:self-claimed:software-key</code>
+						</para>
+					</listitem>
+				</itemizedlist>
 			</section>
 		</section>
 	</section>
