@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014 e-Contract.be BVBA.
+ * Copyright (C) 2014-2020 e-Contract.be BVBA.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -23,6 +23,7 @@ import java.util.Set;
 
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPMessage;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -37,17 +38,14 @@ import org.w3c.dom.Node;
 
 public class LoggingSOAPHandler implements SOAPHandler<SOAPMessageContext> {
 
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(LoggingSOAPHandler.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(LoggingSOAPHandler.class);
 
 	@Override
 	public boolean handleMessage(SOAPMessageContext context) {
-		boolean outbound = (boolean) context
-				.get(SOAPMessageContext.MESSAGE_OUTBOUND_PROPERTY);
+		boolean outbound = (boolean) context.get(SOAPMessageContext.MESSAGE_OUTBOUND_PROPERTY);
 		SOAPMessage soapMessage = context.getMessage();
 		try {
-			LOGGER.debug("SOAP message (outbound {}): {}", outbound,
-					toString(soapMessage.getSOAPPart()));
+			LOGGER.debug("SOAP message (outbound {}): {}", outbound, toString(soapMessage.getSOAPPart()));
 		} catch (Exception e) {
 			LOGGER.error("SOAP toString error");
 		}
@@ -69,12 +67,12 @@ public class LoggingSOAPHandler implements SOAPHandler<SOAPMessageContext> {
 	}
 
 	private static String toString(Node node) throws Exception {
-		TransformerFactory transformerFactory = TransformerFactory
-				.newInstance();
+		TransformerFactory transformerFactory = TransformerFactory.newInstance();
 		Transformer transformer = transformerFactory.newTransformer();
+		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 		StringWriter stringWriter = new StringWriter();
-		transformer.transform(new DOMSource(node), new StreamResult(
-				stringWriter));
+		transformer.transform(new DOMSource(node), new StreamResult(stringWriter));
 		return stringWriter.toString();
 	}
 }

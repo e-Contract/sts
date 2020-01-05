@@ -36,7 +36,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.ws.Binding;
 import javax.xml.ws.BindingProvider;
+import javax.xml.ws.handler.Handler;
 import javax.xml.ws.soap.SOAPFaultException;
 
 import org.apache.cxf.Bus;
@@ -418,6 +420,12 @@ public class ReleaseAcceptanceTest {
 	public void testExampleWebServiceHolderOfKey() throws Exception {
 		ExampleService exampleService = new ExampleService();
 		ExampleServicePortType port = exampleService.getExampleServicePort();
+		
+		BindingProvider bindingProvider = (BindingProvider) port;
+		Binding binding = bindingProvider.getBinding();
+		List<Handler> handlerChain = binding.getHandlerChain();
+		handlerChain.add(new LoggingSOAPHandler());
+		binding.setHandlerChain(handlerChain);
 
 		SecurityDecorator securityDecorator = new SecurityDecorator();
 		securityDecorator.decorate((BindingProvider) port,

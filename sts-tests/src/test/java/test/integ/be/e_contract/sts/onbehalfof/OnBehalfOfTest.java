@@ -18,6 +18,8 @@
 
 package test.integ.be.e_contract.sts.onbehalfof;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.math.BigInteger;
@@ -46,6 +48,9 @@ import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.trust.STSClient;
+import org.apache.ws.security.saml.SAMLKeyInfo;
+import org.apache.ws.security.saml.ext.AssertionWrapper;
+import org.apache.ws.security.validate.Credential;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -193,8 +198,16 @@ public class OnBehalfOfTest {
 		stsClient.setEnableLifetime(true);
 		stsClient.setTtl(60 * 60 * 5);
 		SecurityToken securityToken = stsClient.requestSecurityToken("http://active.saml.token.target");
-		Element token = securityToken.getToken();
-		LOGGER.debug("STS SAML token: {}", toFormattedString(token));
+		Element tokenElement = securityToken.getToken();
+		LOGGER.debug("STS SAML token: {}", toFormattedString(tokenElement));
+		AssertionWrapper assertionWrapper = new AssertionWrapper(tokenElement);
+		Assertion assertion = assertionWrapper.getSaml2();
+		assertTrue(assertion.isSigned());
+		Credential trustCredential = new Credential();
+		SAMLKeyInfo samlKeyInfo = assertionWrapper.getSignatureKeyInfo();
+		trustCredential.setPublicKey(samlKeyInfo.getPublicKey());
+		trustCredential.setCertificates(samlKeyInfo.getCerts());
+		assertionWrapper.verifySignature(samlKeyInfo);
 	}
 
 	@Test
