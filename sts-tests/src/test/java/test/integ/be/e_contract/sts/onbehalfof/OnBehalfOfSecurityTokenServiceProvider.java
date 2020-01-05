@@ -21,7 +21,6 @@ import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -39,8 +38,6 @@ import org.apache.cxf.sts.claims.ClaimsHandler;
 import org.apache.cxf.sts.claims.ClaimsManager;
 import org.apache.cxf.sts.operation.TokenIssueOperation;
 import org.apache.cxf.sts.service.ServiceMBean;
-import org.apache.cxf.sts.token.delegation.SAMLDelegationHandler;
-import org.apache.cxf.sts.token.delegation.TokenDelegationHandler;
 import org.apache.cxf.sts.token.provider.AttributeStatementProvider;
 import org.apache.cxf.sts.token.provider.DefaultConditionsProvider;
 import org.apache.cxf.sts.token.provider.SAMLTokenProvider;
@@ -55,9 +52,7 @@ import org.apache.xml.security.signature.XMLSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import test.integ.be.e_contract.sts.ExampleTokenDelegationHandler;
 import test.integ.be.e_contract.sts.ServerCallbackHandler;
-import test.integ.be.e_contract.sts.saml.SAMLSubjectProvider;
 
 @WebService(targetNamespace = "http://docs.oasis-open.org/ws-sx/ws-trust/200512", serviceName = "SecurityTokenService", wsdlLocation = "ws-trust-1.4.wsdl", portName = "SecurityTokenServicePort")
 @HandlerChain(file = "/example-ws-handlers.xml")
@@ -98,12 +93,7 @@ public class OnBehalfOfSecurityTokenServiceProvider extends SecurityTokenService
 
 		List<TokenProvider> tokenProviders = new LinkedList<>();
 		SAMLTokenProvider samlTokenProvider = new SAMLTokenProvider();
-		samlTokenProvider.setSubjectProvider(new SAMLSubjectProvider());
-
-		List<TokenDelegationHandler> delegationHandlers = new LinkedList<>();
-		TokenDelegationHandler tokenDelegationHandler = new ExampleTokenDelegationHandler();
-		delegationHandlers.add(tokenDelegationHandler);
-		issueOperation.setDelegationHandlers(delegationHandlers);
+		samlTokenProvider.setSubjectProvider(new OnBehalfOfSubjectProvider());
 
 		ClaimsManager claimsManager = new ClaimsManager();
 		claimsManager.setClaimHandlers(Collections.singletonList((ClaimsHandler) new OnBehalfOfClaimsHandler()));
@@ -121,14 +111,13 @@ public class OnBehalfOfSecurityTokenServiceProvider extends SecurityTokenService
 		issueOperation.setTokenProviders(tokenProviders);
 
 		issueOperation.getTokenValidators().add(new OnBehalfOfSAMLTokenValidator());
-		issueOperation.getDelegationHandlers().add(new SAMLDelegationHandler());
+		issueOperation.getDelegationHandlers().add(new OnBehalfOfSAMLDelegationHandler());
 
 		setIssueOperation(issueOperation);
 	}
 
 	public X509Certificate getCallerCertificate() {
 		MessageContext messageContext = this.context.getMessageContext();
-		Set<String> messageContextKeys = messageContext.keySet();
 		Object receiveResults = messageContext.get(WSHandlerConstants.RECV_RESULTS);
 		List<WSHandlerResult> wsHandlerResultList = (List<WSHandlerResult>) receiveResults;
 		WSHandlerResult wsHandlerResult = wsHandlerResultList.get(0);

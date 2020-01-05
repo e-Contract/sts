@@ -18,6 +18,7 @@
 
 package test.integ.be.e_contract.sts.onbehalfof;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -32,6 +33,7 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.transform.OutputKeys;
@@ -48,9 +50,7 @@ import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.trust.STSClient;
-import org.apache.ws.security.saml.SAMLKeyInfo;
 import org.apache.ws.security.saml.ext.AssertionWrapper;
-import org.apache.ws.security.validate.Credential;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -79,6 +79,7 @@ import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.core.SubjectConfirmation;
 import org.opensaml.saml2.core.SubjectConfirmationData;
+import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.XMLObjectBuilder;
 import org.opensaml.xml.XMLObjectBuilderFactory;
 import org.opensaml.xml.io.Marshaller;
@@ -93,6 +94,7 @@ import org.opensaml.xml.security.x509.BasicX509Credential;
 import org.opensaml.xml.signature.KeyInfo;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.SignatureConstants;
+import org.opensaml.xml.signature.SignatureValidator;
 import org.opensaml.xml.signature.Signer;
 import org.opensaml.xml.signature.impl.SignatureBuilder;
 import org.slf4j.Logger;
@@ -148,8 +150,8 @@ public class OnBehalfOfTest {
 		WS_SECURITY_SIGNER_PRIVATE_KEY = wsSecurityKeyPair.getPrivate();
 		PublicKey wsSecurityPublicKey = wsSecurityKeyPair.getPublic();
 		try {
-			WS_SECURITY_SIGNER_CERTIFICATE = getCertificate("CN=PassiveIdentityProvider",
-					WS_SECURITY_SIGNER_PRIVATE_KEY, wsSecurityPublicKey);
+			WS_SECURITY_SIGNER_CERTIFICATE = getCertificate("CN=Application", WS_SECURITY_SIGNER_PRIVATE_KEY,
+					wsSecurityPublicKey);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -175,6 +177,7 @@ public class OnBehalfOfTest {
 
 	@Test
 	public void testOnBehalfOf() throws Exception {
+		// setup
 		Element onBehalfOfToken = generateToken();
 		LOGGER.debug("OnBehalfOf SAML token: {}", toFormattedString(onBehalfOfToken));
 
@@ -189,6 +192,7 @@ public class OnBehalfOfTest {
 		stsClient.setTokenType("http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0");
 		stsClient.setKeyType("http://docs.oasis-open.org/ws-sx/ws-trust/200512/Bearer");
 		Map<String, Object> properties = stsClient.getProperties();
+		// username/password dummies
 		properties.put(SecurityConstants.SIGNATURE_USERNAME, "username");
 		properties.put(SecurityConstants.CALLBACK_HANDLER, new ExampleSecurityPolicyCallbackHandler());
 		properties.put(SecurityConstants.SIGNATURE_CRYPTO,
@@ -197,21 +201,28 @@ public class OnBehalfOfTest {
 		stsClient.setOnBehalfOf(onBehalfOfToken);
 		stsClient.setEnableLifetime(true);
 		stsClient.setTtl(60 * 60 * 5);
+
+		// operate
 		SecurityToken securityToken = stsClient.requestSecurityToken("http://active.saml.token.target");
+
+		// verify
 		Element tokenElement = securityToken.getToken();
 		LOGGER.debug("STS SAML token: {}", toFormattedString(tokenElement));
 		AssertionWrapper assertionWrapper = new AssertionWrapper(tokenElement);
 		Assertion assertion = assertionWrapper.getSaml2();
 		assertTrue(assertion.isSigned());
-		Credential trustCredential = new Credential();
-		SAMLKeyInfo samlKeyInfo = assertionWrapper.getSignatureKeyInfo();
-		trustCredential.setPublicKey(samlKeyInfo.getPublicKey());
-		trustCredential.setCertificates(samlKeyInfo.getCerts());
-		assertionWrapper.verifySignature(samlKeyInfo);
+
+		BasicX509Credential validatingCredential = new BasicX509Credential();
+		validatingCredential.setEntityCertificate(TestOnBehalfOfService.getSAMLSignerCertificate());
+		SignatureValidator signatureValidator = new SignatureValidator(validatingCredential);
+		signatureValidator.validate(assertion.getSignature());
+
+		assertEquals("subject", assertion.getSubject().getNameID().getValue());
 	}
 
 	@Test
 	public void testOnBehalfOfActAs() throws Exception {
+		// setup
 		Element onBehalfOfToken = generateToken();
 		LOGGER.debug("OnBehalfOf SAML token: {}", toFormattedString(onBehalfOfToken));
 
@@ -239,13 +250,50 @@ public class OnBehalfOfTest {
 		stsClient.setActAs(actAsToken);
 		stsClient.setEnableLifetime(true);
 		stsClient.setTtl(60 * 60 * 5);
+
+		// operate
 		SecurityToken securityToken = stsClient.requestSecurityToken("http://active.saml.token.target");
-		Element token = securityToken.getToken();
-		LOGGER.debug("STS SAML token: {}", toFormattedString(token));
+
+		// verify
+		Element tokenElement = securityToken.getToken();
+		LOGGER.debug("STS SAML token: {}", toFormattedString(tokenElement));
+		AssertionWrapper assertionWrapper = new AssertionWrapper(tokenElement);
+		Assertion assertion = assertionWrapper.getSaml2();
+		assertTrue(assertion.isSigned());
+
+		BasicX509Credential validatingCredential = new BasicX509Credential();
+		validatingCredential.setEntityCertificate(TestOnBehalfOfService.getSAMLSignerCertificate());
+		SignatureValidator signatureValidator = new SignatureValidator(validatingCredential);
+		signatureValidator.validate(assertion.getSignature());
+
+		assertEquals("subject", assertion.getSubject().getNameID().getValue());
+		List<Attribute> attributes = assertion.getAttributeStatements().get(0).getAttributes();
+		assertAttribute(attributes, "urn:be:e-contract:iam:claims:self-claimed:office-key", "office-key-value");
+		assertAttribute(attributes, "urn:be:e-contract:iam:claims:self-claimed:software-key", "software-key-value");
+	}
+
+	private void assertAttribute(List<Attribute> attributes, String attributeName, String extectedAttributeValue) {
+		for (Attribute attribute : attributes) {
+			if (!attributeName.equals(attribute.getName())) {
+				continue;
+			}
+			List<XMLObject> attributeValues = attribute.getAttributeValues();
+			for (XMLObject attributeValue : attributeValues) {
+				LOGGER.debug("attribute value class: {}", attributeValue.getClass().getName());
+				if (attributeValue instanceof XSString) {
+					XSString stringAttributeValue = (XSString) attributeValue;
+					if (extectedAttributeValue.equals(stringAttributeValue.getValue())) {
+						return;
+					}
+				}
+			}
+		}
+		throw new RuntimeException("attribute not found");
 	}
 
 	@Test
 	public void testOnBehalfOfNoAppliesTo() throws Exception {
+		// setup
 		Element onBehalfOfToken = generateToken();
 		LOGGER.debug("OnBehalfOf SAML token: {}", toFormattedString(onBehalfOfToken));
 
@@ -268,13 +316,28 @@ public class OnBehalfOfTest {
 		stsClient.setOnBehalfOf(onBehalfOfToken);
 		stsClient.setEnableLifetime(true);
 		stsClient.setTtl(60 * 60 * 5);
+
+		// operate
 		SecurityToken securityToken = stsClient.requestSecurityToken();
-		Element token = securityToken.getToken();
-		LOGGER.debug("STS SAML token: {}", toFormattedString(token));
+
+		// verify
+		Element tokenElement = securityToken.getToken();
+		LOGGER.debug("STS SAML token: {}", toFormattedString(tokenElement));
+		AssertionWrapper assertionWrapper = new AssertionWrapper(tokenElement);
+		Assertion assertion = assertionWrapper.getSaml2();
+		assertTrue(assertion.isSigned());
+
+		BasicX509Credential validatingCredential = new BasicX509Credential();
+		validatingCredential.setEntityCertificate(TestOnBehalfOfService.getSAMLSignerCertificate());
+		SignatureValidator signatureValidator = new SignatureValidator(validatingCredential);
+		signatureValidator.validate(assertion.getSignature());
+
+		assertEquals("subject", assertion.getSubject().getNameID().getValue());
 	}
 
 	@Test
 	public void testOnBehalfOfHOK() throws Exception {
+		// setup
 		Element onBehalfOfToken = generateToken();
 		LOGGER.debug("OnBehalfOf SAML token: {}", toFormattedString(onBehalfOfToken));
 
@@ -304,9 +367,26 @@ public class OnBehalfOfTest {
 		stsClient.setOnBehalfOf(onBehalfOfToken);
 		stsClient.setEnableLifetime(true);
 		stsClient.setTtl(600);
+
+		// operate
 		SecurityToken securityToken = stsClient.requestSecurityToken("http://active.saml.token.target");
-		Element token = securityToken.getToken();
-		LOGGER.debug("STS SAML token: {}", toFormattedString(token));
+
+		// verify
+		Element tokenElement = securityToken.getToken();
+		LOGGER.debug("STS SAML token: {}", toFormattedString(tokenElement));
+		AssertionWrapper assertionWrapper = new AssertionWrapper(tokenElement);
+		Assertion assertion = assertionWrapper.getSaml2();
+		assertTrue(assertion.isSigned());
+
+		BasicX509Credential validatingCredential = new BasicX509Credential();
+		validatingCredential.setEntityCertificate(TestOnBehalfOfService.getSAMLSignerCertificate());
+		SignatureValidator signatureValidator = new SignatureValidator(validatingCredential);
+		signatureValidator.validate(assertion.getSignature());
+
+		assertEquals("subject", assertion.getSubject().getNameID().getValue());
+
+		assertEquals("urn:oasis:names:tc:SAML:2.0:cm:holder-of-key",
+				assertion.getSubject().getSubjectConfirmations().get(0).getMethod());
 
 	}
 

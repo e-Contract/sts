@@ -30,7 +30,6 @@ import org.apache.cxf.sts.claims.ClaimsParameters;
 import org.apache.cxf.sts.claims.RequestClaim;
 import org.apache.cxf.sts.claims.RequestClaimCollection;
 import org.apache.cxf.sts.request.ReceivedToken;
-import org.apache.ws.security.CustomTokenPrincipal;
 import org.apache.ws.security.WSSecurityException;
 import org.apache.ws.security.saml.ext.AssertionWrapper;
 import org.opensaml.saml2.core.Assertion;
@@ -66,12 +65,6 @@ public class OnBehalfOfClaimsHandler implements ClaimsHandler {
 			ClaimsParameters paramClaimsParameters) {
 		LOGGER.debug("retrieveClaimValues");
 		ClaimCollection claimCollection = new ClaimCollection();
-		CustomTokenPrincipal customTokenPrincipal = (CustomTokenPrincipal) paramClaimsParameters.getPrincipal();
-		LOGGER.debug("custom token principal: {}", customTokenPrincipal.getName());
-		ReceivedToken receivedToken = (ReceivedToken) customTokenPrincipal.getTokenObject();
-		LOGGER.debug("received token type: {}", receivedToken.getClass().getName());
-		LOGGER.debug("token type: {}", receivedToken.getToken().getClass().getName());
-		LOGGER.debug("token context: {}", receivedToken.getTokenContext());
 		ReceivedToken actAsReceivedToken = paramClaimsParameters.getTokenRequirements().getActAs();
 		String officeKey = null;
 		String softwareKey = null;

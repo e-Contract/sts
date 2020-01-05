@@ -77,7 +77,6 @@ import be.fedict.commons.eid.client.BeIDCards;
 import be.fedict.commons.eid.client.FileType;
 import be.fedict.commons.eid.jca.BeIDProvider;
 import org.apache.cxf.bus.spring.SpringBusFactory;
-import static org.junit.Assert.assertEquals;
 
 /**
  * The acceptance tests for a release of the IAM platform. All these acceptance
