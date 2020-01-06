@@ -110,7 +110,9 @@ public class OnBehalfOfSecurityTokenServiceProvider extends SecurityTokenService
 		tokenProviders.add(samlTokenProvider);
 		issueOperation.setTokenProviders(tokenProviders);
 
-		issueOperation.getTokenValidators().add(new OnBehalfOfSAMLTokenValidator());
+		OnBehalfOfSAMLTokenValidator tokenValidator = new OnBehalfOfSAMLTokenValidator();
+		tokenValidator.setSubjectConstraints(Collections.singletonList(".*"));
+		issueOperation.getTokenValidators().add(tokenValidator);
 		issueOperation.getDelegationHandlers().add(new OnBehalfOfSAMLDelegationHandler());
 
 		setIssueOperation(issueOperation);
