@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>be.e_contract</groupId>
 		<artifactId>sts</artifactId>
-		<version>0.5.0</version>
+		<version>0.5.1-SNAPSHOT</version>
 	</parent>
 	<name>eID Security Token Service CXF Client</name>
 	<groupId>be.e_contract.sts</groupId>
@@ -14,7 +14,7 @@
 		<dependency>
 			<groupId>be.e_contract.sts</groupId>
 			<artifactId>sts-ws</artifactId>
-			<version>0.5.0</version>
+			<version>0.5.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.cxf</groupId>
