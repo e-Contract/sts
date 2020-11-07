@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014-2020 e-Contract.be BVBA.
+ * Copyright (C) 2014-2020 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -17,9 +17,9 @@
  */
 package test.integ.be.e_contract.sts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -75,8 +75,8 @@ import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.opensaml.Configuration;
 import org.opensaml.DefaultBootstrap;
 import org.opensaml.common.SAMLObjectBuilder;
@@ -143,8 +143,8 @@ public class ReleaseAcceptanceTest {
 	private static final String STS_LOCATION = "https://local.e-contract.be/iam/sts";
 	private static final String ONBEHALFOF_STS_LOCATION = "https://local.e-contract.be/iam/onbehalfof-sts";
 
-	@Before
-	public void setUp() throws Exception {
+	@BeforeAll
+	public static void setUp() throws Exception {
 		Security.addProvider(new BeIDProvider());
 	}
 
@@ -543,7 +543,7 @@ public class ReleaseAcceptanceTest {
 		BasicX509Credential validatingCredential = new BasicX509Credential();
 		validatingCredential.setEntityCertificate(TestOnBehalfOfService.getSAMLSignerCertificate());
 		SignatureValidator signatureValidator = new SignatureValidator(validatingCredential);
-		//signatureValidator.validate(assertion.getSignature());
+		// signatureValidator.validate(assertion.getSignature());
 
 		assertEquals("subject", assertion.getSubject().getNameID().getValue());
 		List<Attribute> attributes = assertion.getAttributeStatements().get(0).getAttributes();

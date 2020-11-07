@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014-2019 e-Contract.be BVBA.
+ * Copyright (C) 2014-2020 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -56,9 +56,9 @@ import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.joda.time.DateTime;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.opensaml.Configuration;
 import org.opensaml.DefaultBootstrap;
 import org.opensaml.common.SAMLObjectBuilder;
@@ -153,7 +153,7 @@ public class SAMLSTSTest {
 		return SAML_SIGNER_CERTIFICATE;
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		int sslFreePort = getFreePort();
 
@@ -170,7 +170,7 @@ public class SAMLSTSTest {
 		this.samlStsEndpoint = Endpoint.publish(this.samlStsUrl, new SAMLSecurityTokenServiceProvider());
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		this.stsEndpoint.stop();
 		this.samlStsEndpoint.stop();

@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014 e-Contract.be BVBA.
+ * Copyright (C) 2014-2020 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -37,8 +37,8 @@ import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.cxf.ws.mex.MetadataExchange;
 import org.apache.cxf.ws.mex.model._2004_09.Metadata;
 import org.apache.cxf.ws.mex.model._2004_09.ObjectFactory;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,13 +47,12 @@ import test.integ.be.e_contract.sts.CXFSTSClientTest.MyTrustManager;
 
 public class WSMEXTest {
 
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(WSMEXTest.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(WSMEXTest.class);
 
-	@Before
-	public void setUp() throws Exception {
+	@BeforeAll
+	public static void setUp() throws Exception {
 		TrustManager trustManager = new MyTrustManager();
-		TrustManager[] sslTrustManagers = new TrustManager[]{trustManager};
+		TrustManager[] sslTrustManagers = new TrustManager[] { trustManager };
 		SSLContext ssl_ctx = SSLContext.getInstance("TLS");
 		ssl_ctx.init(null, sslTrustManagers, new SecureRandom());
 		SSLSocketFactory sslSocketFactory = ssl_ctx.getSocketFactory();

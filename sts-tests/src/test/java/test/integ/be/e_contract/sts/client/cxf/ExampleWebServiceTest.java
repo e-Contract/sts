@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014 e-Contract.be BVBA.
+ * Copyright (C) 2014-2020 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -22,8 +22,8 @@ import java.security.Security;
 
 import javax.xml.ws.BindingProvider;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +38,10 @@ import be.fedict.commons.eid.jca.BeIDProvider;
 
 public class ExampleWebServiceTest {
 
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(ExampleWebServiceTest.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ExampleWebServiceTest.class);
 
-	@Before
-	public void setUp() throws Exception {
+	@BeforeAll
+	public static void setUp() throws Exception {
 		Security.addProvider(new BeIDProvider());
 	}
 
@@ -54,12 +53,10 @@ public class ExampleWebServiceTest {
 		SecurityDecorator securityDecorator = new SecurityDecorator();
 		securityDecorator.setOfficeKey("example-office-key");
 		securityDecorator.setSoftwareKey("example-software-key");
-		securityDecorator.decorate((BindingProvider) port,
-				"https://www.e-contract.be/iam/example");
+		securityDecorator.decorate((BindingProvider) port, "https://www.e-contract.be/iam/example");
 
 		GetSelfClaimsRequest getSelfClaimsRequest = new GetSelfClaimsRequest();
-		ClaimsResponseType claimsResponse = port
-				.getSelfClaims(getSelfClaimsRequest);
+		ClaimsResponseType claimsResponse = port.getSelfClaims(getSelfClaimsRequest);
 		LOGGER.debug("subject: {}", claimsResponse.getSubject());
 		for (ClaimType claim : claimsResponse.getClaim()) {
 			LOGGER.debug("claim {} = {}", claim.getName(), claim.getValue());

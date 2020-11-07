@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2014-2015 e-Contract.be BVBA.
+ * Copyright (C) 2014-2020 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -17,19 +17,22 @@
  */
 package test.integ.be.e_contract.sts;
 
+import java.security.Security;
+
+import javax.xml.ws.BindingProvider;
+
+import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
+import org.apache.cxf.bus.spring.SpringBusFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import be.e_contract.sts.client.cxf.SecurityDecorator;
 import be.e_contract.sts.example.ws.jaxws.ExampleService;
 import be.e_contract.sts.example.ws.jaxws.ExampleServicePortType;
 import be.fedict.commons.eid.jca.BeIDProvider;
-import java.security.Security;
-import javax.xml.ws.BindingProvider;
-import org.apache.cxf.Bus;
-import org.apache.cxf.BusFactory;
-import org.apache.cxf.bus.spring.SpringBusFactory;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Example for HTTP proxy.
@@ -38,11 +41,10 @@ import org.slf4j.LoggerFactory;
  */
 public class ProxyTest {
 
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(ProxyTest.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ProxyTest.class);
 
-	@Before
-	public void setUp() throws Exception {
+	@BeforeAll
+	public static void setUp() throws Exception {
 		Security.addProvider(new BeIDProvider());
 	}
 
@@ -56,8 +58,7 @@ public class ProxyTest {
 		ExampleServicePortType port = exampleService.getExampleServicePort();
 
 		SecurityDecorator securityDecorator = new SecurityDecorator();
-		securityDecorator.decorate((BindingProvider) port,
-				"https://www.e-contract.be/iam/example");
+		securityDecorator.decorate((BindingProvider) port, "https://www.e-contract.be/iam/example");
 
 		// invoke the web service
 		String result = port.holderOfKeyEcho("hello world");

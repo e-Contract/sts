@@ -1,6 +1,6 @@
 /*
  * eID Security Token Service Project.
- * Copyright (C) 2019-2020 e-Contract.be BVBA.
+ * Copyright (C) 2019-2020 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -18,8 +18,8 @@
 
 package test.integ.be.e_contract.sts.onbehalfof;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
@@ -63,9 +63,9 @@ import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.joda.time.DateTime;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.opensaml.Configuration;
 import org.opensaml.DefaultBootstrap;
 import org.opensaml.common.SAMLObjectBuilder;
@@ -157,7 +157,7 @@ public class OnBehalfOfTest {
 		}
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		int sslFreePort = getFreePort();
 		System.setProperty("testutil.ports.Server", Integer.toString(sslFreePort));
@@ -170,7 +170,7 @@ public class OnBehalfOfTest {
 		this.stsEndpoint = Endpoint.publish(this.stsUrl, new OnBehalfOfSecurityTokenServiceProvider());
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		this.stsEndpoint.stop();
 	}
